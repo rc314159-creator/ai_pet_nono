@@ -3,8 +3,8 @@ title: AI Pet 技术架构
 description: 当前 AI Pet Demo 的技术分层、运行时、工具协议、多端入口和模块边界；新开发任务前必须读取。
 status: 已批准
 created: 2026-05-30
-updated: 2026-05-30
-update_reason: 根据 MVP 功能设计讨论更新入口架构，明确无 HTML 展示页，桌宠点击弹出应用窗口。
+updated: 2026-05-31
+update_reason: 同步用户激励子路由、每日任务/排行榜/奖励详情页和奖励服饰解锁契约。
 doc_type: architecture-spec
 domain_taxa:
   - domain-service
@@ -13,8 +13,10 @@ domain_taxa:
   - ui-channel
   - data-contract
 related:
+  - current-system-architecture-2026-05-30.md
   - ../product/product-spec-2026-05-30.md
   - ../modules/INDEX.md
+  - ../modules/user-incentive-2026-05-31.md
   - ../plan/mvp-feature-design-2026-05-30.md
   - desktop-pet-app-window-linkage-protocol-2026-05-30.md
   - ../research/agent-foundations.md
@@ -22,6 +24,8 @@ related:
 ---
 
 # AI Pet 技术架构
+
+> 当前整体系统架构真相源见 [AI Pet 当前系统架构总览](current-system-architecture-2026-05-30.md)。本文保留技术分层、协议和工具契约细节；若执行入口、目录职责或验证标准有冲突，以当前系统架构总览为准。
 
 ## 架构目标
 
@@ -42,12 +46,12 @@ flowchart TD
 
   subgraph Channels["入口层"]
     AppWindow["应用窗口/功能面板<br/>React/Vite 渲染"]
-    Desktop["桌面宠物<br/>OpenPets"]
+    Desktop["桌面宠物<br/>desktop-photo-pet Electron"]
     FutureMobile["后续入口<br/>H5/PWA/微信/飞书/小程序/App"]
   end
 
   subgraph AgentLayer["Agent 层"]
-    Agent["OpenAI Agents SDK<br/>Pet Group Chat Agent"]
+    Agent["OpenCode/opencode Runtime<br/>MCP tools<br/>OpenAI Agents SDK fallback"]
     Tools["AI Pet Tools<br/>SDK tools / MCP"]
   end
 
@@ -89,12 +93,27 @@ flowchart TD
 
 当前代码位于 `ai-pet/`：
 
-- 应用窗口：Electron shell + React/Vite/TypeScript 渲染。产品口径是“桌宠点击后弹出的应用窗口/功能面板”，不是 HTML 展示页；当前视觉比例按手机屏幕长宽比实现，约 `430x932`。
+- 应用窗口：Electron shell + React/Vite/TypeScript renderer。产品口径是“桌宠点击后弹出的应用窗口/功能面板”，不是 HTML 展示页；当前视觉比例按手机屏幕长宽比实现，约 `430x932`。
 - API：Express，端口 `127.0.0.1:8788`。
 - 应用窗口开发端口：`127.0.0.1:5180`。
-- 桌宠：OpenPets 运行时，通过本地 CLI/IPC 桥接。
+- 桌宠：当前默认开发入口使用 `desktop-photo-pet` 的照片级动态桌宠 Electron 进程；它同一进程内负责桌宠窗口、点击打开应用窗口、应用窗口打开时隐藏桌宠、应用窗口关闭时恢复桌宠。OpenPets 运行时保留为旧调试/备选入口，通过本地 CLI/IPC 桥接。
 - Domain：当前在前端 `src/domain/engine.ts` 和 mock 数据中实现，后续应抽成共享领域服务。
-- AI：对话页宠物群聊主 Agent 方向已确定为 OpenAI Agents SDK。当前保留 `/api/ask` 作为早期照护问答接口；对话页应走 `/api/agent/chat`，由 OpenAI Agents SDK、科技狗 persona、主 thread/session 和业务 tools 驱动。
+- AI：当前对话主路径为 OpenCode/opencode runtime + MCP；OpenAI Agents SDK 只保留为 fallback。当前 Demo 的对话模型网关使用 llmmelon OpenAI-compatible Chat Completions，默认 `claude-sonnet-4-6`，`claude-opus-4-6` 已实测可用；语音工具使用阿里云百炼 Qwen Voice Design + Qwen TTS，Qwen key 不用于聊天模型。
+
+## 当前实际运行架构
+
+当前 Demo 的可运行架构必须按以下事实理解，不再按“前端 HTML 项目”理解：
+
+| 层 | 当前实现 | 职责 | 验证入口 |
+|---|---|---|---|
+| 完整桌面入口 | `desktop-photo-pet/main.cjs` | 在同一个 Electron 进程内创建透明桌宠窗口和点击后的应用窗口；负责桌宠点击、拖拽、应用窗口打开时隐藏桌宠、应用窗口关闭时恢复桌宠 | `npm run dev` 或 `npm run dev:photo-pet` |
+| 应用窗口 standalone 调试 | `desktop-app/main.cjs` | 只创建应用窗口，便于调试应用窗口 UI；不创建桌宠，不能验证桌宠显隐联动 | `npm run dev:app` |
+| Renderer | `src/App.tsx`、`src/styles.css`、`index.html`、Vite dev server 或 `dist/index.html` | 被 Electron `BrowserWindow` 加载的应用窗口界面实现；技术上使用 HTML/CSS/React，但产品不是 HTML 展示页 | 浏览器只作 smoke test，最终验证必须回到 Electron 窗口 |
+| 桌宠 renderer | `desktop-photo-pet/renderer.html`、`desktop-photo-pet/runtime.js` | 被透明桌宠 `BrowserWindow` 加载，播放照片级 Mochi motion manifest 动作帧并轮询动作/外观状态 | Electron 桌宠窗口 |
+| API 与 Agent | `server/index.ts`、`server/agent.ts`、`server/opencodeAgent.ts`、`server/mcp.ts`、`server/appearance.ts`、`server/voice.ts` | 提供业务 API、OpenCode/opencode 对话主路径、AI Pet MCP tools、动作命令和外观状态；OpenAI Agents SDK 仅 fallback | `127.0.0.1:8788` |
+| 领域模型 | `src/domain/*` | 当前共享的宠物档案、状态、mock 数据、动作和显示身份来源；后续继续抽成端无关 Domain Service | TypeScript 类型检查和 API/UI 联动验证 |
+
+因此，React/Vite/HTML 是 Electron renderer 的实现方式；系统交付对象是桌面 App 链路：桌宠窗口 + 点击后应用窗口。`reports/` 下的 HTML 文件只允许作为历史报告或视觉证据，不作为当前产品入口。
 
 ## 运行时边界
 
@@ -119,11 +138,13 @@ flowchart TD
 - 通过受控工具访问宠物业务数据。
 - 触发任务规划、状态解释、桌宠表达和推荐。
 
-当前方向：
+当前 Agent 运行方式：
 
-- 对话页宠物群聊主 Agent：OpenAI Agents SDK。
-- 工具暴露：OpenAI Agents SDK function tools，后续可继续扩展 MCP server 或等价工具协议。
-- OpenCode / opencode：保留为后台工具、MCP 生态或开发 agent 参考，不作为宠物群聊主 Agent。
+- 对话页宠物群聊主 Agent：OpenCode SDK / opencode runtime + MCP。
+- 模型供应商：llmmelon New API/OpenAI-compatible `/v1/chat/completions`，默认 `claude-sonnet-4-6`；`claude-opus-4-6` 已实测可用；缺少 key 或 runtime 失败时才走 fallback。
+- 工具暴露：AI Pet MCP tools；当前 OpenAI Agents SDK function tools 只作为 fallback。
+- 语音供应商：百炼 `qwen-voice-design` 创建/复用科技狗自定义音色，`qwen3-tts-vd-2026-01-26` 合成语音；缺少 key 或供应商失败时回退浏览器语音播放。
+- OpenAI Agents SDK：只作为 fallback，不是主 Agent 底座。
 
 禁止：
 
@@ -148,7 +169,7 @@ flowchart TD
 
 职责：
 
-- 使用 OpenPets 提供系统级宠物窗口。
+- 当前 Demo 默认使用 `desktop-photo-pet` 提供系统级照片级桌宠窗口；OpenPets 保留为旧调试/备选入口，不是当前完整链路的默认验证对象。
 - 支持气泡、动作、状态反应、pet pack 切换。
 - 真实宠物形象必须优先保证和用户上传宠物一致；低保真程序化 3D 不满足当前展示要求。
 - 真实宠物动态形象的当前正确资产结构是 motion manifest + 完整多帧动作序列；不要把单张照片整体晃动或拆四肢 rig 当作 Demo 主方案。
@@ -157,8 +178,8 @@ flowchart TD
 
 当前缺口：
 
-- 已接 OpenPets built-in pet。
-- 还需导入或生成项目专属宠物形象；当前补充了 `desktop-photo-pet` 作为照片级动态桌宠运行程序验证，并先通过 `public/assets/pets/mochi/motions/manifest.json` 播放 Mochi 走路 20 帧预览。
+- 已导入项目专属 Mochi 桌宠形象；当前默认用 `desktop-photo-pet` 作为照片级动态桌宠运行程序，并通过 `public/assets/pets/mochi/motions/manifest.json` 播放 12 个动作、284 张透明帧的 v1 完整动作包。应用窗口内对话页、状态页和我的装扮大预览也复用同一份 motion manifest 和透明帧，避免再出现程序化 CSS mock 形象。
+- OpenPets built-in pet 已降为旧调试/备选入口；后续只有在 OpenPets renderer 能承载当前照片级动作帧和点击联动时，才重新作为主入口。
 - 如果 OpenPets pet pack 不能承载足够真实的动态形象，需要扩展 OpenPets renderer 或采用独立桌面运行时承载照片级 2D/2.5D、Live2D/Rive/Spine 或高质量 glTF。
 - 还需把桌宠从“同步按钮触发反馈”升级为“用户点击即可展开应用窗口的入口”。
 
@@ -174,8 +195,10 @@ flowchart TD
 
 - 点击桌宠本体 -> `chat`
 - 点击异常气泡 -> `status`
-- 点击照护任务提醒 -> `tasks`
-- 点击换装/装扮反馈 -> `outfit`
+- 点击照护任务提醒 -> `my` 下的用户激励每日任务详情页
+- 点击换装/装扮反馈 -> `my` 页内装扮区
+
+当前 `desktop-photo-pet` 集成入口还承担窗口显隐：应用窗口创建或聚焦时隐藏桌宠窗口；应用窗口关闭时恢复桌宠窗口。`desktop-app/main.cjs` 仅作为 standalone 应用窗口调试入口，不用于验证桌宠显隐联动。
 
 ### 动作优先级
 
@@ -214,6 +237,8 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 - `plan_daily_tasks`
 - `complete_task`
 - `explain_task_reason`
+- `get_user_incentive_summary`
+- `get_reward_unlocks`
 
 ### 桌宠
 
@@ -226,7 +251,7 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 
 - `get_main_thread`：读取单宠物唯一主群聊。
 - `record_memory`：记录用户、宠物和事件记忆。
-- `reply_with_voice`：当前回合返回语音消息；语音不是文字后处理。
+- `reply_with_voice`：当前回合返回语音消息；当前实现优先用 Qwen TTS 合成，语音不是文字后处理。
 
 ### 商业与装扮
 
@@ -235,6 +260,9 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 - `recommend_products`
 - `get_outfit_catalog`
 - `preview_outfit`
+- `get_outfit_unlock_state`
+
+当前展示阶段的桌宠真实换装接口只保存配饰状态，不保存服装、毛发或妆容状态。应用窗口保存配饰后写入 `PetAppearanceState`；该状态是我的页、对话页、状态页和桌面桌宠的单一外观真相源，Demo 阶段由 `server/appearance.ts` 持久化到 `.ai-pet-data/appearance.json`。照片级桌宠运行时读取该状态，并按当前配饰选择对应的完整动作帧图；应用窗口关闭后也必须强制刷新一次外观状态。服装、毛发、妆容如果出现在应用窗口中，只能作为页面预览或后续方案，不进入真实桌宠渲染契约。
 
 ## 数据契约
 
@@ -260,7 +288,7 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 下一步优先开发：
 
 1. 把当前前端 domain 规则抽成可被 API 和 tools 复用的服务。
-2. 接 OpenAI Agents SDK 到宠物群聊主 thread 和业务 tools。
+2. 继续扩大 AI Pet MCP tools 的覆盖面；对话页 `/api/agent/chat` 主路径已经接入 OpenCode/opencode，OpenAI Agents SDK 路径仅保留为 fallback。
 3. 让桌宠成为可点击展开应用窗口的主入口，而不只是显示反馈。
 4. 明确商品推荐和换装模块的最小可运行闭环。
 5. 保持应用窗口 + 桌宠联动稳定，再扩展其他端口。

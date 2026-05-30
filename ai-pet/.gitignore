@@ -1,5 +1,10 @@
 node_modules/
 dist/
+build/
+release/
 *.tsbuildinfo
+.ai-pet-data/
 .env
 .env.*
+!.env.example
+release-config/.env

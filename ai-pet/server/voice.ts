@@ -93,7 +93,11 @@ function trimWarning(prefix: string, detail: string) {
   return `${prefix}:${detail.replace(/\s+/g, " ").trim().slice(0, 180)}`;
 }
 
-async function callQwenCustomization<T>(input: Record<string, unknown>, apiKey: string): Promise<T> {
+async function callQwenCustomization<T>(
+  input: Record<string, unknown>,
+  apiKey: string,
+  parameters?: Record<string, unknown>
+): Promise<T> {
   const response = await fetch(`${getQwenBaseUrl()}/services/audio/tts/customization`, {
     method: "POST",
     headers: {
@@ -102,7 +106,8 @@ async function callQwenCustomization<T>(input: Record<string, unknown>, apiKey: 
     },
     body: JSON.stringify({
       model: process.env.AI_PET_QWEN_VOICE_DESIGN_MODEL || "qwen-voice-design",
-      input
+      input,
+      ...(parameters ? { parameters } : {})
     })
   });
 
@@ -158,7 +163,11 @@ async function resolveQwenVoice(apiKey: string, model: string) {
       preferred_name: preferredName,
       language: "zh"
     },
-    apiKey
+    apiKey,
+    {
+      sample_rate: Number(process.env.AI_PET_QWEN_SAMPLE_RATE || 24000),
+      response_format: process.env.AI_PET_QWEN_RESPONSE_FORMAT || "wav"
+    }
   );
   const voice = created.output?.voice;
   if (!voice) throw new Error(created.message || created.code || "qwen_voice_create_empty");

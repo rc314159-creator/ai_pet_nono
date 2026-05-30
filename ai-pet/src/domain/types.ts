@@ -9,6 +9,7 @@ export type PetMotionAction =
   | "walk"
   | "play"
   | "sleep"
+  | "sleep_laze"
   | "eat"
   | "scratch"
   | "bark"
@@ -16,15 +17,34 @@ export type PetMotionAction =
   | "alert"
   | "jump"
   | "spin"
+  | "turn"
   | "sit"
   | "come_closer"
-  | "nod";
+  | "nod"
+  | "look_back"
+  | "tail_wag"
+  | "remind"
+  | "wake_stretch"
+  | "sniff_explore";
 export type PetMotionSource = "bracelet_mirror" | "random_action" | "agent_tool_call";
 export type PetMotionPriority = 30 | 60 | 100;
+export type PetAccessoryId = "none" | "acc-gps" | "acc-bell" | "acc-medal";
+
+export type PetAppearanceState = {
+  petId: string;
+  accessoryId: PetAccessoryId;
+  accessoryLabel: string;
+  syncTarget: "desktop_pet";
+  assetMode: "image_edit_required" | "image_edit_generated_full_frame";
+  source: "app_window";
+  updatedAt: string;
+  note: string;
+};
 
 export type PetProfile = {
   id: string;
   name: string;
+  displayName?: string;
   species: Species;
   breed: string;
   ageMonths: number;
@@ -58,6 +78,7 @@ export type PetProfile = {
   };
   avatar: {
     packId: string;
+    profileImageUrl?: string;
     palette: string[];
     humanForm: string;
     tagline: string;
@@ -192,6 +213,7 @@ export type ExpressionCommand = {
   context?: {
     evidenceEventId?: string;
     messageId?: string;
+    bubbleText?: string;
     conversationId?: string;
     targetView?: "chat" | "status" | "outfit" | "tasks" | "care";
   };

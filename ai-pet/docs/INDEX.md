@@ -8,9 +8,11 @@
 ## 新对话必读顺序
 
 1. 本页。
-2. [AI Pet 当前产品规格](product/product-spec-2026-05-30.md)。
-3. [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md)。
-4. [AI Pet 模块分类索引](modules/INDEX.md)。
+2. [AI Pet 产品逻辑与分层框架](architecture/product-logic-framework-2026-05-31.md)。
+3. [AI Pet 当前系统架构总览](architecture/current-system-architecture-2026-05-30.md)。
+4. [AI Pet 当前产品规格](product/product-spec-2026-05-30.md)。
+5. [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md)。
+6. [AI Pet 模块分类索引](modules/INDEX.md)。
 
 ## 当前结论
 
@@ -18,11 +20,12 @@
 - 产品主线：AI 电子宠物陪伴和真实宠物数字分身共存；电子宠物可以是纯虚拟宠物，也可以是真实宠物在系统中的分身。
 - 用户优先级：优先服务已有真实宠物的人群，同时兼顾没有真实宠物但需要 AI 电子宠物陪伴的人群。
 - Demo 主闭环：系统级桌宠 + 点击桌宠弹出的应用窗口必须同时跑通，用真实宠物档案、设备/手动数据、照护任务、AI 解释、桌宠核心入口和装扮/后续推荐形成完整开发闭环。
-- 桌面宠物底座优先级：OpenPets > codex-pet-companion/DyberPet 逻辑移植 > BongoCat/AI-Desktop-Pet Live2D 参考。
+- 当前可运行桌宠底座：默认使用 `desktop-photo-pet` 的照片级 Electron 桌宠集成入口；OpenPets 降为旧调试/备选入口，不能再作为当前完整 Demo 的默认验证对象。
 - 桌宠定位：桌宠是核心入口，不是表现层；必须支持常驻、提醒、状态表达、点击展开和轻交互。复杂操作在弹出的应用窗口中完成，并同步回桌宠。
 - 应用窗口定位：应用窗口不是 HTML 展示页或营销页，而是点击桌宠后展开的产品功能面板；可用 React/Vite 等前端技术渲染，但产品口径统一称为应用窗口/宠物面板。
-- AI/agent 底座：凡涉及 AI 的地方优先接成熟 agent；当前方向为 OpenCode SDK / opencode runtime + MCP 或等价工具协议。
+- AI/agent 底座：当前对话主路径是 OpenCode/opencode runtime + `ai_pet` MCP tools；OpenAI Agents SDK 只作为 fallback，不能描述为最终 Agent 底座。
 - 健康监测：Demo 不等待真实硬件 API；用足够完整的 mock/手动数据把健康解释、任务、桌宠提醒和汇报闭环跑通。
+- 用户激励：从“我的”页点击“用户激励”进入独立子流程；每日任务、排行榜和奖励/可解锁服饰继续进入详情页。装扮仍是“我的”页内既有功能，任何“奖励获得”的服饰或配饰必须在用户激励奖励页有对应解锁来源。
 - 换装与商业化：MVP 换装先作为娱乐和陪伴玩法，用内置模板同步到对话主页和桌宠；商品推荐、电商、真实宠物试装和同款推荐作为后续商业化入口预留。
 - 安全边界：当前不作为产品讨论焦点；实现层可保留必要底线，但不再作为待用户拍板的问题。
 
@@ -30,6 +33,7 @@
 
 - [AI Pet 知识库分类体系](knowledge-base/taxonomy.md)
 - [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md)
+- [AI Pet 应用内实时知识库模块](modules/live-knowledge-base-2026-05-31.md)
 - [AI Pet 知识库缺口记录](_GAP.md)
 
 ## 产品与会议框架
@@ -45,6 +49,8 @@
 - [展示阶段并行开发协调 2026-05-30](plan/display-development-coordination-2026-05-30.md)
 - [并行开发工作流 2026-05-30](plan/parallel-development-workstreams-2026-05-30.md)
 - [Mochi 桌宠动作包生成计划 2026-05-30](plan/desktop-pet-motion-pack-plan-2026-05-30.md)
+- [对话页省略等待与宠物养护建言实施计划 2026-05-31](plan/chat-waiting-cue-and-care-ticker-plan-2026-05-31.md)
+- [Mac Demo 安装交付方案 2026-05-31](plan/mac-demo-distribution-2026-05-31.md)
 - [Demo 实施计划](plan/mvp-plan.md)（早期计划，需按新 spec 更新后执行）
 - [Demo 实现记录 2026-05-30](plan/implementation-log-2026-05-30.md)
 - [Demo 实现记录 2026-05-29](plan/implementation-log-2026-05-29.md)
@@ -52,7 +58,10 @@
 
 ## 架构与数据契约
 
+- [AI Pet 产品逻辑与分层框架](architecture/product-logic-framework-2026-05-31.md)
+- [AI Pet 当前系统架构总览](architecture/current-system-architecture-2026-05-30.md)
 - [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md)
+- [AI Pet Agent Runtime、Dog Persona 与桌宠气泡生命周期](architecture/agent-runtime-dog-persona-and-bubble-lifecycle-2026-05-31.md)
 - [桌宠点击到应用窗口联动协议](architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md)
 - [历史 MVP 架构](architecture/mvp-architecture.md)（已由技术架构接管）
 - [Mock 设备数据规格](research/mock-device-data-spec.md)
@@ -61,6 +70,9 @@
 
 - [AI Pet 模块分类索引](modules/INDEX.md)
 - [AI Pet 对话页 Agent 群聊模块](modules/agent-chat-2026-05-30.md)
+- [AI Pet 宠物外观单一真相源模块](modules/pet-appearance-2026-05-31.md)
+- [AI Pet 应用内实时知识库模块](modules/live-knowledge-base-2026-05-31.md)
+- [AI Pet 用户激励、每日任务与奖励解锁模块](modules/user-incentive-2026-05-31.md)
 - [AI Pet 功能范围与对齐问题](modules/function-scope-2026-05-30.md)
 - [AI Pet 基于现有产品和开源项目的功能映射](modules/research-grounded-function-map-2026-05-30.md)
 
@@ -111,6 +123,29 @@
 - [2026-05-30 对话页 Agent 设计口径错误问题记录](fix-records/2026-05-30-agent-chat-design-misalignment.md)
 - [2026-05-30 参考 App 底部导航与初始页未对齐问题记录](fix-records/2026-05-30-reference-app-nav-welcome-misalignment.md)
 - [2026-05-30 应用窗口 Mock 交互不完整问题记录](fix-records/2026-05-30-application-window-mock-interactions-incomplete.md)
+- [2026-05-30 Electron 应用窗口宠物形象与桌宠显隐联动问题记录](fix-records/2026-05-30-electron-app-avatar-and-desktop-pet-visibility.md)
+- [2026-05-30 应用窗口缺少关闭入口导致桌宠无法恢复问题记录](fix-records/2026-05-30-application-window-close-restore-desktop-pet.md)
+- [2026-05-30 装扮页真实同步范围应收敛到桌宠配饰问题记录](fix-records/2026-05-30-outfit-accessory-desktop-pet-sync.md)
+- [2026-05-30 应用窗口验证目标误用浏览器问题记录](fix-records/2026-05-30-electron-window-verification-target.md)
+- [2026-05-30 应用窗口被误当成前端 HTML 与实际 App 架构记录不足问题记录](fix-records/2026-05-30-app-window-vs-html-architecture-drift.md)
+- [2026-05-30 社区页 6 个真实图片卡片未在当前 app 屏幕内可见问题记录](fix-records/2026-05-30-community-six-cards-visible-in-app.md)
+- [2026-05-30 对话页名字头像未复用我的页宠物身份问题记录](fix-records/2026-05-30-chat-profile-identity-sync.md)
+- [2026-05-30 对话 Agent 误用 Qwen Key 作为聊天模型 Provider 问题记录](fix-records/2026-05-30-agent-chat-provider-qwen-llmmelon-misuse.md)
+- [2026-05-30 对话页浏览器端到端卡住与语音不发送问题记录](fix-records/2026-05-30-chat-e2e-ui-stuck-and-voice-not-working.md)
+- [2026-05-30 对话页消息名字应位于头像上方问题记录](fix-records/2026-05-30-chat-message-name-above-avatar.md)
+- [2026-05-30 对话页 Agent 未正常对话与角色提示词不足问题记录](fix-records/2026-05-30-agent-chat-runtime-and-persona-not-working.md)
+- [2026-05-30 对话页 Agent Runtime 未按 OpenCode/Claude Code 等成熟开源 Agent 接入问题记录](fix-records/2026-05-30-agent-runtime-open-source-agent-misalignment.md)
+- [2026-05-30 对话页 Agent 动作链路 E2E 未返回动作问题记录](fix-records/2026-05-30-agent-motion-e2e-no-response.md)
+- [2026-05-31 对话页历史记录未持久化导致每次进入都是新会话问题记录](fix-records/2026-05-31-chat-history-not-persisted.md)
+- [2026-05-31 对话页桌宠动作气泡多余与主动提醒重复问题记录](fix-records/2026-05-31-chat-motion-card-and-proactive-duplicate.md)
+- [2026-05-31 关闭应用窗口后桌宠恢复与桌宠气泡同源问题记录](fix-records/2026-05-31-desktop-pet-restore-and-shared-bubble-source.md)
+- [2026-05-31 桌宠气泡重复展示与 Agent/Dog Persona 逻辑未对齐问题记录](fix-records/2026-05-31-desktop-bubble-repeat-and-agent-persona-runtime.md)
+- [2026-05-31 市集推荐页泄露推荐过程说明问题记录](fix-records/2026-05-31-market-recommendation-process-copy-leak.md)
+- [2026-05-31 对话页内部 Thread ID 暴露与用户激励闭环缺失问题记录](fix-records/2026-05-31-incentive-loop-and-thread-id-ui-leak.md)
+- [2026-05-31 用户激励子页返回按钮与应用关闭按钮重叠问题记录](fix-records/2026-05-31-incentive-subpage-back-close-overlap.md)
+- [2026-05-31 对话页发送后等待态同时显示文案和省略点问题记录](fix-records/2026-05-31-chat-pending-indicator-duplicate-cue.md)
+- [2026-05-31 状态页未严格对齐参考项目交互问题记录](fix-records/2026-05-31-status-page-reference-interaction-misalignment.md)
+- [2026-05-31 桌宠显示橙色像素宠物而不是小狗问题记录](fix-records/2026-05-31-orange-pixel-pet-instead-of-dog.md)
 
 ## 已有验证证据
 

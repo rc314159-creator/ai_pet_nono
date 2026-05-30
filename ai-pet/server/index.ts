@@ -1,17 +1,34 @@
 import "./env";
 import cors from "cors";
 import express from "express";
-import { createPetAgentReply, getAgentRuntimeStatus } from "./agent";
+import { createPetAgentReply, createProactiveAgentMessage, getAgentRuntimeStatus } from "./agent";
+import { getDesktopPetAppearance, isPetAccessoryId, updateDesktopPetAppearance } from "./appearance";
+import {
+  getKnowledgeBaseSnapshot,
+  recordKnowledgeBaseEvent,
+  recordKnowledgeBaseMemories,
+  recordKnowledgeBaseMessages,
+  subscribeKnowledgeBase
+} from "./knowledgeBase";
 import { getMotionSnapshot, submitAgentMotion, submitBraceletMirror, submitMotionCommand, submitRandomMotion } from "./motion";
 import { getDiscoverySnapshot, getOpenPetsStatus, sayOpenPets } from "./openpets";
+import { appendThreadMessages, getLatestPetThreadMessage, getThreadMemories, getThreadMessages, replaceThreadMemories } from "./threadStore";
+import type { AgentChatMessage } from "../src/domain/agent";
 import type { ExpressionCommand, PetMotionAction, StreamPacket, VirtualPetState } from "../src/domain/types";
 
 const app = express();
 const port = Number(process.env.AI_PET_API_PORT || 8788);
 const llmBaseUrl = process.env.LLMMELON_BASE_URL || "https://llmmelon.cloud/v1";
 const llmModel = process.env.LLMMELON_MODEL || "gpt-4o-mini";
+const desktopRuntime = process.env.AI_PET_DESKTOP_RUNTIME || "desktop-photo-pet";
 
-app.use(cors({ origin: ["http://127.0.0.1:5180", "http://localhost:5180"] }));
+const allowedOrigins = new Set(["http://127.0.0.1:5180", "http://localhost:5180", "null"]);
+
+app.use(cors({
+  origin(origin, callback) {
+    callback(null, !origin || allowedOrigins.has(origin));
+  }
+}));
 app.use(express.json({ limit: "1mb" }));
 
 type AskPayload = {
@@ -41,16 +58,53 @@ app.get("/api/health", (_req, res) => {
     ok: true,
     llm: process.env.LLMMELON_API_KEY ? "llmmelon-configured" : "local-fallback",
     model: process.env.LLMMELON_API_KEY ? llmModel : "rule-engine",
-    desktopPet: getDiscoverySnapshot() ? "openpets-discovered" : "openpets-not-discovered"
+    desktopPet: desktopRuntime,
+    desktopPetDisplayName: "旺财",
+    legacyOpenPets: getDiscoverySnapshot() ? "openpets-discovered" : "openpets-not-discovered"
   });
 });
 
 app.get("/api/desktop-pet/status", async (_req, res) => {
-  res.json(await getOpenPetsStatus());
+  res.json({
+    configured: true,
+    connected: true,
+    runtime: desktopRuntime,
+    appRunning: true,
+    defaultPetVisible: true,
+    speechBubblesEnabled: true,
+    defaultPet: {
+      id: "pet_mochi",
+      displayName: "旺财",
+      builtIn: false
+    },
+    legacyOpenPets: getDiscoverySnapshot() ? "openpets-discovered" : "openpets-not-discovered"
+  });
 });
 
 app.get("/api/desktop-pet/motion", (_req, res) => {
   res.json(getMotionSnapshot());
+});
+
+app.get("/api/desktop-pet/appearance", (_req, res) => {
+  res.json(getDesktopPetAppearance());
+});
+
+app.post("/api/desktop-pet/appearance", (req, res) => {
+  const accessoryId = req.body?.accessoryId;
+  if (!isPetAccessoryId(accessoryId)) {
+    res.status(400).json({ ok: false, error: "supported_accessory_required" });
+    return;
+  }
+
+  const petId = typeof req.body?.petId === "string" && req.body.petId.trim() ? req.body.petId.trim() : "pet_mochi";
+  const appearance = updateDesktopPetAppearance(accessoryId, petId);
+  recordKnowledgeBaseEvent({
+    kind: "appearance_saved",
+    accessoryId: appearance.accessoryId,
+    accessoryLabel: appearance.accessoryLabel,
+    source: "desktop-pet-appearance"
+  });
+  res.json(appearance);
 });
 
 app.post("/api/desktop-pet/motion/bracelet", (req, res) => {
@@ -89,6 +143,40 @@ app.post("/api/desktop-pet/motion", (req, res) => {
 
 app.post("/api/desktop-pet/say", async (req, res) => {
   const message = String(req.body?.message || "").trim();
+  if (!message) {
+    res.status(400).json({ ok: false, error: "message_required" });
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const petMessage: AgentChatMessage = {
+    id: `desktop_pet_say_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    speaker: "pet",
+    authorName: "旺财",
+    text: message,
+    createdAt: now,
+    provider: "desktop-photo-pet"
+  };
+  appendThreadMessages("pet_mochi_main", [petMessage]);
+  recordKnowledgeBaseMessages("pet_mochi_main", [petMessage]);
+  res.json({
+    ok: true,
+    runtime: desktopRuntime,
+    message: "Desktop photo pet bubble queued.",
+    bubble: {
+      id: petMessage.id,
+      text: petMessage.text,
+      createdAt: petMessage.createdAt
+    }
+  });
+});
+
+app.get("/api/legacy/openpets/status", async (_req, res) => {
+  res.json(await getOpenPetsStatus());
+});
+
+app.post("/api/legacy/openpets/say", async (req, res) => {
+  const message = String(req.body?.message || "").trim();
   const reaction = String(req.body?.reaction || "success").trim();
   if (!message) {
     res.status(400).json({ ok: false, error: "message_required" });
@@ -105,14 +193,138 @@ app.post("/api/desktop-pet/say", async (req, res) => {
   }
 });
 
+app.get("/api/desktop-pet/bubble", (req, res) => {
+  const threadId = String(req.query.threadId || "pet_mochi_main").trim() || "pet_mochi_main";
+  const message = getLatestPetThreadMessage(threadId);
+  if (!message) {
+    res.json({
+      threadId,
+      message: undefined
+    });
+    return;
+  }
+
+  res.json({
+    threadId,
+    message: {
+      id: message.id,
+      text: message.text,
+      authorName: message.authorName,
+      provider: message.provider,
+      createdAt: message.createdAt
+    }
+  });
+});
+
 app.get("/api/agent/status", (_req, res) => {
   res.json(getAgentRuntimeStatus());
+});
+
+app.get("/api/knowledge-base", (_req, res) => {
+  res.json(getKnowledgeBaseSnapshot());
+});
+
+app.get("/api/knowledge-base/stream", (req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no"
+  });
+
+  const sendSnapshot = (snapshot = getKnowledgeBaseSnapshot()) => {
+    res.write(`event: snapshot\n`);
+    res.write(`data: ${JSON.stringify(snapshot)}\n\n`);
+  };
+  const unsubscribe = subscribeKnowledgeBase(sendSnapshot);
+  const heartbeat = setInterval(() => {
+    res.write(": keepalive\n\n");
+  }, 25000);
+
+  sendSnapshot();
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+    res.end();
+  });
+});
+
+app.post("/api/knowledge-base/events", (req, res) => {
+  try {
+    const kind = String(req.body?.kind || "").trim();
+    if (!kind) {
+      res.status(400).json({ error: "kind_required" });
+      return;
+    }
+
+    const snapshot = recordKnowledgeBaseEvent({
+      kind: kind as Parameters<typeof recordKnowledgeBaseEvent>[0]["kind"],
+      title: typeof req.body?.title === "string" ? req.body.title : undefined,
+      detail: typeof req.body?.detail === "string" ? req.body.detail : undefined,
+      source: typeof req.body?.source === "string" ? req.body.source : undefined,
+      tags: Array.isArray(req.body?.tags) ? req.body.tags.map(String) : undefined,
+      importance: req.body?.importance,
+      task: req.body?.task
+    });
+    res.json(snapshot);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get("/api/agent/threads/:threadId/messages", (req, res) => {
+  const threadId = String(req.params.threadId || "").trim();
+  if (!threadId) {
+    res.status(400).json({ error: "thread_required" });
+    return;
+  }
+
+  res.json({
+    threadId,
+    messages: getThreadMessages(threadId),
+    memory: getThreadMemories(threadId)
+  });
+});
+
+app.post("/api/agent/threads/:threadId/proactive", (req, res) => {
+  try {
+    const result = createProactiveAgentMessage({
+      threadId: String(req.params.threadId || "").trim(),
+      context: req.body?.context
+    });
+    const motion = result.motionCommand ? submitMotionCommand(result.motionCommand) : getMotionSnapshot();
+    if (result.message) recordKnowledgeBaseMessages(result.threadId, [result.message]);
+    res.json({ ...result, motion });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(message === "context_required" ? 400 : 500).json({
+      error: message
+    });
+  }
 });
 
 app.post("/api/agent/chat", async (req, res) => {
   try {
     const result = await createPetAgentReply(req.body);
-    const motion = result.motionCommand ? submitMotionCommand(result.motionCommand) : getMotionSnapshot();
+    const userMessage: AgentChatMessage = {
+      id: `user-${new Date().toISOString()}-${Math.random().toString(16).slice(2, 8)}`,
+      speaker: "user",
+      authorName: "主人",
+      text: String(req.body?.input || "").trim(),
+      createdAt: new Date().toISOString(),
+      responseMode: "text"
+    };
+    appendThreadMessages(result.threadId, [userMessage, result.message]);
+    replaceThreadMemories(result.threadId, result.memory);
+    recordKnowledgeBaseMessages(result.threadId, [userMessage, result.message]);
+    recordKnowledgeBaseMemories(result.threadId, result.memory);
+    const motionCommands = result.motionCommands || (result.motionCommand ? [result.motionCommand] : []);
+    const motion = motionCommands.length
+      ? motionCommands.reduce((_snapshot, command) => submitMotionCommand(command), getMotionSnapshot())
+      : getMotionSnapshot();
     res.json({ ...result, motion });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -30,6 +30,14 @@ const localEnv: Record<string, string> = {};
 loadEnvFile(path.join(process.cwd(), ".env"), localEnv);
 loadEnvFile(path.join(process.cwd(), ".env.local"), localEnv);
 
+const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+if (resourcesPath) loadEnvFile(path.join(resourcesPath, ".env"), localEnv);
+if (process.env.AI_PET_ENV_FILE) loadEnvFile(process.env.AI_PET_ENV_FILE, localEnv);
+
 for (const [key, value] of Object.entries(localEnv)) {
   if (process.env[key] === undefined) process.env[key] = value;
+}
+
+if (process.env.OPENAI_AGENTS_DISABLE_TRACING === undefined) {
+  process.env.OPENAI_AGENTS_DISABLE_TRACING = "1";
 }

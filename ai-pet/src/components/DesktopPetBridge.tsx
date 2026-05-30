@@ -1,5 +1,6 @@
 import { MonitorUp, Radio, RefreshCw, SendHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { apiUrl } from "../api";
 import type { DailyTask, PetProfile, StreamPacket, VirtualPetState } from "../domain/types";
 
 type DesktopStatus = {
@@ -32,7 +33,7 @@ export function DesktopPetBridge({ profile, state, packet, tasks }: Props) {
 
   async function refreshStatus() {
     try {
-      const response = await fetch("/api/desktop-pet/status");
+      const response = await fetch(apiUrl("/api/desktop-pet/status"));
       const data = await response.json() as DesktopStatus;
       setStatus(data);
       setMessageState(data.connected ? "connected" : "not connected");
@@ -47,7 +48,7 @@ export function DesktopPetBridge({ profile, state, packet, tasks }: Props) {
   async function sendToDesktop(message = desktopMessage) {
     setSending(true);
     try {
-      const response = await fetch("/api/desktop-pet/say", {
+      const response = await fetch(apiUrl("/api/desktop-pet/say"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, reaction: state.currentAnimation === "alert" ? "error" : "success" })

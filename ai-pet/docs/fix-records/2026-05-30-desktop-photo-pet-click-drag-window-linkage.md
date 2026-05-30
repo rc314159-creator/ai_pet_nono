@@ -58,7 +58,7 @@ related:
 - `npm run build` 通过。
 - 已重启 `desktop-photo-pet/main.cjs`，桌面截图确认桌宠显示为缩小后的右下角小窗。
 
-## 剩余注意
+## 后续更新
 
 - 真实桌宠动作播放只支持当前动作包 manifest 中已有的 `walk`、`jump`、`tail_wag`，其它动作命令会映射到这些可用动作。
-- 如果同时单独运行 `desktop-app/main.cjs` 和 `desktop-photo-pet/main.cjs`，点击桌宠会在桌宠进程内打开应用窗口；最终集成时应只保留一套启动入口，避免重复窗口。
+- 2026-05-30 后续修复已把默认 `npm run dev` 改为 `api + renderer + desktop-photo-pet` 集成入口；`desktop-app/main.cjs` 仅保留为 standalone 应用窗口调试入口，避免默认开发时出现重复窗口和无法验证桌宠显隐的问题。

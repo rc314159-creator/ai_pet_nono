@@ -32,8 +32,7 @@ body {
 }
 
 .close-button,
-.speech,
-.mode-label {
+.speech {
   position: absolute;
   z-index: 3;
   -webkit-app-region: no-drag;
@@ -130,22 +129,6 @@ body {
   transform: rotate(45deg);
 }
 
-.mode-label {
-  left: 50%;
-  bottom: 8px;
-  transform: translateX(-50%);
-  padding: 5px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.48);
-  border-radius: 999px;
-  background: rgba(255, 252, 240, 0.72);
-  color: rgba(25, 35, 31, 0.7);
-  box-shadow: 0 10px 28px rgba(22, 31, 27, 0.12);
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-  backdrop-filter: blur(14px);
-}
-
 .mode-idle .pet-shadow {
   animation: shadow-breathe 3.7s ease-in-out infinite;
 }
@@ -159,11 +142,9 @@ body {
 }
 
 .speech.visible {
-  animation: bubble-in 3.2s ease-in-out both;
-}
-
-.mode-alert .speech.visible {
-  animation-duration: 4.8s;
+  opacity: 1;
+  transform: translateY(0);
+  animation: bubble-in 180ms ease-out both;
 }
 
 @keyframes shadow-breathe {
@@ -191,13 +172,11 @@ body {
 }
 
 @keyframes bubble-in {
-  0%,
-  100% {
+  0% {
     opacity: 0;
     transform: translateY(8px);
   }
-  12%,
-  76% {
+  100% {
     opacity: 1;
     transform: translateY(0);
   }

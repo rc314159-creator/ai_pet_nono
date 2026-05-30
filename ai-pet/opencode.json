@@ -1,0 +1,71 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "llmmelon/claude-sonnet-4-6",
+  "small_model": "llmmelon/claude-sonnet-4-6",
+  "snapshot": false,
+  "provider": {
+    "llmmelon": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llmmelon",
+      "options": {
+        "baseURL": "https://llmmelon.cloud/v1",
+        "apiKey": "{env:LLMMELON_API_KEY}"
+      },
+      "models": {
+        "claude-sonnet-4-6": {
+          "name": "claude-sonnet-4-6",
+          "limit": {
+            "context": 200000,
+            "output": 8192
+          }
+        },
+        "claude-opus-4-6": {
+          "name": "claude-opus-4-6",
+          "limit": {
+            "context": 200000,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "ai_pet": {
+      "type": "local",
+      "command": ["npm", "run", "mcp:ai-pet", "--"],
+      "enabled": true
+    }
+  },
+  "agent": {
+    "ai-pet-companion": {
+      "description": "AI Pet companion agent for the desktop pet group chat.",
+      "mode": "primary",
+      "model": "llmmelon/claude-sonnet-4-6",
+      "temperature": 0.55,
+      "prompt": "{file:.opencode/prompts/ai-pet-companion.md}",
+      "tools": {
+        "bash": false,
+        "edit": false,
+        "write": false,
+        "read": false,
+        "grep": false,
+        "glob": false,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": false
+      },
+      "permission": {
+        "bash": "deny",
+        "edit": "deny",
+        "read": "deny",
+        "grep": "deny",
+        "glob": "deny",
+        "webfetch": "deny",
+        "websearch": "deny",
+        "todowrite": "deny",
+        "ai_pet_*": "allow"
+      }
+    }
+  },
+  "default_agent": "ai-pet-companion"
+}

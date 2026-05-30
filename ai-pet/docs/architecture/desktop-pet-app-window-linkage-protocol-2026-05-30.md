@@ -3,8 +3,8 @@ title: 桌宠点击到应用窗口联动协议
 description: 明确桌宠点击打开应用窗口的基础跳转协议，以及手环数据、随机动作和 agent 动作工具调用驱动桌宠动作时的优先级仲裁。
 status: 已批准
 created: 2026-05-30
-updated: 2026-05-30
-update_reason: 根据用户澄清，桌宠联动包含基础跳转逻辑和动作联动优先级两套逻辑，需要写入知识库供并行开发使用。
+updated: 2026-05-31
+update_reason: 补充应用窗口关闭后桌宠恢复兜底，以及桌宠气泡和对话页主动消息同源的事件协议。
 doc_type: architecture-protocol
 domain_taxa:
   - desktop-runtime
@@ -13,9 +13,12 @@ domain_taxa:
   - domain-service
 related:
   - technical-architecture-2026-05-30.md
+  - agent-runtime-dog-persona-and-bubble-lifecycle-2026-05-31.md
   - ../product/product-spec-2026-05-30.md
   - ../modules/INDEX.md
   - ../plan/parallel-development-workstreams-2026-05-30.md
+  - ../fix-records/2026-05-31-desktop-pet-restore-and-shared-bubble-source.md
+  - ../fix-records/2026-05-31-desktop-bubble-repeat-and-agent-persona-runtime.md
 ---
 
 # 桌宠点击到应用窗口联动协议
@@ -41,6 +44,7 @@ related:
 - 如果应用窗口已启动但在后台：聚焦已有窗口。
 - 如果带有目标视图：跳转到对应应用窗口页签。
 - 如果没有目标视图：默认进入陪伴对话页。
+- 应用窗口关闭、隐藏或销毁后：桌宠必须恢复显示；恢复后桌宠应读取最新同源宠物事件作为气泡。
 
 ### 最小事件字段
 
@@ -152,11 +156,46 @@ type ExpressionCommand = {
   context?: {
     evidenceEventId?: string;
     messageId?: string;
+    bubbleText?: string;
     conversationId?: string;
     targetView?: "chat" | "status" | "outfit" | "tasks";
   };
 };
 ```
+
+`bubbleText` 不是另一套气泡生成逻辑。它必须来自 `messageId` 指向的同一条对话消息，只是为了让桌宠动作轮询时无需再查一次消息表也能立刻显示相同文案。
+
+## 桌宠气泡同源协议
+
+桌宠气泡的文本来源顺序：
+
+1. `ExpressionCommand.context.bubbleText`，对应同一条 `ThreadMessage`。
+2. 后端最新桌宠气泡接口，例如 `GET /api/desktop-pet/bubble?threadId=pet_mochi_main` 返回的最新宠物消息。
+3. 动作 manifest 的默认 speech，仅作为没有对话事件时的 fallback。
+
+禁止桌宠 runtime 独立生成新的主动沟通文案。应用窗口里宠物主动说的话、关闭窗口后桌宠气泡里说的话、左右分屏视频里对应的文案，都应该引用同一条 thread/event。
+
+桌宠动作循环只负责动作帧和动作标签，不得把已经显示的共享对话气泡覆盖成动作说明；否则会造成“对话页一条、桌宠另一条”的错觉。
+
+当前 Demo UI 不显示底部动作标签；动作标签只能作为开发调试信息存在，不能在桌宠视觉界面里形成第二个气泡。
+
+桌宠气泡生命周期：
+
+- 每个 `ThreadMessage.id` 最多展示一次。
+- 每次展示 5-10 秒，当前 Demo 固定 8 秒。
+- 展示结束后隐藏 speech bubble，不保持常驻。
+- 定时轮询、窗口恢复、visibilitychange 和 motion command 都不能绕过去重重播旧消息。
+- 如果有新 `ThreadMessage.id`，可立即替换当前气泡并重新计时。
+
+## 应用窗口关闭恢复协议
+
+应用窗口生命周期要求：
+
+1. 打开或聚焦应用窗口前，桌宠可以隐藏。
+2. 应用窗口触发 `close`、`closed` 或被隐藏时，Electron 主进程都要尝试恢复桌宠窗口。
+3. 恢复桌宠窗口时要重新设置 always-on-top、visible-on-all-workspaces，并把窗口移到最上层。
+4. 恢复后通知桌宠 renderer 拉取最新同源气泡。
+5. 如果桌宠窗口意外不存在，主进程应重新创建桌宠窗口。
 
 ## 仲裁规则
 

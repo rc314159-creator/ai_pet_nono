@@ -1,5 +1,6 @@
 import { Bot, Send, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { apiUrl } from "../api";
 
 type Props = {
   context: unknown;
@@ -22,7 +23,7 @@ export function AdvisorChat({ context }: Props) {
     setQuestion(nextQuestion);
     setLoading(true);
     try {
-      const response = await fetch("/api/ask", {
+      const response = await fetch(apiUrl("/api/ask"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: nextQuestion, context })

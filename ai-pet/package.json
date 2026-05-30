@@ -3,37 +3,93 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "desktop-photo-pet/main.cjs",
   "scripts": {
-    "dev": "concurrently -k -n api,renderer,pet,app -c teal,blue,green,magenta \"npm:dev:api\" \"npm:dev:renderer\" \"npm:dev:desktop\" \"npm:dev:app\"",
+    "dev": "concurrently -k -n api,renderer,photo-pet -c teal,blue,green \"npm:dev:api\" \"npm:dev:renderer\" \"npm:dev:photo-pet\"",
+    "dev:openpets-app": "concurrently -k -n api,renderer,openpets,app -c teal,blue,green,magenta \"npm:dev:api\" \"npm:dev:renderer\" \"npm:dev:openpets-desktop\" \"npm:dev:app\"",
     "dev:renderer": "vite --host 127.0.0.1 --port 5180",
     "dev:app": "electron desktop-app/main.cjs",
-    "dev:api": "tsx watch server/index.ts",
-    "dev:desktop": "node scripts/run-openpets-dev.mjs",
+    "dev:api": "AI_PET_DESKTOP_RUNTIME=desktop-photo-pet tsx watch server/index.ts",
+    "dev:desktop": "npm run dev:photo-pet",
+    "dev:openpets-desktop": "node scripts/run-openpets-dev.mjs",
     "dev:photo-pet": "electron desktop-photo-pet/main.cjs",
-    "build": "tsc -b && vite build",
+    "mcp:ai-pet": "tsx server/mcp.ts",
+    "agent:opencode:test": "opencode run --agent ai-pet-companion --model llmmelon/claude-sonnet-4-6 --format json",
+    "build": "npm run typecheck && vite build && npm run prune:dist-assets && npm run build:server",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --packages=external --outfile=build/server/index.cjs",
+    "prune:dist-assets": "node scripts/prune-dist-assets.mjs",
+    "release:env:clean": "node scripts/prepare-demo-env.mjs --clean",
+    "release:env:demo": "node scripts/prepare-demo-env.mjs --include-local-env",
+    "dist:mac": "npm run release:env:clean && npm run build && electron-builder --mac zip",
+    "dist:mac:demo": "npm run release:env:demo && npm run build && electron-builder --mac zip",
     "preview": "vite preview --host 127.0.0.1 --port 5180",
     "typecheck": "tsc -b"
   },
+  "build": {
+    "appId": "com.aipet.demo",
+    "productName": "AI Pet Demo",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "desktop-photo-pet/**",
+      "desktop-app/**",
+      "dist/**",
+      "build/server/**",
+      "opencode.json",
+      ".opencode/prompts/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "release-config",
+        "to": ".",
+        "filter": [
+          ".env"
+        ]
+      }
+    ],
+    "asar": true,
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.lifestyle",
+      "icon": "build-resources/icon.icns",
+      "target": [
+        "zip"
+      ],
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
+  },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@openai/agents": "^0.11.6",
-    "@vitejs/plugin-react": "^5.1.1",
-    "concurrently": "^9.2.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "lucide-react": "^0.556.0",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "tsx": "^4.21.0",
-    "vite": "^7.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.48",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "concurrently": "^10.0.0",
     "electron": "^42.3.0",
-    "typescript": "^5.9.3"
+    "electron-builder": "^26.8.1",
+    "esbuild": "^0.28.0",
+    "lucide-react": "^1.17.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tsx": "^4.22.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.14"
   }
 }

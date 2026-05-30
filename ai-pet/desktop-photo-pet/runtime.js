@@ -1,9 +1,10 @@
 const stage = document.querySelector("#stage");
 const closeButton = document.querySelector(".close-button");
-const label = document.querySelector(".mode-label");
 const speech = document.querySelector(".speech");
 const canvas = document.querySelector(".pet-canvas");
 const ctx = canvas.getContext("2d");
+const mainThreadId = "pet_mochi_main";
+const sharedBubbleHoldMs = 8000;
 
 const preferredMotionOrder = [
   "idle",
@@ -13,27 +14,36 @@ const preferredMotionOrder = [
   "turn",
   "tail_wag",
   "sit",
-  "lie_down",
-  "stretch",
+  "sleep_laze",
+  "wake_stretch",
+  "sniff_explore",
+  "remind",
   "alert"
 ];
 
 const externalMotionMap = {
-  idle: "walk",
+  idle: "idle",
   idle_happy: "tail_wag",
   walk: "walk",
   play: "tail_wag",
-  sleep: "walk",
+  sleep: "sleep_laze",
+  sleep_laze: "sleep_laze",
   eat: "tail_wag",
-  scratch: "tail_wag",
-  bark: "tail_wag",
-  tired_idle: "walk",
-  alert: "jump",
+  scratch: "alert",
+  bark: "alert",
+  tired_idle: "sleep_laze",
+  alert: "alert",
   jump: "jump",
-  spin: "tail_wag",
-  sit: "walk",
+  spin: "turn",
+  turn: "turn",
+  sit: "sit",
   come_closer: "jump",
-  nod: "tail_wag"
+  nod: "look_back",
+  look_back: "look_back",
+  tail_wag: "tail_wag",
+  remind: "remind",
+  wake_stretch: "wake_stretch",
+  sniff_explore: "sniff_explore"
 };
 
 let manifest;
@@ -50,8 +60,20 @@ let loaded = false;
 let pointerStart;
 let didDrag = false;
 let lastExternalCommandId = "";
+let lastThreadBubbleMessageId = "";
+let sharedBubbleText = "";
+let sharedBubbleHoldUntil = 0;
+let sharedBubbleHideTimer;
+let currentAccessoryLabel = "无配饰";
+let currentAccessoryId = "none";
+let currentAssetMode = "image_edit_required";
+let lastAppearanceUpdatedAt = "";
 
 const frameCache = new Map();
+const accessoryFrameCache = new Map();
+const pendingAccessoryFrameLoads = new Set();
+const failedAccessoryFrameLoads = new Set();
+const displayedBubbleKeys = new Set(readDisplayedBubbleKeys());
 
 closeButton.addEventListener("click", (event) => {
   event.stopPropagation();
@@ -71,6 +93,18 @@ window.addEventListener("keydown", (event) => {
   if (Number.isInteger(n) && n >= 1 && n <= 9) setMotion(motionOrder[n - 1]);
 });
 
+window.desktopPhotoPet?.onAppWindowClosed?.(() => {
+  pollLatestThreadBubble({ immediate: true });
+  pollAppearance({ force: true });
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    pollLatestThreadBubble({ immediate: true });
+    pollAppearance({ force: true });
+  }
+});
+
 init();
 
 async function init() {
@@ -88,10 +122,13 @@ async function init() {
     loaded = true;
     setMotion(manifest.defaultMotion || motionOrder[0]);
     window.setInterval(pollMotionCommand, 900);
+    window.setInterval(() => pollLatestThreadBubble(), 1600);
+    window.setInterval(pollAppearance, 1100);
+    pollAppearance();
+    pollLatestThreadBubble({ immediate: true });
     requestAnimationFrame(tick);
   } catch (error) {
     console.error(error);
-    label.textContent = "Mochi 动作包加载失败";
     speech.textContent = "找不到动作帧素材。";
     speech.classList.add("visible");
   }
@@ -169,11 +206,13 @@ function setMotion(motionId, now = performance.now()) {
   motionCompletedAt = 0;
   isCurrentMotionComplete = false;
 
-  const current = manifest.motions[currentMotionId];
   stage.className = `mode-${motionId}`;
-  label.textContent = `Mochi 动作帧 · ${current.label}`;
-  speech.textContent = current.speech;
-  replaySpeechBubble();
+  const activeBubble = getActiveSharedBubbleText(now);
+  if (activeBubble) {
+    speech.textContent = activeBubble;
+    replaySpeechBubble();
+  }
+  warmCurrentAccessoryMotion();
   drawCurrentFrame();
 }
 
@@ -227,10 +266,54 @@ function advanceFrame(now) {
 function drawCurrentFrame() {
   const current = manifest.motions[currentMotionId];
   const framePath = current.frames[currentFrameIndex];
-  const image = frameCache.get(framePath);
+  const accessoryImage = getAccessoryFrame(framePath);
+  const image = accessoryImage || frameCache.get(framePath);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!image) return;
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+}
+
+function shouldUseAccessoryFrames() {
+  return currentAccessoryId !== "none" && currentAssetMode === "image_edit_generated_full_frame";
+}
+
+function accessoryFrameKey(accessoryId, framePath) {
+  return `${accessoryId}:${framePath}`;
+}
+
+function getAccessoryFrame(framePath) {
+  if (!shouldUseAccessoryFrames()) return undefined;
+  const key = accessoryFrameKey(currentAccessoryId, framePath);
+  const image = accessoryFrameCache.get(key);
+  if (image) return image;
+  requestAccessoryFrame(currentAccessoryId, framePath);
+  return undefined;
+}
+
+function requestAccessoryFrame(accessoryId, framePath) {
+  const key = accessoryFrameKey(accessoryId, framePath);
+  if (accessoryFrameCache.has(key) || pendingAccessoryFrameLoads.has(key) || failedAccessoryFrameLoads.has(key)) return;
+
+  pendingAccessoryFrameLoads.add(key);
+  const image = new Image();
+  image.onload = () => {
+    pendingAccessoryFrameLoads.delete(key);
+    accessoryFrameCache.set(key, image);
+    if (currentAccessoryId === accessoryId) drawCurrentFrame();
+  };
+  image.onerror = () => {
+    pendingAccessoryFrameLoads.delete(key);
+    failedAccessoryFrameLoads.add(key);
+  };
+  image.src = new URL(`image-edited-outfits/${accessoryId}/${framePath}`, assetRootUrl).href;
+}
+
+function warmCurrentAccessoryMotion() {
+  if (!shouldUseAccessoryFrames()) return;
+  const current = manifest.motions[currentMotionId];
+  for (const framePath of current.frames) {
+    requestAccessoryFrame(currentAccessoryId, framePath);
+  }
 }
 
 function nextMotionId() {
@@ -246,8 +329,65 @@ function replaySpeechBubble() {
   window.requestAnimationFrame(() => speech.classList.add("visible"));
 }
 
+function getActiveSharedBubbleText(now = performance.now()) {
+  return sharedBubbleText && now < sharedBubbleHoldUntil ? sharedBubbleText : "";
+}
+
+function showSharedThreadBubble(messageId, text) {
+  showSpeechBubbleOnce(messageId ? `thread:${messageId}` : "", text);
+  if (messageId) lastThreadBubbleMessageId = messageId;
+}
+
+function showSpeechBubbleOnce(displayKey, text) {
+  if (!text) return;
+  if (displayKey && displayedBubbleKeys.has(displayKey)) return;
+  if (displayKey) {
+    displayedBubbleKeys.add(displayKey);
+    writeDisplayedBubbleKeys();
+  }
+  if (sharedBubbleHideTimer) {
+    window.clearTimeout(sharedBubbleHideTimer);
+    sharedBubbleHideTimer = undefined;
+  }
+  sharedBubbleText = text;
+  sharedBubbleHoldUntil = performance.now() + sharedBubbleHoldMs;
+  speech.textContent = text;
+  replaySpeechBubble();
+  sharedBubbleHideTimer = window.setTimeout(hideSharedThreadBubble, sharedBubbleHoldMs);
+}
+
+function hideSharedThreadBubble() {
+  sharedBubbleText = "";
+  sharedBubbleHoldUntil = 0;
+  speech.classList.remove("visible");
+  speech.textContent = "";
+  if (sharedBubbleHideTimer) {
+    window.clearTimeout(sharedBubbleHideTimer);
+    sharedBubbleHideTimer = undefined;
+  }
+}
+
+function readDisplayedBubbleKeys() {
+  try {
+    const raw = window.localStorage?.getItem("ai-pet.displayedBubbleKeys");
+    const keys = JSON.parse(raw || "[]");
+    return Array.isArray(keys) ? keys.filter((item) => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeDisplayedBubbleKeys() {
+  try {
+    const keys = Array.from(displayedBubbleKeys).slice(-120);
+    window.localStorage?.setItem("ai-pet.displayedBubbleKeys", JSON.stringify(keys));
+  } catch {
+    // Desktop pet bubbles still work without localStorage persistence.
+  }
+}
+
 async function pollMotionCommand() {
-  if (!loaded) return;
+  if (!loaded || document.visibilityState !== "visible") return;
 
   try {
     const response = await fetch("http://127.0.0.1:8788/api/desktop-pet/motion", { cache: "no-store" });
@@ -262,8 +402,57 @@ async function pollMotionCommand() {
     if (!manifest.motions[motionId]) return;
 
     setMotion(motionId);
-    speech.textContent = command.reason || manifest.motions[motionId].speech;
-    replaySpeechBubble();
+    if (command.context?.bubbleText) {
+      showSharedThreadBubble(command.context.messageId, command.context.bubbleText);
+    } else {
+      pollLatestThreadBubble({ immediate: true });
+    }
+  } catch {
+    // The API process is optional for the standalone desktop pet demo.
+  }
+}
+
+async function pollLatestThreadBubble(options = {}) {
+  if (!loaded) return;
+  if (!options.immediate && document.visibilityState !== "visible") return;
+
+  try {
+    const query = new URLSearchParams({ threadId: mainThreadId });
+    const response = await fetch(`http://127.0.0.1:8788/api/desktop-pet/bubble?${query.toString()}`, { cache: "no-store" });
+    if (!response.ok) return;
+
+    const snapshot = await response.json();
+    const message = snapshot.message;
+    if (!message?.id || !message.text) return;
+    if (displayedBubbleKeys.has(`thread:${message.id}`)) return;
+    if (message.id === lastThreadBubbleMessageId) return;
+
+    showSharedThreadBubble(message.id, message.text);
+  } catch {
+    // The API process is optional for the standalone desktop pet demo.
+  }
+}
+
+async function pollAppearance(options = {}) {
+  if (!loaded) return;
+
+  try {
+    const response = await fetch("http://127.0.0.1:8788/api/desktop-pet/appearance", { cache: "no-store" });
+    if (!response.ok) return;
+
+    const appearance = await response.json();
+    if (!appearance?.updatedAt || (!options.force && appearance.updatedAt === lastAppearanceUpdatedAt)) return;
+
+    lastAppearanceUpdatedAt = appearance.updatedAt;
+    currentAccessoryLabel = appearance.accessoryLabel || "配饰";
+    currentAccessoryId = appearance.accessoryId || "none";
+    currentAssetMode = appearance.assetMode || "image_edit_required";
+    warmCurrentAccessoryMotion();
+
+    if (appearance.note && !getActiveSharedBubbleText()) {
+      showSpeechBubbleOnce(`appearance:${appearance.updatedAt}:${appearance.note}`, appearance.note);
+    }
+    drawCurrentFrame();
   } catch {
     // The API process is optional for the standalone desktop pet demo.
   }

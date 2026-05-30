@@ -1,10 +1,10 @@
 ---
 title: Mochi 桌宠动作包生成计划
 description: 记录照片级桌宠第一批动作、帧数、节奏和逐帧生成规则。
-status: 草案
+status: v1-complete
 created: 2026-05-30
 updated: 2026-05-30
-update_reason: 根据走路速度和动作丰富度反馈，确定第一批 12 个核心动作。
+update_reason: 第一批 12 个动作已生成并接入桌面运行时 manifest。
 doc_type: implementation-plan
 domain_taxa:
   - desktop-runtime
@@ -19,9 +19,9 @@ related:
 
 ## 结论
 
-第一批不只做 10 个动作。10 个能覆盖最小闭环，但缺少“提醒”和“警觉”的分离，也缺少真实宠物的闲逛探索。当前建议第一批生成 12 个核心动作，约 300 张透明帧。
+第一批不只做 10 个动作。10 个能覆盖最小闭环，但缺少“提醒”和“警觉”的分离，也缺少真实宠物的闲逛探索。当前第一批已经生成并接入 12 个核心动作。
 
-当前 walk-only 预览先把现有 20 帧降到 6 fps，循环约 3.33 秒。正式 walk 动作应补到 28 帧、8 fps，循环约 3.5 秒。
+当前运行时 manifest：`public/assets/pets/mochi/motions/manifest.json`，`version: 9`，`demoMode: motion-pack-v1-complete`。正式 walk 动作已补到 28 帧、8 fps，循环约 3.5 秒。
 
 ## 动作清单
 
@@ -31,7 +31,7 @@ related:
 | P0 | `walk` | 走路 | 28 | 8 | 3.5s | 循环 |
 | P0 | `jump` | 蹦跳 | 24 | 8 | 3.0s | 单次 |
 | P0 | `look_back` | 回头 | 24 | 8 | 3.0s | 单次 |
-| P0 | `turn` | 转身 | 32 | 8 | 4.0s | 单次 |
+| P0 | `turn` | 转身 | 16 | 8 | 2.0s | 单次 |
 | P0 | `tail_wag` | 摇尾巴 | 24 | 8 | 3.0s | 循环 |
 | P0 | `sleep_laze` | 睡懒觉/趴睡 | 32 | 6 | 5.3s | 循环 |
 | P0 | `remind` | 温和提醒 | 20 | 7 | 2.9s | 单次/循环 |
@@ -40,7 +40,9 @@ related:
 | P1 | `wake_stretch` | 醒来伸懒腰 | 28 | 7 | 4.0s | 单次 |
 | P1 | `sniff_explore` | 嗅闻/探索 | 24 | 7 | 3.4s | 循环 |
 
-合计：300 张透明帧。
+合计：284 张透明帧。
+
+说明：原 storyboard 规划 `turn` 为 32 帧；v1 实际可用版本先接入 16 帧。若继续提高真实感，应优先把 `turn` 补到 32 帧，再细修 `walk` 和 `sniff_explore` 的局部过渡。
 
 ## 逐帧生成规则
 
@@ -52,12 +54,18 @@ related:
 
 ## 生成顺序
 
-1. `walk`：补到正式 28 帧并降低节奏到 3.5 秒。
-2. `idle`：做常驻呼吸，不需要大动作，但要有眼神和身体微变化。
-3. `tail_wag`：验证局部动作是否能保持真实感。
-4. `look_back`：验证头身角度变化。
-5. `turn`：最难，必须单独验收方向一致性。
-6. `jump`：开心反馈。
-7. `sleep_laze`：休息场景。
-8. `remind` 与 `alert`：分别做温和提醒和警觉状态。
-9. `sit`、`wake_stretch`、`sniff_explore`：补齐日常陪伴动作。
+1. `walk`：已补到正式 28 帧并降低节奏到 3.5 秒。
+2. `idle`：已完成常驻呼吸/眨眼循环。
+3. `tail_wag`：已完成摇尾循环。
+4. `look_back`：已完成回头单次动作。
+5. `turn`：已完成 16 帧 v1，后续可补 32 帧。
+6. `jump`：已完成开心蹦跳。
+7. `sleep_laze`：已完成休息循环。
+8. `remind` 与 `alert`：已分别完成温和提醒和警觉状态。
+9. `sit`、`wake_stretch`、`sniff_explore`：已补齐日常陪伴动作。
+
+## 当前验证结果
+
+- `python3 ai-pet/scripts/motion_pack/validate_motion_pack.py ai-pet/public/assets/pets/mochi/motions/manifest.json`：Errors: 0，Warnings: 4。
+- `node --check desktop-photo-pet/runtime.js && node --check desktop-photo-pet/preload.cjs && node --check desktop-photo-pet/main.cjs`：通过。
+- `npm run build`：通过。

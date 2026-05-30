@@ -5,11 +5,15 @@ import {
   createLocalAgentTurn,
   createToolCardFromMotion,
   getPersonaForProfile,
+  isVoiceReplyRequested,
   mainThreadIdForPet,
+  planAgentMotionToolCall,
   truncateAgentText
 } from "../src/domain/agent";
 import { createAgentMotionCommand } from "../src/domain/motion";
 import { getAgentGatewayConfig, getAgentRunner } from "./agentGateway";
+import { getOpenCodeRuntimeStatus, isOpenCodeRuntimeAvailable, runOpenCodePetAgent } from "./opencodeAgent";
+import { appendThreadMemory, appendThreadMessages, getThreadMemories, getThreadMessages, replaceThreadMemories } from "./threadStore";
 import { getVoiceRuntimeStatus, synthesizePetSpeech } from "./voice";
 import type {
   AgentChatMessage,
@@ -36,9 +40,11 @@ type PetAgentRuntimeContext = {
   threadId: string;
   responseMode: AgentResponseMode;
   memory: AgentMemoryFact[];
+  history: AgentChatMessage[];
   toolCalls: PetAgentToolCall[];
   toolCards: AgentToolCard[];
   voiceResult?: VoiceResult;
+  voiceAllowed: boolean;
 };
 
 type AgentChatResult = {
@@ -53,12 +59,23 @@ type AgentChatResult = {
   toolCalls: PetAgentToolCall[];
   toolCards: AgentToolCard[];
   motionCommand?: ExpressionCommand;
+  motionCommands?: ExpressionCommand[];
   warning?: string;
   detail?: string;
 };
 
+type ProactiveAgentResult = {
+  threadId: string;
+  message?: AgentChatMessage;
+  motionCommand?: ExpressionCommand;
+  reason?: string;
+  skipped?: "no_issue" | "already_latest" | "recent_issue_already_covered";
+  messages: AgentChatMessage[];
+};
+
 const threadSessions = new Map<string, MemorySession>();
 const memoryStore = new Map<string, AgentMemoryFact[]>();
+const agentRunTimeoutMs = Number(process.env.AI_PET_AGENT_TIMEOUT_MS || 12000);
 
 const motionActionSchema = z.enum([
   "idle",
@@ -66,6 +83,7 @@ const motionActionSchema = z.enum([
   "walk",
   "play",
   "sleep",
+  "sleep_laze",
   "eat",
   "scratch",
   "bark",
@@ -73,9 +91,15 @@ const motionActionSchema = z.enum([
   "alert",
   "jump",
   "spin",
+  "turn",
   "sit",
   "come_closer",
-  "nod"
+  "nod",
+  "look_back",
+  "tail_wag",
+  "remind",
+  "wake_stretch",
+  "sniff_explore"
 ]);
 
 function getThreadSession(threadId: string) {
@@ -86,26 +110,103 @@ function getThreadSession(threadId: string) {
   return session;
 }
 
-function getThreadMemory(threadId: string) {
+function getThreadMemory(threadId: string, petDisplayName = "科技狗") {
   const existing = memoryStore.get(threadId);
-  if (existing) return existing;
+  const stored = getThreadMemories(threadId);
+  if (existing) {
+    const seen = new Set(existing.map((item) => item.id));
+    for (const item of stored) {
+      if (!seen.has(item.id)) {
+        existing.push(item);
+        seen.add(item.id);
+      }
+    }
+    return existing;
+  }
+  if (stored.length) {
+    memoryStore.set(threadId, stored);
+    return stored;
+  }
   const memory: AgentMemoryFact[] = [
     {
       id: `${threadId}-memory-role`,
       type: "pet_memory",
-      content: "Demo 固定群聊动物角色是科技狗；它负责在一个主群聊里连接文字、语音、动作、记忆和工具。",
+      content: `Demo 固定群聊动物角色是${petDisplayName}；它负责在一个主群聊里连接文字、语音、动作、记忆和工具。`,
       createdAt: new Date().toISOString(),
       source: "system"
     }
   ];
   memoryStore.set(threadId, memory);
+  replaceThreadMemories(threadId, memory);
   return memory;
 }
 
 function appendMemory(threadId: string, fact: AgentMemoryFact) {
   const memory = getThreadMemory(threadId);
+  const duplicate = memory.find((item) => item.type === fact.type && item.content === fact.content && item.source === fact.source);
+  if (duplicate) return memory;
   memory.push(fact);
+  appendThreadMemory(threadId, fact);
   return memory;
+}
+
+function mergeAgentHistory(...groups: Array<AgentChatMessage[] | undefined>) {
+  const seen = new Set<string>();
+  const messages: AgentChatMessage[] = [];
+  for (const group of groups) {
+    for (const message of group || []) {
+      if (!message?.id || seen.has(message.id) || !message.text.trim()) continue;
+      seen.add(message.id);
+      messages.push(message);
+    }
+  }
+  return messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function formatRecentHistory(history: AgentChatMessage[]) {
+  const recent = history.slice(-16);
+  if (!recent.length) return "- 暂无历史消息。";
+  return recent
+    .map((message) => {
+      const author = message.authorName || (message.speaker === "user" ? "主人" : "旺财");
+      return `- ${author}: ${truncateAgentText(message.text, 180)}`;
+    })
+    .join("\n");
+}
+
+function extractExplicitMemory(input: string) {
+  const normalized = input.trim();
+  const patterns = [
+    /(?:请你|帮我|你要)?记住[，,:：\s]*(.+)$/u,
+    /(?:请你|帮我)?记一下[，,:：\s]*(.+)$/u,
+    /以后[，,:：\s]*(.+)$/u,
+    /下次[，,:：\s]*(.+)$/u
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    const content = match?.[1]?.trim();
+    if (content && content.length >= 2) return truncateAgentText(content, 220);
+  }
+
+  return undefined;
+}
+
+function findRecallMemory(input: string, memory: AgentMemoryFact[]) {
+  if (!/(还记得|记得|我刚才说|我之前说|之前我说|我说过|几点|什么时候|多久)/.test(input)) return undefined;
+  const candidates = memory.filter((item) => item.source === "user_explicit" || item.type === "participant_memory" || item.type === "event_memory");
+  if (!candidates.length) return undefined;
+  const stopChars = new Set("我你他她它的了呢吗呀吧啊和是会还记得之前刚才说过什么时候几点多久主人旺财".split(""));
+  const score = (content: string) => Array.from(new Set(content)).filter((char) => !stopChars.has(char) && input.includes(char)).length;
+  const ranked = [...candidates].sort((a, b) => score(b.content) - score(a.content) || b.createdAt.localeCompare(a.createdAt));
+  const best = ranked[0];
+  if (!best) return undefined;
+  return score(best.content) >= 2 ? best : candidates.at(-1);
+}
+
+function createMemoryRecallAnswer(fact: AgentMemoryFact, petDisplayName: string) {
+  const content = fact.content.replace(/^我/, "你说你").replace(/帮你/g, "帮我");
+  return `记得呀，主人，${content}。${petDisplayName}会乖乖等你，先不疯跑。`;
 }
 
 function createMessageId(prefix: string) {
@@ -206,7 +307,8 @@ function createTechDogTools() {
     }),
     tool({
       name: "request_pet_motion",
-      description: "Request a desktop pet action through the motion arbitration layer. Use it for explicit action requests like spin, jump, sit, come closer, nod, walk, play, or sleep.",
+      description:
+        "Request a desktop pet action through the motion arbitration layer. Use it for explicit action requests like spin, turn, jump, sit, come closer, nod/look_back, tail_wag, walk, play, sleep_laze, remind, wake_stretch, sniff_explore, or alert.",
       parameters: z.object({
         action: motionActionSchema,
         reason: z.string().min(1)
@@ -244,9 +346,15 @@ function createTechDogTools() {
       }),
       execute: async (input, runContext) => {
         const runtime = runContext?.context as PetAgentRuntimeContext;
+        if (!runtime.voiceAllowed) {
+          return {
+            ok: false,
+            reason: "voice_not_requested_this_turn"
+          };
+        }
         const voice = await synthesizePetSpeech(input.utterance, runtime.snapshot);
         runtime.voiceResult = voice;
-        runtime.toolCards.push(makeToolCard("voice", "语音回复", voice.provider, voice.voice));
+        runtime.toolCards.push(makeToolCard("voice", "语音回复", "已准备好一条语音", voice.voice));
         return {
           ok: true,
           transcript: voice.transcript,
@@ -258,9 +366,9 @@ function createTechDogTools() {
   ];
 }
 
-function createTechDogAgent(model: string) {
+function createTechDogAgent(model: string, displayName: string) {
   return new Agent<PetAgentRuntimeContext>({
-    name: "科技狗",
+    name: displayName,
     model,
     instructions: (runContext) =>
       buildTechDogAgentInstructions({
@@ -282,8 +390,21 @@ function buildPrompt(input: string, runtime: PetAgentRuntimeContext) {
     `发言者：主人`,
     `本回合希望输出：${runtime.responseMode}`,
     "",
+    "最近群聊记录：",
+    formatRecentHistory(runtime.history),
+    "",
     input
   ].join("\n");
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label}_timeout_${timeoutMs}ms`)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
 
 function createMessageFromResult({
@@ -314,9 +435,216 @@ function createMessageFromResult({
   };
 }
 
+function looksLikeRawAgentEventStream(text: string) {
+  const trimmed = text.trim();
+  return trimmed.startsWith('{"type":') || /"sessionID"|"tool_use"|"step_start"/.test(trimmed);
+}
+
+function getLlmmelonFastMotionModels() {
+  return [
+    process.env.LLMMELON_FAST_MOTION_MODEL,
+    process.env.LLMMELON_MODEL,
+    process.env.AI_PET_AGENT_MODEL,
+    "claude-sonnet-4-6"
+  ].reduce<string[]>((models, model) => {
+    const name = String(model || "").trim();
+    if (name && !models.includes(name)) models.push(name);
+    return models;
+  }, []);
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function createLlmmelonFastMotionReply(input: string, snapshot: AgentContextSnapshot, persona = getPersonaForProfile(snapshot.profile)) {
+  const apiKey = process.env.LLMMELON_API_KEY || process.env.AI_PET_AGENT_API_KEY;
+  if (!apiKey) return undefined;
+
+  const baseURL = (process.env.LLMMELON_BASE_URL || process.env.AI_PET_AGENT_BASE_URL || "https://llmmelon.cloud/v1").replace(/\/$/, "");
+  let lastError: Error | undefined;
+
+  for (const model of getLlmmelonFastMotionModels()) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await fetch(`${baseURL}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model,
+            temperature: 0.45,
+            max_tokens: 140,
+            messages: [
+              {
+                role: "system",
+                content: [
+                  `你是 AI Pet 主群聊里的宠物「${persona.displayName}」。`,
+                  "主人提出了一个明确动作请求；动作工具已由系统触发，你只需要像宠物本人一样回复一句中文。",
+                  "不要提模型、接口、工具、JSON、fallback。不要使用 emoji。最多一句动作描写加一句短回复。"
+                ].join("\n")
+              },
+              {
+                role: "user",
+                content: input
+              }
+            ]
+          })
+        });
+
+        const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string }; model?: string };
+        if (!response.ok) throw new Error(data.error?.message || `llmmelon_chat_${response.status}`);
+        const answer = truncateAgentText(String(data.choices?.[0]?.message?.content || "").trim(), 260);
+        if (!answer) throw new Error("llmmelon_empty_motion_reply");
+        return {
+          provider: "llmmelon-direct",
+          model: data.model || model,
+          answer
+        };
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        if (attempt === 0) await delay(500);
+      }
+    }
+  }
+
+  throw lastError || new Error("llmmelon_motion_reply_failed");
+}
+
+function buildProactiveIssue(snapshot: AgentContextSnapshot) {
+  const latest = snapshot.latestDailySummary;
+  const notes = latest.notes.join("；");
+  const skinObservation = snapshot.manualObservations.find((item) => /红点|抓挠|舔|皮肤|腹部/.test(item.note));
+  const highTask = snapshot.pendingTasks.find((task) => task.priority === "high" && task.status === "pending");
+  const expectedFood = snapshot.profile.diet.dailyGrams;
+  const lowFood = latest.foodGrams > 0 && latest.foodGrams < expectedFood * 0.92;
+
+  if (latest.scratchMinutes >= 24 || /抓挠|红点|皮肤/.test(notes) || skinObservation) {
+    return {
+      reason: `抓挠 ${latest.scratchMinutes} 分钟；${notes || skinObservation?.note || "需要皮肤观察"}`,
+      text: `汪，主人，我今天肚皮有点痒，抓挠比平时多一点。你进来的时候能先帮我看看腹部红点吗？别安排太疯的奔跑，我想先被摸摸确认一下。`
+    };
+  }
+
+  if (latest.healthIndex <= 78) {
+    return {
+      reason: `健康指数 ${latest.healthIndex}`,
+      text: `汪，主人，我今天状态有点低，身体不像平时那么轻快。你先陪我观察一下吃饭、喝水和精神好不好，可以吗？`
+    };
+  }
+
+  if (lowFood) {
+    return {
+      reason: `进食 ${latest.foodGrams}g，低于计划 ${expectedFood}g`,
+      text: `汪，主人，我今天饭没有吃够，肚子有点空空的。你能帮我看看是不是该少量补一点，或者换个更舒服的喂法吗？`
+    };
+  }
+
+  if (highTask) {
+    return {
+      reason: highTask.reason,
+      text: `汪，主人，我有个要紧的小任务想提醒你：${highTask.title}。你进来了就先看看我，好不好？`
+    };
+  }
+
+  return undefined;
+}
+
+const proactiveIssueTokens = ["肚皮", "红点", "皮肤", "饭没有吃够", "进食", "健康指数", "状态有点低"];
+
+function sharesProactiveIssue(left: string, right: string) {
+  return proactiveIssueTokens.some((token) => left.includes(token) && right.includes(token));
+}
+
+function recentMessagesAlreadyCoverIssue(messages: AgentChatMessage[], issueText: string) {
+  return messages
+    .slice(-8)
+    .filter((message) => message.speaker === "pet")
+    .some((message) => message.provider === "proactive-alert" || sharesProactiveIssue(message.text, issueText));
+}
+
+export function createProactiveAgentMessage(payload: { threadId?: string; context?: AgentContextSnapshot }): ProactiveAgentResult {
+  if (!payload.context?.profile) throw new Error("context_required");
+
+  const snapshot: AgentContextSnapshot = {
+    ...payload.context,
+    mainThreadId: payload.threadId || payload.context.mainThreadId || mainThreadIdForPet(payload.context.profile)
+  };
+  const threadId = snapshot.mainThreadId || mainThreadIdForPet(snapshot.profile);
+  const issue = buildProactiveIssue(snapshot);
+  const currentMessages = getThreadMessages(threadId);
+  if (!issue) {
+    return {
+      threadId,
+      skipped: "no_issue",
+      messages: currentMessages
+    };
+  }
+
+  const lastMessage = currentMessages.at(-1);
+  if (lastMessage?.provider === "proactive-alert" && lastMessage.text === issue.text) {
+    return {
+      threadId,
+      skipped: "already_latest",
+      messages: currentMessages
+    };
+  }
+
+  if (recentMessagesAlreadyCoverIssue(currentMessages, issue.text)) {
+    return {
+      threadId,
+      skipped: "recent_issue_already_covered",
+      messages: currentMessages
+    };
+  }
+
+  const persona = getPersonaForProfile(snapshot.profile);
+  const messageId = createMessageId("pet-proactive");
+  const command = createAgentMotionCommand("remind", issue.reason, {
+    targetView: "chat",
+    conversationId: threadId,
+    messageId,
+    bubbleText: issue.text
+  });
+  const message: AgentChatMessage = {
+    id: messageId,
+    speaker: "pet",
+    authorName: persona.displayName,
+    text: issue.text,
+    createdAt: new Date().toISOString(),
+    responseMode: "text",
+    provider: "proactive-alert"
+  };
+  const messages = appendThreadMessages(threadId, [message]);
+  return {
+    threadId,
+    message,
+    motionCommand: command,
+    reason: issue.reason,
+    messages
+  };
+}
+
 export function getAgentRuntimeStatus() {
   const gateway = getAgentGatewayConfig();
   const voice = getVoiceRuntimeStatus();
+  const opencode = getOpenCodeRuntimeStatus();
+  if (isOpenCodeRuntimeAvailable()) {
+    return {
+      provider: opencode.provider,
+      model: opencode.model,
+      configured: opencode.configured,
+      cliVersion: opencode.cliVersion,
+      mcp: opencode.mcp,
+      fallbackProvider: gateway.configured ? `openai-agents-sdk:${gateway.provider}` : "local-fallback",
+      tts: voice.provider,
+      ttsConfigured: voice.configured,
+      ttsModel: voice.model,
+      ttsVoice: voice.voice
+    };
+  }
   return {
     provider: gateway.configured ? `openai-agents-sdk:${gateway.provider}` : "local-fallback",
     model: gateway.model,
@@ -340,23 +668,58 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
   };
   const threadId = snapshot.mainThreadId || mainThreadIdForPet(snapshot.profile);
   const responseMode: AgentResponseMode = payload.responseMode === "voice" ? "voice" : "text";
+  const voiceAllowed = responseMode === "voice" || isVoiceReplyRequested(input);
   const persona = getPersonaForProfile(snapshot.profile);
-  const memory = getThreadMemory(threadId);
+  const memory = getThreadMemory(threadId, persona.displayName);
+  const history = mergeAgentHistory(getThreadMessages(threadId), payload.history);
   const runtime: PetAgentRuntimeContext = {
     snapshot,
     threadId,
     responseMode,
     memory: [...memory],
+    history,
     toolCalls: [],
-    toolCards: []
+    toolCards: [],
+    voiceAllowed
   };
+  const explicitMemory = extractExplicitMemory(input);
+  if (explicitMemory && !runtime.memory.some((item) => item.type === "participant_memory" && item.content === explicitMemory && item.source === "user_explicit")) {
+    const fact = createMemoryFact("participant_memory", explicitMemory, "user_explicit");
+    appendMemory(threadId, fact);
+    runtime.memory.push(fact);
+    runtime.toolCards.push(makeToolCard("memory", "已写入记忆", fact.content, fact.type));
+  }
+
+  const recalledMemory = !explicitMemory ? findRecallMemory(input, runtime.memory) : undefined;
+  if (recalledMemory) {
+    runtime.toolCards.push(makeToolCard("memory", "长期记忆", recalledMemory.content, recalledMemory.type));
+    const message = createMessageFromResult({
+      answer: createMemoryRecallAnswer(recalledMemory, persona.displayName),
+      runtime,
+      provider: "local-memory",
+      model: "thread-store"
+    });
+    return {
+      provider: "local-memory",
+      model: "thread-store",
+      personaId: persona.id,
+      threadId,
+      answer: message.text,
+      responseMode: message.responseMode || responseMode,
+      message,
+      memory: getThreadMemory(threadId, persona.displayName),
+      toolCalls: runtime.toolCalls,
+      toolCards: runtime.toolCards
+    };
+  }
 
   const fallback = async (warning?: string, detail?: string): Promise<AgentChatResult> => {
     const local = createLocalAgentTurn(input, snapshot, responseMode, persona);
     runtime.toolCalls.push(...local.toolCalls);
     runtime.toolCards.push(...local.toolCards);
-    if (responseMode === "voice") {
+    if (voiceAllowed) {
       runtime.voiceResult = await synthesizePetSpeech(local.answer, snapshot);
+      runtime.toolCards.push(makeToolCard("voice", "语音回复", "已准备好一条语音", runtime.voiceResult.voice));
     }
     const message = createMessageFromResult({
       answer: local.answer,
@@ -364,6 +727,7 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
       provider: "local-fallback",
       model: "persona-rule-engine"
     });
+    const motionCommands = runtime.toolCalls.map((call) => call.command);
     return {
       provider: "local-fallback",
       model: "persona-rule-engine",
@@ -372,30 +736,158 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
       answer: message.text,
       responseMode: message.responseMode || responseMode,
       message,
-      memory: getThreadMemory(threadId),
+      memory: getThreadMemory(threadId, persona.displayName),
       toolCalls: runtime.toolCalls,
       toolCards: runtime.toolCards,
-      motionCommand: runtime.toolCalls[0]?.command,
+      motionCommand: motionCommands.at(-1),
+      motionCommands,
       warning,
       detail
     };
   };
+
+  const explicitMotionCall = planAgentMotionToolCall(input, snapshot);
+  if (explicitMotionCall) {
+    runtime.toolCalls.push(explicitMotionCall);
+    runtime.toolCards.push(createToolCardFromMotion(explicitMotionCall));
+
+    let provider = "llmmelon-direct";
+    let model = process.env.LLMMELON_FAST_MOTION_MODEL || process.env.LLMMELON_MODEL || process.env.AI_PET_AGENT_MODEL || "claude-sonnet-4-6";
+    let warning: string | undefined;
+    let detail: string | undefined;
+    let answer: string;
+
+    try {
+      const timeoutMs = Number(process.env.LLMMELON_FAST_MOTION_TIMEOUT_MS || 25000);
+      const fastReply = await withTimeout(createLlmmelonFastMotionReply(input, snapshot, persona), timeoutMs, "llmmelon_motion_reply");
+      answer = fastReply?.answer || createLocalAgentTurn(input, snapshot, responseMode, persona).answer;
+      provider = fastReply?.provider || "local-fallback";
+      model = fastReply?.model || "persona-rule-engine";
+    } catch (error) {
+      warning = "llmmelon_motion_fast_reply_error";
+      detail = error instanceof Error ? error.message : String(error);
+      const local = createLocalAgentTurn(input, snapshot, responseMode, persona);
+      answer = local.answer;
+      provider = "local-fallback";
+      model = "persona-rule-engine";
+    }
+
+    const refreshedMotionCall: PetAgentToolCall = {
+      ...explicitMotionCall,
+      command: createAgentMotionCommand(explicitMotionCall.arguments.action, explicitMotionCall.arguments.reason, explicitMotionCall.command.context)
+    };
+    runtime.toolCalls[0] = refreshedMotionCall;
+    runtime.toolCards[0] = createToolCardFromMotion(refreshedMotionCall);
+
+    if (!runtime.voiceResult && responseMode === "voice" && answer) {
+      runtime.voiceResult = await synthesizePetSpeech(answer, snapshot);
+      runtime.toolCards.push(makeToolCard("voice", "语音回复", "已准备好一条语音", runtime.voiceResult.voice));
+    }
+
+    const message = createMessageFromResult({
+      answer,
+      runtime,
+      provider,
+      model
+    });
+    const motionCommands = runtime.toolCalls.map((call) => call.command);
+    return {
+      provider,
+      model,
+      personaId: persona.id,
+      threadId,
+      answer: message.text,
+      responseMode: message.responseMode || responseMode,
+      message,
+      memory: getThreadMemory(threadId, persona.displayName),
+      toolCalls: runtime.toolCalls,
+      toolCards: runtime.toolCards,
+      motionCommand: motionCommands.at(-1),
+      motionCommands,
+      warning,
+      detail
+    };
+  }
+
+  if (isOpenCodeRuntimeAvailable()) {
+    try {
+      const opencode = await runOpenCodePetAgent({
+        input,
+        snapshot,
+        threadId,
+        responseMode,
+        memory: runtime.memory,
+        history: runtime.history
+      });
+      runtime.toolCalls.push(...opencode.toolCalls);
+      runtime.toolCards.push(...opencode.toolCards);
+      if (!runtime.toolCalls.some((call) => call.name === "request_pet_motion")) {
+        const recoveredMotionCall = planAgentMotionToolCall(input, snapshot);
+        if (recoveredMotionCall) {
+          runtime.toolCalls.push(recoveredMotionCall);
+          runtime.toolCards.push(createToolCardFromMotion(recoveredMotionCall));
+        }
+      }
+      const localBackup = looksLikeRawAgentEventStream(opencode.answer) ? createLocalAgentTurn(input, snapshot, responseMode, persona) : undefined;
+      const cleanAnswer = localBackup?.answer || opencode.answer;
+      if (!runtime.voiceResult && voiceAllowed && cleanAnswer) {
+        runtime.voiceResult = await synthesizePetSpeech(cleanAnswer, snapshot);
+        runtime.toolCards.push(makeToolCard("voice", "语音回复", "已准备好一条语音", runtime.voiceResult.voice));
+      }
+      const message = createMessageFromResult({
+        answer: runtime.voiceResult?.transcript || cleanAnswer,
+        runtime,
+        provider: opencode.provider,
+        model: opencode.model
+      });
+      const motionCommands = runtime.toolCalls.map((call) => call.command);
+      return {
+        provider: opencode.provider,
+        model: opencode.model,
+        personaId: persona.id,
+        threadId,
+        answer: message.text,
+        responseMode: message.responseMode || responseMode,
+        message,
+        memory: getThreadMemory(threadId, persona.displayName),
+        toolCalls: runtime.toolCalls,
+        toolCards: runtime.toolCards,
+        motionCommand: motionCommands.at(-1),
+        motionCommands
+      };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn(`OpenCode agent runtime failed, falling back: ${detail}`);
+      return fallback("opencode_agent_request_error", detail);
+    }
+  }
 
   const gateway = getAgentGatewayConfig();
   const runner = getAgentRunner(gateway);
   if (!gateway.configured || !runner) return fallback();
 
   try {
-    const agent = createTechDogAgent(gateway.model);
-    const result = await runner.run(agent, buildPrompt(input, runtime), {
-      context: runtime,
-      session: getThreadSession(threadId),
-      maxTurns: 5
-    });
+    const agent = createTechDogAgent(gateway.model, persona.displayName);
+    const result = await withTimeout(
+      runner.run(agent, buildPrompt(input, runtime), {
+        context: runtime,
+        session: getThreadSession(threadId),
+        maxTurns: 5
+      }),
+      agentRunTimeoutMs,
+      "openai_agents_run"
+    );
     const finalOutput = truncateAgentText(String(result.finalOutput || ""));
-    if (!runtime.voiceResult && responseMode === "voice" && finalOutput) {
+    if (!runtime.toolCalls.some((call) => call.name === "request_pet_motion")) {
+      const recoveredMotionCall = planAgentMotionToolCall(input, snapshot);
+      if (recoveredMotionCall) {
+        runtime.toolCalls.push(recoveredMotionCall);
+        runtime.toolCards.push(createToolCardFromMotion(recoveredMotionCall));
+      }
+    }
+    if (!runtime.voiceResult && voiceAllowed && finalOutput) {
       runtime.voiceResult = await synthesizePetSpeech(finalOutput, snapshot);
-      runtime.toolCards.push(makeToolCard("voice", "语音回复", runtime.voiceResult.provider, runtime.voiceResult.voice));
+      runtime.toolCards.push(makeToolCard("voice", "语音回复", "已准备好一条语音", runtime.voiceResult.voice));
     }
     const answer = runtime.voiceResult?.transcript || finalOutput || (await fallback("openai_agents_empty_output")).answer;
     const provider = `openai-agents-sdk:${gateway.provider}`;
@@ -406,6 +898,7 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
       model: gateway.model
     });
 
+    const motionCommands = runtime.toolCalls.map((call) => call.command);
     return {
       provider,
       model: gateway.model,
@@ -417,7 +910,8 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
       memory: getThreadMemory(threadId),
       toolCalls: runtime.toolCalls,
       toolCards: runtime.toolCards,
-      motionCommand: runtime.toolCalls[0]?.command
+      motionCommand: motionCommands.at(-1),
+      motionCommands
     };
   } catch (error) {
     return fallback("openai_agents_request_error", error instanceof Error ? error.message : String(error));

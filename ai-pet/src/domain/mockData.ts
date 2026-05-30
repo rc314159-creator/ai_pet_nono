@@ -18,6 +18,7 @@ export const petProfiles: PetProfile[] = [
   {
     id: "pet_mochi",
     name: "Mochi",
+    displayName: "旺财",
     species: "dog",
     breed: "Pembroke Welsh Corgi",
     ageMonths: 28,
@@ -51,6 +52,7 @@ export const petProfiles: PetProfile[] = [
     },
     avatar: {
       packId: "mochi-corgi-sprite-v1",
+      profileImageUrl: "assets/pets/mochi/wangcai-profile-avatar-v1.png",
       palette: ["#c98d54", "#f5efe4", "#3e2a1f", "#72a67f"],
       humanForm: "短发户外少女，蜂蜜色夹克，白色围巾，圆眼睛",
       tagline: "短腿巡逻员，今天也在守护零食柜。"

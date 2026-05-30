@@ -1,10 +1,10 @@
 ---
 title: 真实宠物桌面形象路线
 description: 根据 2026-05-30 会议和本地 Demo 验证，记录真实宠物数字分身在桌面端的可落地视觉方案。
-status: 草案
+status: v1-complete
 created: 2026-05-30
 updated: 2026-05-30
-update_reason: 根据用户反馈将走路循环降到约 3.3 秒，并把第一批动作从 10 个扩展为 12 个核心动作。
+update_reason: 第一批 12 动作照片级帧序列已生成并接入桌面运行时。
 doc_type: research-evidence
 domain_taxa:
   - desktop-runtime
@@ -46,15 +46,15 @@ related:
 - `ai-pet/desktop-photo-pet/`：Electron 透明/无边框/置顶桌面窗口。
 - `npm run dev:photo-pet`：启动照片级动态桌宠。
 - `ai-pet/public/assets/pets/mochi/mochi-corgi-realistic-v1.png`：当前照片级 Mochi cutout 占位资产。
-- `ai-pet/public/assets/pets/mochi/motions/manifest.json`：当前 Mochi walk-only 动作包清单。
-- `ai-pet/public/assets/pets/mochi/motions/walk/*.png`：当前走路动作 20 张透明帧。
+- `ai-pet/public/assets/pets/mochi/motions/manifest.json`：当前 Mochi v1 完整动作包清单，12 个动作、284 张透明帧。
+- `ai-pet/public/assets/pets/mochi/motions/*-v1/*.png` 与 `motions/walk-v2/*.png`：当前照片级多动作透明帧。
 
 动作系统修正：
 
 - 不再把同一张宠物图做整体上下晃动作为主动作。
 - 不再把四肢切成固定局部图片在运行时 rig 变形作为当前 Demo 主方案。
 - 当前 Demo 使用“完整帧 PNG 序列 + manifest + 状态机播放”的结构。运行时只负责按动作帧率、循环策略和状态切换播放完整帧。
-- 当前先只展示走路动作，使用生成的 20 张独立姿态透明帧验证效果。
+- 当前已展示第一批 12 个动作，均为完整透明帧序列。
 - 生产链路应由照片/短视频/生成模型输出更真实的多姿态帧，不能用单张图缩放、压扁、翻转或局部 rig 冒充动作。
 
 ## 本次 Demo 的复用边界
@@ -111,9 +111,9 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 - 透明图：`reports/desktop-pet-avatar-demo/mochi-corgi-cutout.png`
 - 应用资产：`ai-pet/public/assets/pets/mochi/mochi-corgi-realistic-v1.png`
 - 动作包：`ai-pet/public/assets/pets/mochi/motions/manifest.json`
-- 走路动作源图：`ai-pet/public/assets/pets/mochi/motion-sheets/walk-20-source.png`
-- 走路透明帧：`ai-pet/public/assets/pets/mochi/motions/walk/00.png` 到 `19.png`
-- 走路预览 GIF：`reports/desktop-photo-pet-walk-20/walk-20-preview.gif`
+- 动作 manifest：`ai-pet/public/assets/pets/mochi/motions/manifest.json`
+- 走路透明帧：`ai-pet/public/assets/pets/mochi/motions/walk-v2/00.png` 到 `27.png`
+- 走路预览 GIF：`reports/desktop-photo-pet-walk-v2/walk-v2-28-preview.gif`
 - 展示原型：`reports/desktop-pet-avatar-demo/index.html`
 - 验证截图：`reports/desktop-pet-avatar-demo/desktop-avatar-demo.png`
 - 桌面运行程序：`ai-pet/desktop-photo-pet/`
@@ -123,15 +123,26 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 
 - 1254×1254 PNG。
 - `hasAlpha: yes`。
-- 当前 walk-only 预览生成 20 张 RGBA 透明帧 PNG。
+- 当前 v1 动作包生成 284 张 RGBA 透明帧 PNG。
 
 当前 Demo 动作：
 
 | 动作 ID | 名称 | 类型 |
 |---|---|---|
+| `idle` | 待机 | 循环 |
 | `walk` | 走路 | 循环 |
+| `jump` | 蹦跳 | 单次 |
+| `look_back` | 回头 | 单次 |
+| `turn` | 转身 | 单次 |
+| `tail_wag` | 摇尾巴 | 循环 |
+| `sleep_laze` | 睡懒觉 | 循环 |
+| `remind` | 温和提醒 | 单次 |
+| `alert` | 警觉 | 循环 |
+| `sit` | 坐下 | 单次 |
+| `wake_stretch` | 醒来伸懒腰 | 单次 |
+| `sniff_explore` | 嗅闻探索 | 循环 |
 
-第一批建议生成 12 个核心动作，总计约 300 张透明帧。10 个动作只够做最小闭环，但缺少“提醒”和“警觉”的分离，也缺少真实宠物常见的探索动作。
+第一批已生成 12 个核心动作，总计 284 张透明帧。10 个动作只够做最小闭环，但缺少“提醒”和“警觉”的分离，也缺少真实宠物常见的探索动作。
 
 | 动作 ID | 名称 | 建议帧数 | 播放策略 | 用途 |
 |---|---|---:|---|---|
@@ -139,7 +150,7 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 | `walk` | 走路 | 28 | 循环，8 fps，约 3.5 秒 | 桌面巡视、移动 |
 | `jump` | 蹦跳 | 24 | 单次，8 fps，约 3.0 秒 | 开心、互动反馈 |
 | `look_back` | 回头 | 24 | 单次，8 fps，约 3.0 秒 | 被呼唤、注意到用户 |
-| `turn` | 转身 | 32 | 单次，8 fps，约 4.0 秒 | 换方向、进入/离开动作 |
+| `turn` | 转身 | 16 | 单次，8 fps，约 2.0 秒 | 换方向、进入/离开动作 |
 | `tail_wag` | 摇尾巴 | 24 | 循环，8 fps，约 3.0 秒 | 开心、亲近 |
 | `sit` | 坐下 | 20 | 单次，7 fps，约 2.9 秒 | 等待、听用户说话 |
 | `sleep_laze` | 睡懒觉/趴睡 | 32 | 循环，6 fps，约 5.3 秒 | 休息、低精力 |
@@ -153,7 +164,7 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 - 每一帧都必须是独立姿态图，不能用单张图压缩、拉伸、翻转、裁四肢或 rig 变形冒充。
 - 先逐张生成，逐帧抠图、统一画布、统一脚底基线，再进入桌面运行时。
 - 帧率写入 `manifest.json`，后续可以不重做图片只调播放节奏。
-- 现有 walk-only 20 帧预览先临时降到 6 fps，循环约 3.33 秒；正式版走路应补到 28 帧并按 8 fps 播放。
+- 现有正式版走路已补到 28 帧并按 8 fps 播放，循环约 3.5 秒。
 
 ## 最小实现步骤
 
