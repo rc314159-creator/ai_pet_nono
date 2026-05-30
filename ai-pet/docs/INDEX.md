@@ -29,6 +29,7 @@
 ## 知识库治理
 
 - [AI Pet 知识库分类体系](knowledge-base/taxonomy.md)
+- [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md)
 - [AI Pet 知识库缺口记录](_GAP.md)
 
 ## 产品与会议框架
@@ -42,19 +43,24 @@
 - [Demo 功能锁定](plan/feature-lock.md)
 - [MVP 功能设计对齐 2026-05-30](plan/mvp-feature-design-2026-05-30.md)
 - [展示阶段并行开发协调 2026-05-30](plan/display-development-coordination-2026-05-30.md)
+- [并行开发工作流 2026-05-30](plan/parallel-development-workstreams-2026-05-30.md)
+- [Mochi 桌宠动作包生成计划 2026-05-30](plan/desktop-pet-motion-pack-plan-2026-05-30.md)
 - [Demo 实施计划](plan/mvp-plan.md)（早期计划，需按新 spec 更新后执行）
+- [Demo 实现记录 2026-05-30](plan/implementation-log-2026-05-30.md)
 - [Demo 实现记录 2026-05-29](plan/implementation-log-2026-05-29.md)
 - [宠物游戏与 AI 虚拟宠物调研计划记录 2026-05-30](plan/pet-game-ai-research-plan-2026-05-30.md)
 
 ## 架构与数据契约
 
 - [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md)
+- [桌宠点击到应用窗口联动协议](architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md)
 - [历史 MVP 架构](architecture/mvp-architecture.md)（已由技术架构接管）
 - [Mock 设备数据规格](research/mock-device-data-spec.md)
 
 ## 模块分类
 
 - [AI Pet 模块分类索引](modules/INDEX.md)
+- [AI Pet 对话页 Agent 群聊模块](modules/agent-chat-2026-05-30.md)
 - [AI Pet 功能范围与对齐问题](modules/function-scope-2026-05-30.md)
 - [AI Pet 基于现有产品和开源项目的功能映射](modules/research-grounded-function-map-2026-05-30.md)
 
@@ -97,9 +103,19 @@
 - [2026-05-30 桌宠形象 Demo 开源参考边界不清问题记录](fix-records/2026-05-30-desktop-avatar-reference-ambiguity.md)
 - [2026-05-30 真实宠物桌宠需 3D/桌面运行时问题记录](fix-records/2026-05-30-desktop-avatar-3d-runtime-requirement.md)
 - [2026-05-30 低保真 3D 桌宠形象方向错误问题记录](fix-records/2026-05-30-low-fidelity-3d-avatar-wrong-direction.md)
+- [2026-05-30 桌宠过大、拖不动、点击不弹应用窗口问题记录](fix-records/2026-05-30-desktop-photo-pet-click-drag-window-linkage.md)
+- [2026-05-30 静态宠物 cutout 上下晃动不是真实动作问题记录](fix-records/2026-05-30-static-cutout-bobbing-not-real-motion.md)
+- [2026-05-30 局部裁剪 rig 动画不自然，应改为多帧动作序列问题记录](fix-records/2026-05-30-rigged-cutout-motion-should-be-frame-animation.md)
+- [2026-05-30 走路动画速度偏快与动作范围待明确问题记录](fix-records/2026-05-30-walk-animation-speed-and-motion-scope.md)
+- [2026-05-30 走路动作不连贯与完整动作包执行问题记录](fix-records/2026-05-30-walk-continuity-and-full-motion-pack-execution.md)
+- [2026-05-30 对话页 Agent 设计口径错误问题记录](fix-records/2026-05-30-agent-chat-design-misalignment.md)
+- [2026-05-30 参考 App 底部导航与初始页未对齐问题记录](fix-records/2026-05-30-reference-app-nav-welcome-misalignment.md)
+- [2026-05-30 应用窗口 Mock 交互不完整问题记录](fix-records/2026-05-30-application-window-mock-interactions-incomplete.md)
 
 ## 已有验证证据
 
+- [AI Pet 应用窗口手机比例截图](../../reports/application-window-ui-2026-05-30/)
+- [AI Pet 早期临时截图归档](../../reports/legacy-root-screenshots/)
 - [AI Pet 产品框架历史 HTML 看板](../../reports/ai-pet-framework-summary/index.html)（历史验证材料，不代表当前产品形态）
 - [宠物沙箱 overnight 历史 HTML 报告](../../reports/pet-sandbox-overnight/index.html)（历史验证材料，不代表当前产品形态）
 - [宠物沙箱运行结构化结果](../../reports/pet-sandbox-overnight/run-results.json)

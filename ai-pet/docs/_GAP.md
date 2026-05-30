@@ -62,6 +62,18 @@ related:
 - `doc_type`
 - `related`
 
-### 6. 物理目录整理尚未执行
+### 6. 物理目录整理需要持续收口
 
-目前只通过 `INDEX.md` 和新分类文档建立逻辑分类，没有移动旧文件。若后续要迁移到 `product/`、`modules/`、`verification/` 等标准结构，需要单独做整理计划，避免破坏已有链接和历史证据。
+已处理一部分：已新增 [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md)，并把根目录散落截图归档到 `reports/application-window-ui-2026-05-30/` 和 `reports/legacy-root-screenshots/`。
+
+仍待处理：
+
+- `src/components/` 中的早期宽屏 MVP 组件当前未被手机比例应用窗口引用，后续需确认迁移到 legacy 还是删除。
+- 桌宠形象线的 `desktop-photo-pet/`、`public/assets/pets/mochi/motions/` 和 `reports/desktop-photo-pet-*` 仍在独立进程中演进，本线暂不整理。
+- 旧文档 frontmatter 和报告索引仍需逐步补齐。
+
+### 7. 桌宠动作接口已具备服务端仲裁，真实运行时消费仍待接入
+
+已处理：已新增 [桌宠点击到应用窗口联动协议](architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md)，并在代码中补充 `ExpressionCommand`、`src/domain/motion.ts`、`server/motion.ts`、`/api/agent/chat` 和 `/api/desktop-pet/motion`。当前口径明确：对话页只和 agent 对话，动作能力通过 `request_pet_motion` 暴露给 agent，由 agent 工具调用进入动作仲裁。
+
+仍待处理：桌宠形象运行时还没有消费 `/api/desktop-pet/motion` 或等价 IPC，因此当前代码已经能生成、仲裁和返回动作命令，但真实桌面宠物是否播放对应动作仍依赖桌宠形象线接入动作命令队列。

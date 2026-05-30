@@ -3,6 +3,24 @@ export type ActivityState = "sleep" | "rest" | "active" | "walk" | "play" | "unk
 export type SignalLevel = "excellent" | "good" | "weak" | "offline";
 export type StressSignal = "normal" | "elevated" | "high";
 export type TaskPriority = "high" | "medium" | "low";
+export type PetMotionAction =
+  | "idle"
+  | "idle_happy"
+  | "walk"
+  | "play"
+  | "sleep"
+  | "eat"
+  | "scratch"
+  | "bark"
+  | "tired_idle"
+  | "alert"
+  | "jump"
+  | "spin"
+  | "sit"
+  | "come_closer"
+  | "nod";
+export type PetMotionSource = "bracelet_mirror" | "random_action" | "agent_tool_call";
+export type PetMotionPriority = 30 | 60 | 100;
 
 export type PetProfile = {
   id: string;
@@ -159,4 +177,29 @@ export type CompetitionEntry = {
   title: string;
   score: number;
   metric: string;
+};
+
+export type ExpressionCommand = {
+  id: string;
+  target: "desktop_pet";
+  source: PetMotionSource;
+  action: PetMotionAction;
+  priority: PetMotionPriority;
+  reason: string;
+  createdAt: string;
+  ttlMs?: number;
+  interruptible?: boolean;
+  context?: {
+    evidenceEventId?: string;
+    messageId?: string;
+    conversationId?: string;
+    targetView?: "chat" | "status" | "outfit" | "tasks" | "care";
+  };
+};
+
+export type MotionArbitrationSnapshot = {
+  active?: ExpressionCommand;
+  queued: ExpressionCommand[];
+  suppressed: ExpressionCommand[];
+  generatedAt: string;
 };

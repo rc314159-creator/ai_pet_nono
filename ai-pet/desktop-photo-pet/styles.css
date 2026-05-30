@@ -28,7 +28,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 1;
-  -webkit-app-region: drag;
+  pointer-events: none;
 }
 
 .close-button,
@@ -40,16 +40,16 @@ body {
 }
 
 .close-button {
-  top: 18px;
-  right: 22px;
-  width: 28px;
-  height: 28px;
+  top: 13px;
+  right: 15px;
+  width: 24px;
+  height: 24px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
   background: rgba(30, 38, 34, 0.28);
   color: #fffef7;
-  font-size: 20px;
-  line-height: 24px;
+  font-size: 18px;
+  line-height: 20px;
   opacity: 0;
   transition: opacity 160ms ease;
 }
@@ -61,24 +61,28 @@ body {
 .pet-wrap {
   position: absolute;
   left: 50%;
-  bottom: 50px;
+  bottom: 30px;
   z-index: 2;
-  width: 420px;
-  height: 420px;
+  width: 282px;
+  height: 282px;
   transform: translateX(-50%);
   transform-origin: 50% 92%;
+  cursor: grab;
+  -webkit-app-region: no-drag;
 }
 
-.pet-image {
+.pet-wrap:active {
+  cursor: grabbing;
+}
+
+.pet-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
   filter: drop-shadow(0 22px 20px rgba(18, 28, 24, 0.18));
   transform-origin: 50% 88%;
-  will-change: transform, filter;
+  will-change: filter;
 }
 
 .pet-shadow {
@@ -92,19 +96,20 @@ body {
   filter: blur(4px);
   transform-origin: 50% 50%;
   will-change: transform, opacity;
+  display: none;
 }
 
 .speech {
-  left: 62px;
-  top: 76px;
-  max-width: 310px;
-  padding: 12px 14px;
+  left: 35px;
+  top: 42px;
+  max-width: 220px;
+  padding: 9px 11px;
   border: 1px solid rgba(255, 255, 255, 0.58);
   border-radius: 8px;
   background: var(--paper);
   color: var(--ink);
   box-shadow: 0 18px 46px rgba(22, 31, 27, 0.16);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.4;
   opacity: 0;
@@ -115,10 +120,10 @@ body {
 .speech::after {
   content: "";
   position: absolute;
-  right: 34px;
-  bottom: -8px;
-  width: 16px;
-  height: 16px;
+  right: 28px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
   border-right: 1px solid rgba(255, 255, 255, 0.58);
   border-bottom: 1px solid rgba(255, 255, 255, 0.58);
   background: inherit;
@@ -127,65 +132,38 @@ body {
 
 .mode-label {
   left: 50%;
-  bottom: 18px;
+  bottom: 8px;
   transform: translateX(-50%);
-  padding: 7px 11px;
+  padding: 5px 9px;
   border: 1px solid rgba(255, 255, 255, 0.48);
   border-radius: 999px;
   background: rgba(255, 252, 240, 0.72);
   color: rgba(25, 35, 31, 0.7);
   box-shadow: 0 10px 28px rgba(22, 31, 27, 0.12);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
   backdrop-filter: blur(14px);
-}
-
-.mode-idle .pet-image {
-  animation: idle-breathe 3.7s ease-in-out infinite;
 }
 
 .mode-idle .pet-shadow {
   animation: shadow-breathe 3.7s ease-in-out infinite;
 }
 
-.mode-walk .pet-wrap {
-  animation: stage-walk 4.6s ease-in-out infinite;
-}
-
-.mode-walk .pet-image {
-  animation: walk-bob 0.52s ease-in-out infinite;
-}
-
 .mode-walk .pet-shadow {
   animation: walk-shadow 0.52s ease-in-out infinite;
 }
 
-.mode-alert .pet-image {
-  animation: alert-lean 1.6s ease-in-out infinite;
+.mode-alert .pet-canvas {
   filter: drop-shadow(0 24px 22px rgba(18, 28, 24, 0.2)) saturate(1.08) contrast(1.02);
 }
 
-.mode-alert .speech {
-  animation: bubble-in 4.8s ease-in-out infinite;
+.speech.visible {
+  animation: bubble-in 3.2s ease-in-out both;
 }
 
-.mode-happy .pet-image {
-  animation: happy-hop 0.92s cubic-bezier(0.34, 0.02, 0.2, 1) infinite;
-}
-
-.mode-happy .pet-shadow {
-  animation: happy-shadow 0.92s cubic-bezier(0.34, 0.02, 0.2, 1) infinite;
-}
-
-@keyframes idle-breathe {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1) rotate(-0.2deg);
-  }
-  50% {
-    transform: translate3d(0, -7px, 0) scale(1.012, 0.996) rotate(0.25deg);
-  }
+.mode-alert .speech.visible {
+  animation-duration: 4.8s;
 }
 
 @keyframes shadow-breathe {
@@ -197,26 +175,6 @@ body {
   50% {
     transform: scale(0.94);
     opacity: 0.72;
-  }
-}
-
-@keyframes stage-walk {
-  0%,
-  100% {
-    transform: translateX(-54%) rotate(-0.8deg);
-  }
-  50% {
-    transform: translateX(-46%) rotate(0.8deg);
-  }
-}
-
-@keyframes walk-bob {
-  0%,
-  100% {
-    transform: translateY(0) scale(1, 1) rotate(-0.5deg);
-  }
-  50% {
-    transform: translateY(-9px) scale(1.006, 0.994) rotate(0.5deg);
   }
 }
 
@@ -232,16 +190,6 @@ body {
   }
 }
 
-@keyframes alert-lean {
-  0%,
-  100% {
-    transform: translateY(-2px) scale(1.02) rotate(-1.2deg);
-  }
-  50% {
-    transform: translateY(-11px) scale(1.035) rotate(1.1deg);
-  }
-}
-
 @keyframes bubble-in {
   0%,
   100% {
@@ -252,30 +200,5 @@ body {
   76% {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes happy-hop {
-  0%,
-  100% {
-    transform: translateY(0) scale(1) rotate(0deg);
-  }
-  42% {
-    transform: translateY(-26px) scale(1.018, 0.985) rotate(-1.8deg);
-  }
-  64% {
-    transform: translateY(-9px) scale(0.992, 1.01) rotate(1.5deg);
-  }
-}
-
-@keyframes happy-shadow {
-  0%,
-  100% {
-    transform: scale(0.98);
-    opacity: 0.74;
-  }
-  42% {
-    transform: scale(0.72);
-    opacity: 0.36;
   }
 }

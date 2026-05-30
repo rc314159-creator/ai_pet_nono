@@ -13,6 +13,8 @@ domain_taxa:
 related:
   - ../product/product-spec-2026-05-30.md
   - ../architecture/technical-architecture-2026-05-30.md
+  - ../architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md
+  - agent-chat-2026-05-30.md
   - ../plan/mvp-feature-design-2026-05-30.md
 ---
 
@@ -33,6 +35,7 @@ related:
 | 宠物档案模块 | P0 | 管理真实宠物和纯电子宠物的基础设定 | `src/domain/mockData.ts`, `architecture/technical-architecture-2026-05-30.md` |
 | 宠物状态机模块 | P0 | 支撑数字分身、电子宠物养成和桌宠反馈 | `src/domain/engine.ts`, `research/pet-game-ai-projects/INDEX.md` |
 | Agent 工具模块 | P0 | 让成熟 agent 调用宠物业务能力 | `research/agent-foundations.md`, `architecture/technical-architecture-2026-05-30.md` |
+| 对话页 Agent 群聊模块 | P0 | 单宠物唯一长期主群聊，科技狗 Demo 角色，OpenAI Agents SDK，文字/语音模式和工具调用 | [agent-chat-2026-05-30.md](agent-chat-2026-05-30.md) |
 | 桌宠核心入口模块 | P0 | OpenPets 常驻入口、气泡、动作、异常提示、点击展开应用窗口 | `components/DesktopPetBridge.tsx`, `research/desktop-pet-foundations.md` |
 | 应用窗口模块 | P0 | 点击桌宠后弹出的功能面板，承载陪伴对话、数据异常、换装互动、任务和后续推荐 | `src/App.tsx`, `src/components/*` |
 | 证据流与健康解释模块 | P0 | 把设备/手动数据解释成状态、任务和报告 | `research/mock-device-data-spec.md`, `research/health-monitoring.md` |
@@ -67,7 +70,7 @@ related:
 
 ### Agent 工具
 
-所有 AI 功能都应优先通过成熟 agent 接入。项目侧只暴露业务工具：
+所有 AI 功能都应优先通过成熟 agent 接入。对话页宠物群聊主 Agent 使用 OpenAI Agents SDK；项目侧只暴露业务工具：
 
 - 读档案。
 - 读状态。
@@ -76,6 +79,8 @@ related:
 - 记录照护或互动。
 - 触发桌宠反馈。
 - 生成推荐。
+
+对话页详细口径见 [AI Pet 对话页 Agent 群聊模块](agent-chat-2026-05-30.md)。
 
 ### 桌宠核心入口
 
@@ -88,10 +93,15 @@ related:
 - 能响应用户轻交互。
 - 能把应用窗口/Agent/Domain 的结果反馈给用户。
 - 能在异常发生时用气泡或提示把用户带到异常报告。
+- 能接收手环/设备数据映射出的默认动作。
+- 能接收指令触发的随机动作。
+- 能接收 agent 通过动作工具发出的动作命令，并以最高优先级执行。
 
 桌宠不是应用窗口的装饰组件。
 
 大型交互不直接堆在桌宠本体上。长对话、数据查看、异常分析和换装应在应用窗口完成，并把结果同步回桌宠。
+
+桌宠动作优先级以 [桌宠点击到应用窗口联动协议](../architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md) 为准：agent 动作工具调用 > 指令触发的随机动作 > 手环/设备数据默认映射。
 
 ### 应用窗口
 
@@ -144,10 +154,11 @@ related:
 
 优先拆出以下独立 module spec：
 
-1. `agent-tools.md`
-2. `desktop-pet-entry.md`
-3. `app-window-entry.md`
-4. `pet-profile-and-state.md`
-5. `evidence-health-task.md`
-6. `commerce-and-outfit.md`
-7. `multi-channel-entrypoints.md`
+1. `agent-chat-2026-05-30.md`（已创建，后续可继续拆工具子 spec）
+2. `agent-tools.md`
+3. `desktop-pet-entry.md`
+4. `app-window-entry.md`
+5. `pet-profile-and-state.md`
+6. `evidence-health-task.md`
+7. `commerce-and-outfit.md`
+8. `multi-channel-entrypoints.md`

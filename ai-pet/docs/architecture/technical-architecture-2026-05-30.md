@@ -16,6 +16,7 @@ related:
   - ../product/product-spec-2026-05-30.md
   - ../modules/INDEX.md
   - ../plan/mvp-feature-design-2026-05-30.md
+  - desktop-pet-app-window-linkage-protocol-2026-05-30.md
   - ../research/agent-foundations.md
   - ../research/desktop-pet-foundations.md
 ---
@@ -46,8 +47,8 @@ flowchart TD
   end
 
   subgraph AgentLayer["Agent 层"]
-    Agent["OpenCode SDK / opencode runtime"]
-    Tools["AI Pet Tools<br/>MCP 或等价协议"]
+    Agent["OpenAI Agents SDK<br/>Pet Group Chat Agent"]
+    Tools["AI Pet Tools<br/>SDK tools / MCP"]
   end
 
   subgraph Domain["领域服务层"]
@@ -88,12 +89,12 @@ flowchart TD
 
 当前代码位于 `ai-pet/`：
 
-- 应用窗口：React + Vite + TypeScript 渲染。产品口径是“桌宠点击后弹出的应用窗口/功能面板”，不是 HTML 展示页。
+- 应用窗口：Electron shell + React/Vite/TypeScript 渲染。产品口径是“桌宠点击后弹出的应用窗口/功能面板”，不是 HTML 展示页；当前视觉比例按手机屏幕长宽比实现，约 `430x932`。
 - API：Express，端口 `127.0.0.1:8788`。
 - 应用窗口开发端口：`127.0.0.1:5180`。
 - 桌宠：OpenPets 运行时，通过本地 CLI/IPC 桥接。
 - Domain：当前在前端 `src/domain/engine.ts` 和 mock 数据中实现，后续应抽成共享领域服务。
-- AI：当前 `/api/ask` 支持 llmmelon 调用路径和本地规则兜底；下一步应接 OpenCode SDK / opencode agent runtime，并通过工具访问领域能力。
+- AI：对话页宠物群聊主 Agent 方向已确定为 OpenAI Agents SDK。当前保留 `/api/ask` 作为早期照护问答接口；对话页应走 `/api/agent/chat`，由 OpenAI Agents SDK、科技狗 persona、主 thread/session 和业务 tools 驱动。
 
 ## 运行时边界
 
@@ -120,8 +121,9 @@ flowchart TD
 
 当前方向：
 
-- OpenCode SDK / opencode runtime。
-- MCP server 或等价工具协议。
+- 对话页宠物群聊主 Agent：OpenAI Agents SDK。
+- 工具暴露：OpenAI Agents SDK function tools，后续可继续扩展 MCP server 或等价工具协议。
+- OpenCode / opencode：保留为后台工具、MCP 生态或开发 agent 参考，不作为宠物群聊主 Agent。
 
 禁止：
 
@@ -149,15 +151,43 @@ flowchart TD
 - 使用 OpenPets 提供系统级宠物窗口。
 - 支持气泡、动作、状态反应、pet pack 切换。
 - 真实宠物形象必须优先保证和用户上传宠物一致；低保真程序化 3D 不满足当前展示要求。
+- 真实宠物动态形象的当前正确资产结构是 motion manifest + 完整多帧动作序列；不要把单张照片整体晃动或拆四肢 rig 当作 Demo 主方案。
 - 点击桌宠必须能打开应用窗口；提醒气泡和异常提示应能把用户带到对应窗口视图。
 - 逐步把点击、拖拽、菜单、提醒确认等桌宠轻交互纳入主流程。
 
 当前缺口：
 
 - 已接 OpenPets built-in pet。
-- 还需导入或生成项目专属宠物形象；当前补充了 `desktop-photo-pet` 作为照片级动态桌宠运行程序验证。
+- 还需导入或生成项目专属宠物形象；当前补充了 `desktop-photo-pet` 作为照片级动态桌宠运行程序验证，并先通过 `public/assets/pets/mochi/motions/manifest.json` 播放 Mochi 走路 20 帧预览。
 - 如果 OpenPets pet pack 不能承载足够真实的动态形象，需要扩展 OpenPets renderer 或采用独立桌面运行时承载照片级 2D/2.5D、Live2D/Rive/Spine 或高质量 glTF。
 - 还需把桌宠从“同步按钮触发反馈”升级为“用户点击即可展开应用窗口的入口”。
+
+## 桌宠与应用窗口联动协议
+
+桌宠联动分成两套逻辑，完整协议见 [桌宠点击到应用窗口联动协议](desktop-pet-app-window-linkage-protocol-2026-05-30.md)。
+
+### 基础跳转
+
+用户点击桌宠、桌宠气泡、异常提醒或轻交互入口时，桌宠运行时发出打开应用窗口事件。Electron 应用窗口如果未启动则启动，如果已启动则聚焦；事件可以携带目标视图，默认进入陪伴对话页。
+
+基础路由约定：
+
+- 点击桌宠本体 -> `chat`
+- 点击异常气泡 -> `status`
+- 点击照护任务提醒 -> `tasks`
+- 点击换装/装扮反馈 -> `outfit`
+
+### 动作优先级
+
+桌宠动作必须由 `ExpressionAdapter` 或后续 `MotionArbiter` 统一仲裁，不能让手环、应用窗口、agent 或桌宠随机动作直接抢占渲染器。对话页只和 agent 对话，不直接解析自然语言并控制动作；运动能力作为 `request_pet_motion` 工具暴露给 agent。
+
+当前 MVP 仲裁顺序：
+
+1. Agent 动作工具调用：最高优先级。用户在陪伴对话页说“请转个圈”等动作请求时，由 agent 决定是否调用 `request_pet_motion`；该工具调用覆盖所有低优先级动作。
+2. 指令触发的随机动作：中优先级。agent、轻交互或演示指令触发随机动作池，覆盖默认状态，但不能覆盖 agent 的明确动作工具调用。
+3. 手环/设备数据默认映射：基线优先级。动物手环记录真实宠物动作后，经领域状态映射到桌宠默认动作；这是应用窗口/领域状态对桌宠的影响。
+
+高优先级动作完成或超时后，桌宠回到最新的手环/设备数据默认映射状态。
 
 ## 工具契约
 
@@ -192,6 +222,12 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 - `virtual_pet_move`
 - `virtual_pet_prompt_user`
 
+### 对话与语音
+
+- `get_main_thread`：读取单宠物唯一主群聊。
+- `record_memory`：记录用户、宠物和事件记忆。
+- `reply_with_voice`：当前回合返回语音消息；语音不是文字后处理。
+
 ### 商业与装扮
 
 - `get_inventory`
@@ -224,7 +260,7 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 下一步优先开发：
 
 1. 把当前前端 domain 规则抽成可被 API 和 tools 复用的服务。
-2. 接 OpenCode SDK / opencode runtime 到宠物 tools。
+2. 接 OpenAI Agents SDK 到宠物群聊主 thread 和业务 tools。
 3. 让桌宠成为可点击展开应用窗口的主入口，而不只是显示反馈。
 4. 明确商品推荐和换装模块的最小可运行闭环。
 5. 保持应用窗口 + 桌宠联动稳定，再扩展其他端口。

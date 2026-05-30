@@ -13,8 +13,10 @@ domain_taxa:
 related:
   - ../product/product-spec-2026-05-30.md
   - ../architecture/technical-architecture-2026-05-30.md
+  - ../architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md
   - ../modules/INDEX.md
   - mvp-feature-design-2026-05-30.md
+  - parallel-development-workstreams-2026-05-30.md
 ---
 
 # AI Pet 展示阶段并行开发协调
@@ -72,6 +74,8 @@ related:
 - 应用窗口负责复杂操作和信息密集展示。
 - 当前 mock 数据必须继续支持真实宠物数字分身和纯电子宠物两类口径。
 - 桌宠形象变化、装扮选择、异常提醒和任务完成结果都应保留可同步到另一端的字段或事件入口，即使后台尚未完成。
+- 桌宠点击打开应用窗口属于基础跳转协议；桌宠动作来源优先级属于动作联动协议，两者分开实现和验证。
+- 动作联动优先级固定为：agent 动作工具调用 > 指令触发的随机动作 > 手环/设备数据默认映射。对话页只和 agent 对话，不能绕过 agent 直接控制桌宠动作。
 
 ## Git 与文件管理规则
 
@@ -107,3 +111,7 @@ related:
 - OpenCode SDK / opencode runtime 工具调用。
 - 桌宠事件到应用窗口的稳定 IPC 或本地协议。
 - mock 数据到真实设备、手动记录和持久化数据的迁移路径。
+
+## 并行工作流入口
+
+后续多个对话并行开发时，以 [AI Pet 并行开发工作流](parallel-development-workstreams-2026-05-30.md) 为领取任务和判断文件边界的入口。该文档把当前展示阶段拆为应用窗口视觉、mock 数据/领域状态、桌宠点击联动、agent 工具接入、桌宠形象动作包、知识库仓库卫生和旧组件清理七条工作流。

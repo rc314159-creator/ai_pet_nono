@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>毛球伙伴 - 智能宠物陪伴</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-warm: #FF9A76;
+            --primary-soft: #FFB4A2;
+            --cream-bg: #FFF8F3;
+            --cream-light: #FFFCFA;
+            --text-primary: #2D2D2D;
+            --text-secondary: #6B6B6B;
+            --text-muted: #9B9B9B;
+            --accent-blue: #7EC8E3;
+            --accent-green: #A8D8B9;
+            --accent-pink: #F4A9A8;
+            --shadow-soft: 0 4px 20px rgba(0,0,0,0.06);
+            --shadow-medium: 0 8px 30px rgba(0,0,0,0.1);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #FFF8F3 0%, #FFF0E8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .device-frame {
+            width: 430px;
+            height: 932px;
+            background: var(--cream-bg);
+            border-radius: 48px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.15), 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #F5F5F5;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 页面通用样式 */
+        .page {
+            width: 100%;
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-bottom: 20px;
+        }
+
+        .page.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .page.prev {
+            transform: translateX(-100%);
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: linear-gradient(180deg, var(--cream-bg) 0%, transparent 100%);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--cream-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .nav-icon:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .nav-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--text-secondary);
+        }
+
+        /* ===== 欢迎页 ===== */
+        .welcome-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+            text-align: center;
+            background: linear-gradient(180deg, #FFF8F3 0%, #FFE8E0 100%);
+        }
+
+        .brand-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            box-shadow: 0 20px 60px rgba(255, 154, 118, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .brand-logo svg {
+            width: 60px;
+            height: 60px;
+            fill: white;
+        }
+
+        .brand-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .brand-tagline {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        .welcome-pet {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .pet-illustration {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(255, 180, 162, 0.4);
+        }
+
+        .pet-illustration::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background: white;
+            border-radius: 50%;
+            top: 20%;
+            left: 20%;
+        }
+
+        .pet-illustration::after {
+            content: '';
+            position: absolute;
+            width: 15%;
+            height: 15%;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 35%;
+            left: 30%;
+            box-shadow: 40px 0 0 var(--text-primary);
+        }
+
+        .start-btn {
+            width: 100%;
+            max-width: 280px;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border: none;
+            border-radius: var(--radius-lg);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 154, 118, 0.4);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(255, 154, 118, 0.5);
+        }
+
+        /* ===== 对话页 ===== */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 0 20px;
+        }
+
+        .pet-showcase {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .pet-avatar-large {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 50%, #FF9A76 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(255, 154, 118, 0.3);
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .pet-avatar-large::before {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            background: white;
+            border-radius: 50%;
+            top: 25%;
+            left: 25%;
+        }
+
+        .pet-avatar-large::after {
+            content: '';
+            position: absolute;
+            width: 12%;
+            height: 12%;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 40%;
+            left: 32%;
+            box-shadow: 36px 0 0 var(--text-primary);
+        }
+
+        .pet-status-bubble {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0 4px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 16px;
+            animation: messageSlide 0.3s ease;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            max-width: 70%;
+            font-size: 14px;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-soft);
+            line-height: 1.5;
+        }
+
+        .chat-input-area {
+            padding: 16px 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .voice-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .voice-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--primary-warm);
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: white;
+            border-radius: 24px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: white;
+        }
+
+        /* ===== 状态页 ===== */
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 24px 16px;
+        }
+
+        .status-entry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: white;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-soft);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .status-entry:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .status-entry svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--primary-warm);
+        }
+
+        .pet-status-showcase {
+            background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
+            border-radius: var(--radius-xl);
+            margin: 0 20px 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .status-pet-avatar {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(255, 154, 118, 0.25);
+        }
+
+        .status-pet-avatar::before {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            background: white;
+            border-radius: 50%;
+            top: 25%;
+            left: 25%;
+        }
+
+        .status-pet-avatar::after {
+            content: '';
+            position: absolute;
+            width: 12%;
+            height: 12%;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 40%;
+            left: 32%;
+            box-shadow: 28px 0 0 var(--text-primary);
+        }
+
+        .current-status {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: left;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .date-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 20px 20px;
+        }
+
+        .date-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .date-item:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .date-item.active {
+            background: white;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .date-day {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .date-num {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .data-cards {
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .data-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+        }
+
+        .data-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .data-card.sleep {
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .data-card.activity {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .data-card.rest {
+            border-left: 4px solid var(--accent-pink);
+        }
+
+        .data-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .data-card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .data-card.sleep .data-card-icon {
+            background: rgba(126, 200, 227, 0.15);
+        }
+
+        .data-card.activity .data-card-icon {
+            background: rgba(168, 216, 185, 0.15);
+        }
+
+        .data-card.rest .data-card-icon {
+            background: rgba(244, 169, 168, 0.15);
+        }
+
+        .data-card-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .data-card.sleep .data-card-icon svg {
+            stroke: var(--accent-blue);
+        }
+
+        .data-card.activity .data-card-icon svg {
+            stroke: var(--accent-green);
+        }
+
+        .data-card.rest .data-card-icon svg {
+            stroke: var(--accent-pink);
+        }
+
+        .data-card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .data-card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .data-card-detail {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ===== 社区页 ===== */
+        .community-header {
+            padding: 0 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box {
+            flex: 1;
+            background: white;
+            border-radius: 24px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .search-box svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-muted);
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            width: 100%;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .waterfall {
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .post-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .post-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #FFE8E0 0%, #FFD4C8 100%);
+            position: relative;
+        }
+
+        .post-image::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+        }
+
+        .post-content {
+            padding: 12px;
+        }
+
+        .post-title {
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .post-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .author-avatar {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+        }
+
+        .author-name {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .post-likes {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .post-likes svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--accent-pink);
+            fill: var(--accent-pink);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(255, 154, 118, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 154, 118, 0.5);
+        }
+
+        .fab svg {
+            width: 24px;
+            height: 24px;
+            stroke: white;
+        }
+
+        /* ===== 市集页 ===== */
+        .market-categories {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .market-categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-tab {
+            padding: 10px 20px;
+            background: white;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .category-tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            color: white;
+        }
+
+        .banner {
+            margin: 0 20px 20px;
+            background: linear-gradient(135deg, #FFE8E0 0%, #FFD4C8 100%);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--primary-warm);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .banner-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .banner-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .product-grid {
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #FFF0E8 0%, #FFE8E0 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image svg {
+            width: 60px;
+            height: 60px;
+            stroke: var(--primary-soft);
+        }
+
+        .product-info {
+            padding: 12px;
+        }
+
+        .product-name {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+        }
+
+        .product-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-warm);
+        }
+
+        .product-price span {
+            font-size: 12px;
+            font-weight: 400;
+        }
+
+        /* ===== 我的页 ===== */
+        .my-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .my-avatar {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .my-info h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .my-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .costume-categories {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .costume-categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .costume-tab {
+            padding: 10px 20px;
+            background: white;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .costume-tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .costume-tab.active {
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            color: white;
+        }
+
+        .costume-grid {
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .costume-item {
+            aspect-ratio: 1;
+            background: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-soft);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .costume-item:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .costume-item svg {
+            width: 32px;
+            height: 32px;
+            stroke: var(--text-secondary);
+        }
+
+        .costume-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .stage-pet {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #FFD4A3 0%, #FFB4A2 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(255, 154, 118, 0.3);
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        .stage-pet::before {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            background: white;
+            border-radius: 50%;
+            top: 25%;
+            left: 25%;
+        }
+
+        .stage-pet::after {
+            content: '';
+            position: absolute;
+            width: 12%;
+            height: 12%;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 40%;
+            left: 32%;
+            box-shadow: 28px 0 0 var(--text-primary);
+        }
+
+        .save-btn {
+            margin: 0 20px 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border: none;
+            border-radius: var(--radius-lg);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 154, 118, 0.3);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(255, 154, 118, 0.4);
+        }
+
+        /* ===== 底部导航 ===== */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px 20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 154, 118, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 154, 118, 0.15);
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active svg {
+            stroke: var(--primary-warm);
+        }
+
+        .nav-item span {
+            font-size: 11px;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active span {
+            color: var(--primary-warm);
+            font-weight: 500;
+        }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="app-container">
+            <!-- 欢迎页 -->
+            <div class="page welcome-page active" id="welcome">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <h1 class="brand-name">毛球伙伴</h1>
+                <p class="brand-tagline">智能陪伴，温暖每一刻</p>
+                <div class="welcome-pet">
+                    <div class="pet-illustration"></div>
+                </div>
+                <button class="start-btn" onclick="showPage('chat')">开始陪伴</button>
+            </div>
+
+            <!-- 对话页 -->
+            <div class="page" id="chat">
+                <div class="top-nav">
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </div>
+                    <span class="nav-title">小橘</span>
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="chat-container">
+                    <div class="pet-showcase">
+                        <div class="pet-status-bubble">
+                            <span class="status-dot"></span>
+                            <span>在线</span>
+                        </div>
+                        <div class="pet-avatar-large"></div>
+                    </div>
+                    <div class="chat-messages">
+                        <div class="message">
+                            <div class="message-avatar"></div>
+                            <div class="message-content">喵~主人好呀！今天工作辛苦了吗？</div>
+                        </div>
+                        <div class="message">
+                            <div class="message-avatar"></div>
+                            <div class="message-content">我今天睡了好久，现在精神满满呢！</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <button class="voice-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                        </button>
+                        <div class="input-wrapper">
+                            <input type="text" class="chat-input" placeholder="和小橘说点什么...">
+                            <button class="send-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态页 -->
+            <div class="page" id="status">
+                <div class="top-nav">
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </div>
+                    <span class="nav-title">状态监测</span>
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="status-header">
+                    <div class="status-entry">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>异常历史</span>
+                    </div>
+                    <div class="status-entry">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        <span>健康报告</span>
+                    </div>
+                </div>
+                <div class="pet-status-showcase">
+                    <div class="status-pet-avatar"></div>
+                    <div class="current-status">
+                        <div class="status-label">当前状态</div>
+                        <div class="status-value">
+                            <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="#7EC8E3" stroke-width="2">
+                                <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+                            </svg>
+                            睡眠中
+                        </div>
+                    </div>
+                </div>
+                <div class="date-selector">
+                    <div class="date-item">
+                        <span class="date-day">五</span>
+                        <span class="date-num">21</span>
+                    </div>
+                    <div class="date-item">
+                        <span class="date-day">六</span>
+                        <span class="date-num">22</span>
+                    </div>
+                    <div class="date-item">
+                        <span class="date-day">日</span>
+                        <span class="date-num">23</span>
+                    </div>
+                    <div class="date-item active">
+                        <span class="date-day">一</span>
+                        <span class="date-num">24</span>
+                    </div>
+                    <div class="date-item">
+                        <span class="date-day">二</span>
+                        <span class="date-num">25</span>
+                    </div>
+                    <div class="date-item">
+                        <span class="date-day">三</span>
+                        <span class="date-num">26</span>
+                    </div>
+                    <div class="date-item">
+                        <span class="date-day">四</span>
+                        <span class="date-num">27</span>
+                    </div>
+                </div>
+                <div class="data-cards">
+                    <div class="data-card sleep">
+                        <div class="data-card-header">
+                            <div class="data-card-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                </svg>
+                            </div>
+                            <span class="data-card-title">睡眠</span>
+                        </div>
+                        <div class="data-card-value">3时38分</div>
+                        <div class="data-card-detail">
+                            <div class="detail-item">
+                                <span>深睡 2.4时</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>浅睡 1.2时</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="data-card activity">
+                        <div class="data-card-header">
+                            <div class="data-card-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <span class="data-card-title">活动</span>
+                        </div>
+                        <div class="data-card-value">58分50秒</div>
+                        <div class="data-card-detail">
+                            <div class="detail-item">
+                                <span>走路 57.8分</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>奔跑 22秒</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="data-card rest">
+                        <div class="data-card-header">
+                            <div class="data-card-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <span class="data-card-title">休闲</span>
+                        </div>
+                        <div class="data-card-value">3时7分</div>
+                        <div class="data-card-detail">
+                            <div class="detail-item">
+                                <span>进食 7.5分</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>舔毛 3.7分</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 社区页 -->
+            <div class="page" id="community">
+                <div class="top-nav">
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </div>
+                    <span class="nav-title">宠物社区</span>
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="community-header">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        <input type="text" placeholder="搜索感兴趣的内容">
+                    </div>
+                </div>
+                <div class="waterfall">
+                    <div class="post-card">
+                        <div class="post-image"></div>
+                        <div class="post-content">
+                            <div class="post-title">我家猫咪今天学会了新技能，超级可爱！</div>
+                            <div class="post-meta">
+                                <div class="post-author">
+                                    <div class="author-avatar"></div>
+                                    <span class="author-name">@猫奴小王</span>
+                                </div>
+                                <div class="post-likes">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                    </svg>
+                                    <span>128</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-card">
+                        <div class="post-image"></div>
+                        <div class="post-content">
+                            <div class="post-title">分享一些养猫心得，新手必看</div>
+                            <div class="post-meta">
+                                <div class="post-author">
+                                    <div class="author-avatar"></div>
+                                    <span class="author-name">@铲屎官小李</span>
+                                </div>
+                                <div class="post-likes">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                    </svg>
+                                    <span>256</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-card">
+                        <div class="post-image"></div>
+                        <div class="post-content">
+                            <div class="post-title">带狗狗去公园散步，天气真好</div>
+                            <div class="post-meta">
+                                <div class="post-author">
+                                    <div class="author-avatar"></div>
+                                    <span class="author-name">@汪星人</span>
+                                </div>
+                                <div class="post-likes">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                    </svg>
+                                    <span>89</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-card">
+                        <div class="post-image"></div>
+                        <div class="post-content">
+                            <div class="post-title">猫咪健康饮食指南，科学喂养</div>
+                            <div class="post-meta">
+                                <div class="post-author">
+                                    <div class="author-avatar"></div>
+                                    <span class="author-name">@宠物医生</span>
+                                </div>
+                                <div class="post-likes">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                    </svg>
+                                    <span>312</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fab">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 市集页 -->
+            <div class="page" id="market">
+                <div class="top-nav">
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </div>
+                    <span class="nav-title">宠物市集</span>
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="market-categories">
+                    <div class="category-tab active">全部</div>
+                    <div class="category-tab">猫粮</div>
+                    <div class="category-tab">狗粮</div>
+                    <div class="category-tab">用品</div>
+                    <div class="category-tab">玩具</div>
+                    <div class="category-tab">保健品</div>
+                </div>
+                <div class="banner">
+                    <div class="banner-content">
+                        <span class="banner-tag">限时特惠</span>
+                        <div class="banner-title">进口猫粮专场</div>
+                        <div class="banner-desc">满199减50，限时抢购</div>
+                    </div>
+                </div>
+                <div class="product-grid">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                            </svg>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">进口无谷猫粮 天然鸡肉配方</div>
+                            <div class="product-price"><span>¥</span>128</div>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+                                <rect x="9" y="9" width="6" height="6"/>
+                                <line x1="9" y1="1" x2="9" y2="4"/>
+                                <line x1="15" y1="1" x2="15" y2="4"/>
+                                <line x1="9" y1="20" x2="9" y2="23"/>
+                                <line x1="15" y1="20" x2="15" y2="23"/>
+                                <line x1="20" y1="9" x2="23" y2="9"/>
+                                <line x1="20" y1="14" x2="23" y2="14"/>
+                                <line x1="1" y1="9" x2="4" y2="9"/>
+                                <line x1="1" y1="14" x2="4" y2="14"/>
+                            </svg>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">智能自动喂食器 定时定量</div>
+                            <div class="product-price"><span>¥</span>299</div>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M2 22h20"/>
+                                <path d="M6 18v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"/>
+                                <path d="M12 8V4"/>
+                                <path d="M8 4h8"/>
+                            </svg>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">舒适宠物窝 四季通用</div>
+                            <div class="product-price"><span>¥</span>89</div>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="3"/>
+                                <line x1="12" y1="2" x2="12" y2="5"/>
+                                <line x1="12" y1="19" x2="12" y2="22"/>
+                                <line x1="2" y1="12" x2="5" y2="12"/>
+                                <line x1="19" y1="12" x2="22" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">逗猫棒套装 互动玩具</div>
+                            <div class="product-price"><span>¥</span>29</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的页（换装） -->
+            <div class="page" id="my">
+                <div class="top-nav">
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </div>
+                    <span class="nav-title">我的装扮</span>
+                    <div class="nav-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="my-header">
+                    <div class="my-avatar"></div>
+                    <div class="my-info">
+                        <h3>小橘</h3>
+                        <p>橘猫 · 2岁</p>
+                    </div>
+                </div>
+                <div class="costume-categories">
+                    <div class="costume-tab active">服装</div>
+                    <div class="costume-tab">毛发</div>
+                    <div class="costume-tab">妆容</div>
+                    <div class="costume-tab">配饰</div>
+                </div>
+                <div class="costume-grid">
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.38 3.4a1.6 1.6 0 0 0-2.29.15l-3.06 3.55-2.15-2.15a1.6 1.6 0 0 0-2.26 0l-6.8 6.8a1.6 1.6 0 0 0 0 2.26l2.15 2.15-3.55 3.06a1.6 1.6 0 0 0-.15 2.29l3.86 3.86a1.6 1.6 0 0 0 2.29-.15l3.06-3.55 2.15 2.15a1.6 1.6 0 0 0 2.26 0l6.8-6.8a1.6 1.6 0 0 0 0-2.26l-2.15-2.15 3.55-3.06a1.6 1.6 0 0 0 .15-2.29l-3.86-3.86z"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="7"/>
+                            <polyline points="12 9 12 12 14 14"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                    </div>
+                    <div class="costume-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="costume-stage">
+                    <div class="stage-pet"></div>
+                </div>
+                <button class="save-btn">保存装扮</button>
+            </div>
+
+            <!-- 底部导航 -->
+            <div class="bottom-nav">
+                <div class="nav-item" data-page="market" onclick="showPage('market')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span>市集</span>
+                </div>
+                <div class="nav-item" data-page="community" onclick="showPage('community')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>社区</span>
+                </div>
+                <div class="nav-item active" data-page="chat" onclick="showPage('chat')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                    <span>对话</span>
+                </div>
+                <div class="nav-item" data-page="status" onclick="showPage('status')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span>状态</span>
+                </div>
+                <div class="nav-item" data-page="my" onclick="showPage('my')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>我的</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // 隐藏欢迎页
+            const welcome = document.getElementById('welcome');
+            if (welcome && welcome.classList.contains('active')) {
+                welcome.style.display = 'none';
+            }
+
+            // 切换页面
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // 更新底部导航
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageId) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Tab切换效果
+        document.querySelectorAll('.category-tab, .costume-tab, .date-item').forEach(tab => {
+            tab.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.category-tab, .costume-tab, .date-item').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -25,10 +25,10 @@ async function createMainWindow() {
   const rendererUrl = process.env.AI_PET_RENDERER_URL || DEFAULT_RENDERER_URL;
 
   mainWindow = new BrowserWindow({
-    width: 1140,
-    height: 790,
-    minWidth: 940,
-    minHeight: 680,
+    width: 430,
+    height: 932,
+    minWidth: 390,
+    minHeight: 844,
     title: "AI Pet",
     frame: false,
     backgroundColor: "#eef4f1",
@@ -40,10 +40,16 @@ async function createMainWindow() {
       sandbox: true
     }
   });
+  mainWindow.setAspectRatio(430 / 932);
 
   const revealWindow = () => {
     mainWindow?.show();
     mainWindow?.focus();
+    console.log("AI Pet application window visible", {
+      visible: mainWindow?.isVisible(),
+      focused: mainWindow?.isFocused(),
+      bounds: mainWindow?.getBounds()
+    });
   };
 
   mainWindow.once("ready-to-show", revealWindow);
@@ -64,6 +70,11 @@ async function createMainWindow() {
   }
   console.log(`AI Pet application window loading renderer ${rendererUrl}`);
   await mainWindow.loadURL(rendererUrl);
+  console.log("AI Pet application window loaded", {
+    windows: BrowserWindow.getAllWindows().length,
+    visible: mainWindow.isVisible(),
+    bounds: mainWindow.getBounds()
+  });
 }
 
 app.whenReady().then(() => {

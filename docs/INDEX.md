@@ -7,13 +7,18 @@
 - [AI Pet Docs](../ai-pet/docs/INDEX.md)
 - [AI Pet 当前产品规格](../ai-pet/docs/product/product-spec-2026-05-30.md)
 - [AI Pet 技术架构](../ai-pet/docs/architecture/technical-architecture-2026-05-30.md)
+- [AI Pet 桌宠点击到应用窗口联动协议](../ai-pet/docs/architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md)
 - [AI Pet 模块分类索引](../ai-pet/docs/modules/INDEX.md)
+- [AI Pet 对话页 Agent 群聊模块](../ai-pet/docs/modules/agent-chat-2026-05-30.md)
 - [AI Pet MVP 功能设计对齐](../ai-pet/docs/plan/mvp-feature-design-2026-05-30.md)
 - [AI Pet 展示阶段并行开发协调](../ai-pet/docs/plan/display-development-coordination-2026-05-30.md)
+- [AI Pet 并行开发工作流](../ai-pet/docs/plan/parallel-development-workstreams-2026-05-30.md)
+- [AI Pet Demo 实现记录 2026-05-30](../ai-pet/docs/plan/implementation-log-2026-05-30.md)
 - [AI Pet 功能范围与对齐问题](../ai-pet/docs/modules/function-scope-2026-05-30.md)
 - [AI Pet 基于现有产品和开源项目的功能映射](../ai-pet/docs/modules/research-grounded-function-map-2026-05-30.md)
 - [AI Pet 真实宠物桌面形象路线](../ai-pet/docs/research/desktop-real-pet-avatar-2026-05-30.md)
 - [AI Pet 知识库分类体系](../ai-pet/docs/knowledge-base/taxonomy.md)
+- [AI Pet 项目目录地图](../ai-pet/docs/knowledge-base/project-directory-map-2026-05-30.md)
 - [AI 宠物产品定位与讨论框架 2026-05-30](../ai-pet/docs/product/positioning-framework-2026-05-30.md)
 
 ## Meeting Records

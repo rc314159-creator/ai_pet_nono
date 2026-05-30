@@ -4,7 +4,7 @@ description: 根据 2026-05-30 会议和本地 Demo 验证，记录真实宠物�
 status: 草案
 created: 2026-05-30
 updated: 2026-05-30
-update_reason: 根据用户纠偏，明确真实性优先级高于 3D 形式；低保真程序化 3D 不满足要求。
+update_reason: 根据用户反馈将走路循环降到约 3.3 秒，并把第一批动作从 10 个扩展为 12 个核心动作。
 doc_type: research-evidence
 domain_taxa:
   - desktop-runtime
@@ -33,7 +33,7 @@ related:
 
 当前可接受路线：
 
-**用户上传照片 -> 提取宠物身份特征 -> 生成/抠出照片级宠物资产 -> 在桌面透明窗口中做 2D/2.5D 动态 -> 后续再升级高质量 3D mesh/rig。**
+**用户上传照片 -> 提取宠物身份特征 -> 生成照片级多动作帧包 -> 桌面透明窗口按 motion manifest 播放完整帧序列 -> 后续再升级高质量 3D mesh/rig。**
 
 明确排序：
 
@@ -46,6 +46,16 @@ related:
 - `ai-pet/desktop-photo-pet/`：Electron 透明/无边框/置顶桌面窗口。
 - `npm run dev:photo-pet`：启动照片级动态桌宠。
 - `ai-pet/public/assets/pets/mochi/mochi-corgi-realistic-v1.png`：当前照片级 Mochi cutout 占位资产。
+- `ai-pet/public/assets/pets/mochi/motions/manifest.json`：当前 Mochi walk-only 动作包清单。
+- `ai-pet/public/assets/pets/mochi/motions/walk/*.png`：当前走路动作 20 张透明帧。
+
+动作系统修正：
+
+- 不再把同一张宠物图做整体上下晃动作为主动作。
+- 不再把四肢切成固定局部图片在运行时 rig 变形作为当前 Demo 主方案。
+- 当前 Demo 使用“完整帧 PNG 序列 + manifest + 状态机播放”的结构。运行时只负责按动作帧率、循环策略和状态切换播放完整帧。
+- 当前先只展示走路动作，使用生成的 20 张独立姿态透明帧验证效果。
+- 生产链路应由照片/短视频/生成模型输出更真实的多姿态帧，不能用单张图缩放、压扁、翻转或局部 rig 冒充动作。
 
 ## 本次 Demo 的复用边界
 
@@ -88,7 +98,7 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 | 方向 | 参考 | 可借鉴点 | 当前用法 |
 |---|---|---|---|
 | 桌宠运行时 | OpenPets | 桌面窗口、pet package、本地 IPC、MCP tools、气泡和 reaction | MVP 主底座参考；真实高保真形象可能需要扩展 renderer |
-| 高级 2D 动作 | BongoCat / AI-Desktop-Pet / Live2D Cubism SDK | 静态图拆层、表情、物理、动作播放 | 后续“高级形象模式”；本次未使用 |
+| 高级 2D 动作 | BongoCat / AI-Desktop-Pet / Live2D Cubism SDK | 动作包、表情、物理、动作播放 | 后续“高级形象模式”；本次未使用 |
 | 状态机驱动动画 | Rive Runtime | app 状态驱动交互动画，跨端 runtime | 后续可用于轻量矢量 UI/表情；本次未使用 |
 | 照片到 3D | TripoSR / Hunyuan3D | 单图或多图生成 mesh、PBR 纹理、glTF/OBJ 导出 | 后续生成链路候选；当前先不实现 |
 | 桌面存在感 | EMO、Moflin、aibo | 小动作、主动 check-in、眼神和非语言反馈 | 作为表现节奏参考，不做硬件模拟 |
@@ -100,6 +110,10 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 - 源图：`reports/desktop-pet-avatar-demo/mochi-corgi-green.png`
 - 透明图：`reports/desktop-pet-avatar-demo/mochi-corgi-cutout.png`
 - 应用资产：`ai-pet/public/assets/pets/mochi/mochi-corgi-realistic-v1.png`
+- 动作包：`ai-pet/public/assets/pets/mochi/motions/manifest.json`
+- 走路动作源图：`ai-pet/public/assets/pets/mochi/motion-sheets/walk-20-source.png`
+- 走路透明帧：`ai-pet/public/assets/pets/mochi/motions/walk/00.png` 到 `19.png`
+- 走路预览 GIF：`reports/desktop-photo-pet-walk-20/walk-20-preview.gif`
 - 展示原型：`reports/desktop-pet-avatar-demo/index.html`
 - 验证截图：`reports/desktop-pet-avatar-demo/desktop-avatar-demo.png`
 - 桌面运行程序：`ai-pet/desktop-photo-pet/`
@@ -109,22 +123,52 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 
 - 1254×1254 PNG。
 - `hasAlpha: yes`。
-- 浏览器验证无 console error。
-- 1280×720 视口内桌宠完整显示。
+- 当前 walk-only 预览生成 20 张 RGBA 透明帧 PNG。
+
+当前 Demo 动作：
+
+| 动作 ID | 名称 | 类型 |
+|---|---|---|
+| `walk` | 走路 | 循环 |
+
+第一批建议生成 12 个核心动作，总计约 300 张透明帧。10 个动作只够做最小闭环，但缺少“提醒”和“警觉”的分离，也缺少真实宠物常见的探索动作。
+
+| 动作 ID | 名称 | 建议帧数 | 播放策略 | 用途 |
+|---|---|---:|---|---|
+| `idle` | 待机/呼吸 | 24 | 循环，8 fps，约 3.0 秒 | 默认常驻状态 |
+| `walk` | 走路 | 28 | 循环，8 fps，约 3.5 秒 | 桌面巡视、移动 |
+| `jump` | 蹦跳 | 24 | 单次，8 fps，约 3.0 秒 | 开心、互动反馈 |
+| `look_back` | 回头 | 24 | 单次，8 fps，约 3.0 秒 | 被呼唤、注意到用户 |
+| `turn` | 转身 | 32 | 单次，8 fps，约 4.0 秒 | 换方向、进入/离开动作 |
+| `tail_wag` | 摇尾巴 | 24 | 循环，8 fps，约 3.0 秒 | 开心、亲近 |
+| `sit` | 坐下 | 20 | 单次，7 fps，约 2.9 秒 | 等待、听用户说话 |
+| `sleep_laze` | 睡懒觉/趴睡 | 32 | 循环，6 fps，约 5.3 秒 | 休息、低精力 |
+| `wake_stretch` | 醒来伸懒腰 | 28 | 单次，7 fps，约 4.0 秒 | 唤醒、切状态 |
+| `remind` | 温和提醒 | 20 | 单次或循环，7 fps，约 2.9 秒 | 健康/库存/任务提醒 |
+| `alert` | 警觉 | 20 | 循环，8 fps，约 2.5 秒 | 异常、注意力提升 |
+| `sniff_explore` | 嗅闻/探索 | 24 | 循环，7 fps，约 3.4 秒 | 桌面探索、闲逛 |
+
+生成规则：
+
+- 每一帧都必须是独立姿态图，不能用单张图压缩、拉伸、翻转、裁四肢或 rig 变形冒充。
+- 先逐张生成，逐帧抠图、统一画布、统一脚底基线，再进入桌面运行时。
+- 帧率写入 `manifest.json`，后续可以不重做图片只调播放节奏。
+- 现有 walk-only 20 帧预览先临时降到 6 fps，循环约 3.33 秒；正式版走路应补到 28 帧并按 8 fps 播放。
 
 ## 最小实现步骤
 
 1. 采集真实宠物照片或用当前档案生成参考特征：品种、毛色、花纹、眼睛、耳朵、体型、特殊标记。
-2. 先输出照片级 cutout/sprite，保证和真实宠物身份一致。
-3. 通过 2D/2.5D 动画让它动起来：idle、sleep、alert、happy、walk 或 hop。
-4. 若走 OpenPets，打包为 pet pack：`pet.json` + `spritesheet.webp` 或按 OpenPets 需要的素材格式组织。
-5. 若走独立 runtime，加载 cutout、视频 sprite、Live2D/Rive/Spine 或未来 glTF。
-6. `ExpressionAdapter` 把领域状态映射到桌宠状态：
+2. 先输出照片级多动作帧包，保证和真实宠物身份一致。
+3. 每个动作输出完整帧序列，并用 manifest 记录动作名、帧率、是否循环、状态语义和帧路径。
+4. 当前最小动作集至少包括：蹦跳、走路、回头、转身、摇尾巴，并扩展坐下、趴下、伸懒腰、提醒、待机等日常动作。
+5. 若走 OpenPets，打包为 pet pack：`pet.json` + `spritesheet.webp` 或按 OpenPets 需要的素材格式组织。
+6. 若走独立 runtime，加载 motion manifest、视频 sprite、Live2D/Rive/Spine 或未来 glTF。
+7. `ExpressionAdapter` 把领域状态映射到桌宠状态：
    - sleep -> 睡觉姿态。
    - alert/error -> 竖耳、靠近屏幕、气泡提醒。
    - play/happy -> 轻跳、摇尾、短气泡。
    - tired/dirty/watch -> 降低饱和度、趴下或低头。
-7. 点击桌宠展开应用窗口；复杂换装和健康分析仍在应用窗口完成，结果同步回桌宠形象。
+8. 点击桌宠展开应用窗口；复杂换装和健康分析仍在应用窗口完成，结果同步回桌宠形象。
 
 ## 照片上传到宠物生成链路
 
@@ -134,9 +178,9 @@ BongoCat 和 AI-Desktop-Pet 不是本次 Demo 的实现来源，只是说明未�
 flowchart LR
   Upload["用户上传宠物照片/短视频"]
   Feature["身份特征提取<br/>品种、毛色、花纹、脸部、体型"]
-  Asset2D["照片级 cutout / 多姿态 sprite"]
+  Asset2D["照片级多动作帧包<br/>motion manifest + PNG sequence"]
   Asset3D["可选：image-to-3D mesh<br/>TripoSR / Hunyuan3D 等"]
-  Rig["动作绑定<br/>2.5D 变形 / Live2D / rig / glTF animation"]
+  Rig["动作生成<br/>多姿态帧 / Live2D / glTF animation"]
   Runtime["桌面运行时<br/>Electron/OpenPets 扩展/Tauri/Unity/Godot"]
   Expression["ExpressionAdapter<br/>状态 -> 动作/气泡"]
 
@@ -148,6 +192,6 @@ flowchart LR
 
 若需要更真实：
 
-- 短期：用多张真实照片/视频帧做一致性生成，补足不同角度和状态。
-- 中期：把半写实 sprite 拆成头、耳、身体、腿、尾巴局部层，做伪骨骼动画。
+- 短期：用多张真实照片/视频帧做一致性生成，补足不同角度和状态，并输出完整动作帧。
+- 中期：如果需要更顺滑，可在动作帧之间加入光流/插帧或用 Live2D/Spine 作为高级制作工具，但运行时仍应消费动作包。
 - 高级：为猫狗定制 Live2D/Rive/Spine 或高质量 3D 模型，但必须先确认资产制作成本、授权、运行时体积和 OpenPets/桌面运行时集成方式。

@@ -1,6 +1,9 @@
 import cors from "cors";
 import express from "express";
+import { createPetAgentReply, getAgentRuntimeStatus } from "./agent";
+import { getMotionSnapshot, submitAgentMotion, submitBraceletMirror, submitMotionCommand, submitRandomMotion } from "./motion";
 import { getDiscoverySnapshot, getOpenPetsStatus, sayOpenPets } from "./openpets";
+import type { ExpressionCommand, PetMotionAction, StreamPacket, VirtualPetState } from "../src/domain/types";
 
 const app = express();
 const port = Number(process.env.AI_PET_API_PORT || 8788);
@@ -45,6 +48,44 @@ app.get("/api/desktop-pet/status", async (_req, res) => {
   res.json(await getOpenPetsStatus());
 });
 
+app.get("/api/desktop-pet/motion", (_req, res) => {
+  res.json(getMotionSnapshot());
+});
+
+app.post("/api/desktop-pet/motion/bracelet", (req, res) => {
+  const packet = req.body?.packet as StreamPacket | undefined;
+  const state = req.body?.state as VirtualPetState | undefined;
+  if (!packet?.timestamp || !packet.activityState) {
+    res.status(400).json({ ok: false, error: "packet_required" });
+    return;
+  }
+  res.json(submitBraceletMirror(packet, state));
+});
+
+app.post("/api/desktop-pet/motion", (req, res) => {
+  const command = req.body?.command as ExpressionCommand | undefined;
+  if (command?.target === "desktop_pet" && command.action && command.source) {
+    res.json(submitMotionCommand(command));
+    return;
+  }
+
+  const source = String(req.body?.source || "").trim();
+  const action = String(req.body?.action || "").trim() as PetMotionAction;
+  const reason = String(req.body?.reason || "").trim() || "manual desktop pet motion request";
+
+  if (source === "agent_tool_call" && action) {
+    res.json(submitAgentMotion(action, reason, req.body?.context));
+    return;
+  }
+
+  if (source === "random_action") {
+    res.json(submitRandomMotion(reason));
+    return;
+  }
+
+  res.status(400).json({ ok: false, error: "motion_command_required" });
+});
+
 app.post("/api/desktop-pet/say", async (req, res) => {
   const message = String(req.body?.message || "").trim();
   const reaction = String(req.body?.reaction || "success").trim();
@@ -59,6 +100,23 @@ app.post("/api/desktop-pet/say", async (req, res) => {
     res.status(503).json({
       ok: false,
       error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get("/api/agent/status", (_req, res) => {
+  res.json(getAgentRuntimeStatus());
+});
+
+app.post("/api/agent/chat", async (req, res) => {
+  try {
+    const result = await createPetAgentReply(req.body);
+    const motion = result.motionCommand ? submitMotionCommand(result.motionCommand) : getMotionSnapshot();
+    res.json({ ...result, motion });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(message === "input_required" || message === "context_required" ? 400 : 500).json({
+      error: message
     });
   }
 });
