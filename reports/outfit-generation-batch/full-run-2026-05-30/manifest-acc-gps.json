@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-05-30T15:47:48.602Z",
+  "source": "yunwu.ai-images-edits",
+  "model": "gpt-image-2",
+  "frames": [
+    "motions/sniff-explore-v1/04.png"
+  ],
+  "accessories": [
+    "acc-gps"
+  ],
+  "taskCount": 1,
+  "written": [],
+  "failed": 1
+}

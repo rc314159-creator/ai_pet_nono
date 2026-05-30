@@ -4,7 +4,7 @@ description: 把用户构想、产品主闭环、桌宠/应用窗口/Agent/记�
 status: 已批准
 created: 2026-05-31
 updated: 2026-05-31
-update_reason: 补齐用户激励、每日任务、排行榜和奖励/服饰解锁的信息架构，避免把修复记录误当成产品真相源。
+update_reason: 修正一分钟循环为 Agent Cron 定时陪伴，由 Agent 结合当前时间和上下文生成情感陪伴话。
 doc_type: architecture-spec
 domain_taxa:
   - product-logic
@@ -28,7 +28,7 @@ related:
 
 ## 文档定位
 
-本文是 AI Pet 的“整体构想和项目逻辑”入口。进入项目后，不应该每次先靠读 `src/App.tsx`、`server/agent.ts` 或 Electron main 进程来反推产品形态；应先读 `../INDEX.md`，再读本文、当前系统架构、产品规格和模块索引。
+本文是 AI Pet 的“整体构想和项目逻辑”入口。进入项目后，不应该每次先靠读 `src/app/App.tsx`、`server/agent.ts` 或 Electron main 进程来反推产品形态；应先读 `../INDEX.md`，再读本文、当前系统架构、产品规格和模块索引。
 
 修复记录只放历史问题；模块 spec 写具体模块契约；本文负责把用户构想、产品闭环、层级职责和数据流串起来。
 
@@ -112,9 +112,9 @@ flowchart TD
 
 | 层 | 职责 | 当前代码入口 |
 |---|---|---|
-| 桌宠层 | 常驻桌面、响应点击、播放动作、接收主动提醒和 Agent 动作命令 | `desktop-photo-pet/`, `public/assets/pets/mochi/motions/manifest.json` |
-| 应用窗口层 | 点击桌宠后弹出，承载五个主入口和对话页面 | `desktop-photo-pet/main.cjs`, `desktop-app/main.cjs` |
-| Renderer UI 层 | 渲染页面、收集输入、展示消息/工具卡片/动作状态 | `src/App.tsx`, `src/styles.css` |
+| 桌宠层 | 常驻桌面、响应点击、播放动作、接收主动提醒和 Agent 动作命令 | `desktop/photo-pet/`, `public/assets/pets/mochi/motions/manifest.json` |
+| 应用窗口层 | 点击桌宠后弹出，承载五个主入口和对话页面 | `desktop/photo-pet/main.cjs`, `desktop/app-window/main.cjs` |
+| Renderer UI 层 | 渲染页面、收集输入、展示消息/工具卡片/动作状态 | `src/app/App.tsx`, `src/app/styles.css` |
 | Domain 层 | 宠物档案、状态、任务、库存、推荐和动作数据结构 | `src/domain/*`, `server/petRuntimeSnapshot.ts` |
 | Agent 层 | 生成宠物回复、调用工具、写记忆、触发桌宠动作 | `server/agent.ts`, `server/opencodeAgent.ts`, `server/mcp.ts`, `.opencode/prompts/` |
 | 持久层 | 保存长期主群聊消息和结构化记忆 | `server/threadStore.ts`, `.ai-pet-data/thread-store.json` |
@@ -221,6 +221,15 @@ Agent Runtime 和 Dog Persona 不是同一个概念。
 - 有狗狗身体感和依恋感，例如“肚皮有点痒”“想先被摸摸确认一下”。
 - 能同步桌宠动作，当前默认触发 `remind`。
 - 写入同一个 thread，下一次进入仍可看到。
+
+当前 Demo 已实现的主动来源：
+
+- 进入对话页的主动提醒：`POST /api/agent/threads/:threadId/proactive`。
+- Agent Cron：`server/petEventRuntime.ts` 默认每 60 秒触发 `cron.companion_checkin`，由 Agent 结合当前时间、推测主人场景、最近群聊和宠物状态生成情感陪伴话。
+- 后台 Hook：`POST /api/agent/hooks` 接收健康、进食、主人回家、外观变化等事件。
+- 同源展示：Timer/Hook 生成的消息先落 `ThreadMessage`，再由对话页轮询和桌宠气泡共同展示；桌宠不再自行拼接“当前未穿戴配饰”这类系统气泡。
+
+“窗边晒太阳、阳台小鸟、垫子打盹、主人回家”只作为手动 Storyboard Hook 或视频排练示例，不是默认一分钟循环的固定内容。
 
 ## 狗狗语气
 

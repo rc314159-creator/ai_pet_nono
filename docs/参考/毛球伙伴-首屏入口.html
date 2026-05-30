@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>毛球伙伴 - 数字生命桌宠</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-warm: #FF9A76;
+            --primary-soft: #FFB4A2;
+            --primary-light: #FFD4C8;
+            --cream-bg: #FFF8F3;
+            --cream-warm: #FFF0E8;
+            --text-primary: #2D2D2D;
+            --text-secondary: #6B6B6B;
+            --text-muted: #9B9B9B;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            /* 保持原有底色 */
+            background: linear-gradient(180deg, #FFF8F3 0%, #FFF0E8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* 设备框架 - 模拟手机屏幕 */
+        .device-frame {
+            width: 430px;
+            height: 932px;
+            background: linear-gradient(180deg, #FFF8F3 0%, #FFE8E0 100%);
+            border-radius: 48px;
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, 0.12),
+                0 10px 30px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #F0F0F0;
+        }
+
+        /* 首屏容器 */
+        .hero-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* 背景装饰 - 柔和的光晕 */
+        .hero-screen::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 154, 118, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-screen::after {
+            content: '';
+            position: absolute;
+            bottom: 30%;
+            right: 10%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 180, 162, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* ===== Logo区域 ===== */
+        .logo-container {
+            position: relative;
+            margin-bottom: 36px;
+            animation: logoFloat 4s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Logo外圈光晕 */
+        .logo-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+            background: radial-gradient(circle, rgba(255, 154, 118, 0.3) 0%, transparent 60%);
+            border-radius: 50%;
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* Logo主体 - 爪印+爱心 */
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(145deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow:
+                0 20px 50px rgba(255, 154, 118, 0.35),
+                0 8px 20px rgba(255, 154, 118, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            animation: logoAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        @keyframes logoAppear {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 爪印SVG */
+        .logo svg {
+            width: 72px;
+            height: 72px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        /* ===== 品牌名 ===== */
+        .brand-name {
+            font-family: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
+            font-size: 42px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            letter-spacing: 6px;
+            text-shadow: 0 2px 8px rgba(255, 154, 118, 0.2);
+            animation: textSlideUp 0.6s ease-out 0.3s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes textSlideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== Slogan ===== */
+        .slogan {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 50px;
+            line-height: 1.8;
+            letter-spacing: 2px;
+            animation: textSlideUp 0.6s ease-out 0.5s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* Slogan中的关键词高亮 */
+        .slogan .keyword {
+            color: var(--primary-warm);
+            font-weight: 500;
+        }
+
+        /* ===== CTA按钮 ===== */
+        .cta-container {
+            animation: textSlideUp 0.6s ease-out 0.7s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .cta-btn {
+            padding: 18px 56px;
+            background: linear-gradient(145deg, var(--primary-warm) 0%, var(--primary-soft) 100%);
+            border: none;
+            border-radius: 28px;
+            color: white;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 17px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow:
+                0 12px 35px rgba(255, 154, 118, 0.4),
+                0 4px 12px rgba(255, 154, 118, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 按钮hover效果 */
+        .cta-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow:
+                0 18px 45px rgba(255, 154, 118, 0.45),
+                0 8px 20px rgba(255, 154, 118, 0.3);
+        }
+
+        .cta-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        /* 按钮内部光效 */
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .cta-btn:hover::before {
+            left: 100%;
+        }
+
+        /* ===== 底部装饰 ===== */
+        .bottom-decoration {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.6s ease-out 1s forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .bottom-decoration span {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .bottom-decoration svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            animation: heartBeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 480px) {
+            .device-frame {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+
+            .brand-name {
+                font-size: 36px;
+            }
+
+            .slogan {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="hero-screen">
+            <!-- Logo区域 -->
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <div class="logo">
+                    <!-- AI生成的爪印+爱心 Logo v4 -->
+                    <img src="logo-paw-heart-v4.jpg" alt="毛球伙伴Logo" style="width: 80px; height: 80px; object-fit: contain; border-radius: 16px;">
+                </div>
+            </div>
+
+            <!-- 品牌名 -->
+            <h1 class="brand-name">毛球伙伴</h1>
+
+            <!-- Slogan -->
+            <p class="slogan">
+                让<span class="keyword">陪伴</span>有温度<br>
+                让<span class="keyword">记录</span>有故事<br>
+                让<span class="keyword">爱</span>被看见
+            </p>
+
+            <!-- CTA按钮 -->
+            <div class="cta-container">
+                <button class="cta-btn">开始陪伴</button>
+            </div>
+
+            <!-- 底部装饰 -->
+            <div class="bottom-decoration">
+                <span>数字生命桌宠</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -98,8 +98,8 @@ Demo 阶段持久化路径：
 退出 App：
 
 1. 应用窗口关闭。
-2. `desktop-photo-pet/main.cjs` 恢复桌宠窗口并发送 `desktop-photo-pet:app-window-closed`。
-3. `desktop-photo-pet/runtime.js` 同时强制拉取最新对话气泡和最新外观状态。
+2. `desktop/photo-pet/main.cjs` 恢复桌宠窗口并发送 `desktop-photo-pet:app-window-closed`。
+3. `desktop/photo-pet/runtime.js` 同时强制拉取最新对话气泡和最新外观状态。
 4. 桌宠按当前 `PetAppearanceState` 立即重绘。
 
 ## 验收标准

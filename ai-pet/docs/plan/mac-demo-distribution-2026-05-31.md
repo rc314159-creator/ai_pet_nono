@@ -27,7 +27,7 @@ related:
 
 - `AI Pet Demo-0.1.0-mac-arm64.zip`：发给对方的压缩包。对方解压后点击 `AI Pet Demo.app` 图标即可启动。
 
-该 zip 的 Electron 主入口是 `desktop-photo-pet/main.cjs`，启动后应显示照片级小狗桌宠。橙色 OpenPets built-in pet 是旧调试入口，不属于当前可交付安装包。
+该 zip 的 Electron 主入口是 `desktop/photo-pet/main.cjs`，启动后应显示照片级小狗桌宠。橙色 OpenPets built-in pet 不属于当前项目运行入口，也不属于当前可交付安装包。
 
 DMG 可作为后续安装体验增强项；当前按用户要求，交付重点收敛为 zip。
 
@@ -90,4 +90,4 @@ DMG 可作为后续安装体验增强项；当前按用户要求，交付重点�
 6. 应用窗口“我的 -> 宠物知识库”可打开。
 7. 发送聊天、保存配饰或完成任务后，知识库更新时间和对应条目实时变化。
 8. 关闭应用窗口后桌宠恢复。
-9. `GET /api/health` 的 `desktopPet` 字段为 `desktop-photo-pet`，不能把旧 OpenPets discovery 当成当前桌宠运行时。
+9. `GET /api/health` 的 `desktopPet` 字段为 `desktop/photo-pet`，响应中不应再出现旧 OpenPets discovery 字段。

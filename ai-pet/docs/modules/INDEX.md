@@ -4,7 +4,7 @@ description: 按产品能力和工程边界组织模块 spec；新功能开发�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 将用户激励、每日任务、排行榜和奖励/服饰解锁拆成独立 P0 模块 spec。
+update_reason: 明确应用窗口默认先进入欢迎/开始陪伴页，开始陪伴后再进入对话主页。
 doc_type: module-spec
 domain_taxa:
   - capability
@@ -40,12 +40,12 @@ related:
 | Agent 工具模块 | P0 | 当前由 OpenCode/opencode 通过 `ai_pet` MCP tools 调用宠物业务能力；OpenAI Agents SDK 仅 fallback | `server/opencodeAgent.ts`, `server/mcp.ts`, `opencode.json`, `architecture/current-system-architecture-2026-05-30.md` |
 | 对话页 Agent 群聊模块 | P0 | 单宠物唯一长期主群聊，可见名字/头像复用 PetProfile，OpenCode/opencode 主路径，文字/语音模式、长期记忆、主动开场和工具调用 | [agent-chat-2026-05-30.md](agent-chat-2026-05-30.md) |
 | 应用内实时知识库模块 | P0 | 在“我的”页展示宠物身份、照护证据、长期记忆和实时事件，并通过本地 JSON store + SSE 实时更新 | [live-knowledge-base-2026-05-31.md](live-knowledge-base-2026-05-31.md), `server/knowledgeBase.ts` |
-| 桌宠核心入口模块 | P0 | `desktop-photo-pet` 照片级 Electron 常驻入口、气泡、动作、异常提示、点击展开应用窗口 | `desktop-photo-pet/`, `public/assets/pets/mochi/motions/manifest.json`, `research/desktop-pet-foundations.md` |
-| 应用窗口模块 | P0 | 点击桌宠后弹出的功能面板，承载陪伴对话、数据异常、换装互动、任务和后续推荐 | `src/App.tsx`, `src/components/*` |
+| 桌宠核心入口模块 | P0 | `desktop/photo-pet` 照片级 Electron 常驻入口、气泡、动作、异常提示、点击展开应用窗口 | `desktop/photo-pet/`, `public/assets/pets/mochi/motions/manifest.json`, `research/desktop-pet-foundations.md` |
+| 应用窗口模块 | P0 | 点击桌宠后弹出的功能面板，承载陪伴对话、数据异常、换装互动、任务和后续推荐 | `src/app/App.tsx`, `src/app/styles.css`, `src/components/*` |
 | 宠物外观单一真相源模块 | P0 | 管理我的页、对话页、状态页和桌面桌宠共享的真实外观状态；当前只把配饰写入同步状态 | [pet-appearance-2026-05-31.md](pet-appearance-2026-05-31.md), `server/appearance.ts`, `src/components/MochiMotionAvatar.tsx` |
 | 证据流与健康解释模块 | P0 | 把设备/手动数据解释成状态、任务和报告 | `research/mock-device-data-spec.md`, `research/health-monitoring.md` |
 | 照护与互动任务模块 | P0 | 生成并完成喂食、遛狗、护理、玩耍等任务 | `src/domain/engine.ts` |
-| 用户激励、任务积分与奖励模块 | P0 | 把每日照护任务完成转成积分、连续天数、排行榜和奖励/服饰解锁反馈 | [user-incentive-2026-05-31.md](user-incentive-2026-05-31.md), `src/domain/engine.ts`, `src/App.tsx`, `research/pet-community-ai-ecosystem/INDEX.md` |
+| 用户激励、任务积分与奖励模块 | P0 | 把每日照护任务完成转成积分、连续天数、排行榜和奖励/服饰解锁反馈 | [user-incentive-2026-05-31.md](user-incentive-2026-05-31.md), `src/domain/engine.ts`, `src/app/App.tsx`, `research/pet-community-ai-ecosystem/INDEX.md` |
 | 商品推荐与换装模块 | P1 | 由库存/任务/状态触发商品、装扮或服务推荐 | `research/open-source-ecommerce/INDEX.md` |
 | 多端入口模块 | P1 | H5/PWA、飞书/微信、小程序、App 的统一入口策略 | `product/product-spec-2026-05-30.md` |
 | 记忆模块 | P0 | 保存主群聊消息、用户显式记忆、宠物事件记忆和记忆召回上下文 | [agent-chat-2026-05-30.md](agent-chat-2026-05-30.md), `server/threadStore.ts` |
@@ -142,7 +142,8 @@ Demo 阶段使用 `server/threadStore.ts` 的本地 JSON store；生产迁移数
 
 应用窗口负责：
 
-- 默认进入陪伴对话主页。
+- 默认进入欢迎/开始陪伴初始页。
+- 用户点击“开始陪伴”后进入陪伴对话主页。
 - 查看和编辑宠物档案。
 - 查看设备/手动数据。
 - 查看异常报告和 AI 分析建议。

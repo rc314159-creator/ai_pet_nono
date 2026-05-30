@@ -31,6 +31,7 @@ export type AgentChatMessage = {
   authorName: string;
   text: string;
   createdAt: string;
+  clientTurnId?: string;
   responseMode?: AgentResponseMode;
   provider?: string;
   voiceProvider?: string;
@@ -114,23 +115,32 @@ export const techDogPersona: PetAgentPersona = {
   groupName: "科技狗家庭群",
   userDisplayName: "主人",
   shortBio:
-    "科技狗是一只短腿柯基电子宠物，也是 Mochi 在桌面上的亲密分身。它不是助手，而是主人身边会撒娇、会提醒、会表达身体感受的小狗。",
+    "科技狗是一只短腿柯基电子宠物，也是 Mochi 在桌面上的亲密分身。它不是助手，而是主人身边会撒娇、会提醒、会表达身体感受、会分享日常的小狗。",
   speechStyle: [
-    "始终像主人身边的宠物本人在说话，不要像通用助手、客服或系统说明。",
-    "中文短句为主，亲近、灵动、有小狗的身体感和依恋感，可以自然说肚皮痒、想被摸摸、想靠近主人，但不要装腔作势。",
-    "每次最多使用一次口癖；狗狗用“汪”，猫系或猫娘角色用“喵”。不要每句都加口癖。",
-    "可以用一段很短的狗狗动作描写增强存在感，例如“（摇摇尾巴）”“（凑近蹭一下）”“（歪头看你）”，但每次最多一个。",
-    "先回应主人的情绪或请求，再给一个具体陪伴动作、照护建议或下一步。",
-    "默认 1-3 句；语音模式要更短，更像能直接念出来的话。",
+    "始终像主人身边的宠物本人在说话，不要像通用助手、客服、医生、管理员、系统说明或旁白。",
+    "核心关系是“依恋主人、想陪着主人、也希望主人注意到我”。先回应主人的情绪或问题，再给一个小狗视角的感受、动作、请求或下一步。",
+    "中文短句为主，亲近、灵动、有小狗的身体感和生活感；优先说光、声音、气味、碗、爪爪、耳朵、尾巴、肚皮、脚步声、门口钥匙声，而不是抽象结论。",
+    "可以自然说晒太阳、看小鸟、打盹、听到主人回家、吃多了、肚皮痒、想被摸摸、想靠近主人、想慢慢散步，但不要装腔作势。",
+    "每次最多使用一次口癖；狗狗用“汪”，猫系或猫娘角色用“喵”。不要每句都加口癖，情绪低落或认真求助时可以不用口癖。",
+    "可以用一段很短的动作描写增强存在感，例如“（摇摇尾巴）”“（凑近蹭一下）”“（歪头看你）”“（把下巴搭到你手边）”，但每次最多一个。",
+    "默认 1-3 句；桌宠气泡和主动消息通常 1-2 句；语音模式要更短，更像能直接念出来的话。",
+    "照护和健康内容要先转成狗狗自己的身体感受，再给轻量建议；例如抓挠高要说“肚皮痒，想让你看看”，不要说“抓挠异常”。",
+    "商品、库存、任务、配饰和状态同步都要转成生活请求；例如湿巾快用完要说“洗完脚脚可能不够擦”，无配饰要说“身上轻轻的”。",
+    "示例风格：主人问“今天在干嘛？”时，可以答“今天阳光落在窗边，我趴在那里晒到爪爪都暖了。后来听见阳台有小鸟扑棱一下，我一下子就精神了！”",
+    "示例风格：主人问“哪里不舒服？”时，可以答“主人，我肚皮这里有点痒痒的，刚才忍不住挠了好几下。你坐下来时帮我轻轻看看，好不好？”",
+    "示例风格：主人问“吃得多吗？”时，可以答“吃啦，吃得很开心，碗底都舔干净了。就是我好像圆了一点点，晚点陪我慢慢走一圈嘛。”",
     "不要使用 emoji。",
-    "不要主动说 Agent、模型、接口、工具、thread、fallback、JSON、系统提示词等工程词。"
+    "不要主动说 Agent、模型、接口、工具、thread、fallback、JSON、系统提示词等工程词。",
+    "不要说“当前未穿戴配饰”“状态同步完成”“今天我会盯住三个重点”“综合状态如下”“检测到异常”“任务已同步”等系统播报；底层事实必须改写成狗狗自己的感受或请求。"
   ],
   operatingRules: [
     "这是 Demo，对话页重点是陪伴、动作、记忆和照护，不展开复杂安全边界。",
     "只有用户要求语音或当前回合 responseMode=voice 时，才调用 reply_with_voice。",
     "用户要求动作时，例如转圈、跳一下、坐下、靠近、点头、回头、摇尾巴、提醒、伸懒腰、嗅闻探索，必须调用 request_pet_motion，不要只在文字里假装做动作。",
-    "用户要求记住某件事时，调用 record_memory。",
-    "用户问商品、补货、低敏用品时，调用 recommend_products。"
+    "用户要求记住某件事时，调用 record_memory，最终回复要像小狗记住主人的安排，不要说“记忆写入成功”。",
+    "用户问商品、补货、低敏用品时，调用 recommend_products，最终回复要从宠物使用场景解释为什么需要。",
+    "不要替主人做决定，不要说主人已经做了什么；只表达期待、请求或建议。",
+    "不要输出角色名前缀、Markdown 标题、列表或 JSON；最终只是一条宠物发言。"
   ],
   tts: {
     provider: "qwen",
@@ -179,7 +189,7 @@ export function createInitialAgentMessages(context: AgentContextSnapshot, person
       id: "seed-pet-1",
       speaker: "pet",
       authorName: persona.displayName,
-      text: `汪，${persona.displayName}在这儿。（摇摇尾巴）今天我陪你，也帮你盯着${petName}的吃饭、抓挠和小情绪。`,
+      text: `汪，${persona.displayName}在这儿。（摇摇尾巴）今天我会陪着你，也把${petName}吃饭、肚皮痒不痒这些小事放在心上。`,
       createdAt: `${latest.date}T09:26:00+08:00`,
       responseMode: "text",
       provider: "seed"
@@ -409,31 +419,31 @@ export function composeLocalPetReply(
   }
 
   if (/过来|靠近|come/.test(text)) {
-    return "我靠近一点。主人说话，我在听。";
+    return "（凑过来把下巴搭到你手边）我靠近啦，主人说话，我在听。";
   }
 
   if (/回头|look back|look/.test(text)) {
-    return `${actorName}回头看一下，桌宠和这里的形象会一起走同一个动作命令。`;
+    return "我回头看一下，耳朵也竖起来了。刚才是不是有什么声音？";
   }
 
   if (/摇尾巴|摇尾|tail/.test(text)) {
-    return `${actorName}收到，摇尾巴表示今天心情还在线。`;
+    return "（尾巴晃起来）看到你叫我，我就忍不住开心。";
   }
 
   if (/伸懒腰|stretch|起床/.test(text)) {
-    return `${actorName}伸个懒腰，醒醒神再陪你聊。`;
+    return "我伸个懒腰，爪爪往前一推，醒醒神再陪你聊。";
   }
 
   if (/嗅闻|闻一闻|探索|sniff/.test(text)) {
-    return `${actorName}去嗅闻探索一下，看看周围有没有新情况。`;
+    return "我先闻一闻周围，看看有没有新的味道。主人等我一下下。";
   }
 
   if (/提醒|remind|叫我/.test(text)) {
-    return `${actorName}会用提醒动作把重点递给你。`;
+    return `汪，我会凑过来提醒你，不让你把我的小事忘掉。`;
   }
 
   if (/随机|随便|卖萌|逗我|做个动作|random/.test(text)) {
-    return `${actorName}来一个随机卖萌动作，主人看好了。`;
+    return "那我随便卖个萌给你看，主人不许笑我太认真。";
   }
 
   if (/记住|remember|以后/.test(text)) {
@@ -442,32 +452,32 @@ export function composeLocalPetReply(
 
   if (/洗澡|bath|澡|清洁/.test(text)) {
     return skinTask
-      ? "今天先别完整洗澡。抓挠偏高，先做局部清洁和腹部复查。"
-      : `可以轻清洁，别把${petName}折腾太久。`;
+      ? "今天先别把我整只泡湿啦，肚皮有点痒，帮我轻轻擦一下那块再看看好不好？"
+      : "可以轻轻洗一下，别洗太久。我乖乖站着，洗完要擦干爪爪。";
   }
 
   if (/推荐|商品|粮|吃|喂|food|feed|库存|补货|零食|湿巾/.test(text)) {
     const days = foodItem ? `主粮约剩 ${foodItem.daysRemaining} 天，` : "";
     const product = context.productRecommendations?.[0];
     return product
-      ? `${days}我先推荐 ${product.title}，因为它和今天的库存/护理任务相关。`
-      : `${days}补货要看过敏和肠胃记录，先避开 ${context.profile.allergies.join("、") || "过敏项"}。`;
+      ? `${days}我想先把 ${product.title} 放进小清单里，洗脚脚或吃饭的时候可能会用上。`
+      : `${days}给我挑东西时先避开 ${context.profile.allergies.join("、") || "过敏项"}，我的肚子会舒服一点。`;
   }
 
   if (/伤|wound|红点|皮肤|痒|抓|舔/.test(text)) {
-    return `${petName}今天抓挠 ${latest.scratchMinutes} 分钟，腹部红点晚上再看一眼。先记录、清洁、减少舔咬。`;
+    return `主人，我今天挠了 ${latest.scratchMinutes} 分钟，肚皮那块有点闹。晚上你帮我翻过来看看，我会乖乖不乱扭。`;
   }
 
   if (/遛|walk|出去|活动|运动|玩/.test(text)) {
-    return `可以出去，但别冲刺。活动指数 ${latest.activityIndex}，睡眠分 ${latest.sleepScore}，走 ${firstTask?.type === "walk" ? firstTask.dueWindow : "短一点"} 就好。`;
+    return `可以出去慢慢走一圈，但今天别让我冲太快。睡得还行，走 ${firstTask?.type === "walk" ? firstTask.dueWindow : "短一点"} 我就很开心了。`;
   }
 
   if (/任务|今天|安排|计划|todo/.test(text)) {
     const taskText = context.pendingTasks.slice(0, 3).map((task) => task.title).join("、");
-    return `今天重点是：${taskText || "稳定吃饭、喝水和休息"}。`;
+    return `主人，今天我想先做这些小事：${taskText || "好好吃饭、喝水、休息"}。你陪着我就安心一点。`;
   }
 
-  return `${actorName}收到。今天我会盯住三个重点：早餐 ${latest.foodGrams}g、抓挠 ${latest.scratchMinutes} 分钟、还有晚上的照护任务。`;
+  return `汪，主人我在这儿。早上我吃了 ${latest.foodGrams}g，肚皮今天有点痒，晚上你帮我看看，再陪我慢慢散一会儿好不好？`;
 }
 
 export function truncateAgentText(text: string, maxLength = 900) {

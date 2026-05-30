@@ -20,9 +20,10 @@
 - 产品主线：AI 电子宠物陪伴和真实宠物数字分身共存；电子宠物可以是纯虚拟宠物，也可以是真实宠物在系统中的分身。
 - 用户优先级：优先服务已有真实宠物的人群，同时兼顾没有真实宠物但需要 AI 电子宠物陪伴的人群。
 - Demo 主闭环：系统级桌宠 + 点击桌宠弹出的应用窗口必须同时跑通，用真实宠物档案、设备/手动数据、照护任务、AI 解释、桌宠核心入口和装扮/后续推荐形成完整开发闭环。
-- 当前可运行桌宠底座：默认使用 `desktop-photo-pet` 的照片级 Electron 桌宠集成入口；OpenPets 降为旧调试/备选入口，不能再作为当前完整 Demo 的默认验证对象。
+- 当前可运行桌宠底座：只使用 `desktop/photo-pet` 的照片级 Electron 桌宠集成入口；OpenPets 仅保留为历史调研证据，不再保留运行入口、API 桥接或交付版备选路径。
 - 桌宠定位：桌宠是核心入口，不是表现层；必须支持常驻、提醒、状态表达、点击展开和轻交互。复杂操作在弹出的应用窗口中完成，并同步回桌宠。
 - 应用窗口定位：应用窗口不是 HTML 展示页或营销页，而是点击桌宠后展开的产品功能面板；可用 React/Vite 等前端技术渲染，但产品口径统一称为应用窗口/宠物面板。
+- App 可用性口径：用户说“App 不能用”时，默认指完整桌面 App 链路不可用；必须检查或启动 `npm run dev` / `desktop/photo-pet` Electron 进程。`127.0.0.1:5180` 只是 renderer 调试地址，不能当成 App，也不能作为最终验收。
 - AI/agent 底座：当前对话主路径是 OpenCode/opencode runtime + `ai_pet` MCP tools；OpenAI Agents SDK 只作为 fallback，不能描述为最终 Agent 底座。
 - 健康监测：Demo 不等待真实硬件 API；用足够完整的 mock/手动数据把健康解释、任务、桌宠提醒和汇报闭环跑通。
 - 用户激励：从“我的”页点击“用户激励”进入独立子流程；每日任务、排行榜和奖励/可解锁服饰继续进入详情页。装扮仍是“我的”页内既有功能，任何“奖励获得”的服饰或配饰必须在用户激励奖励页有对应解锁来源。
@@ -137,15 +138,22 @@
 - [2026-05-30 对话页 Agent Runtime 未按 OpenCode/Claude Code 等成熟开源 Agent 接入问题记录](fix-records/2026-05-30-agent-runtime-open-source-agent-misalignment.md)
 - [2026-05-30 对话页 Agent 动作链路 E2E 未返回动作问题记录](fix-records/2026-05-30-agent-motion-e2e-no-response.md)
 - [2026-05-31 对话页历史记录未持久化导致每次进入都是新会话问题记录](fix-records/2026-05-31-chat-history-not-persisted.md)
+- [2026-05-31 对话页用户消息连续发送两遍问题记录](fix-records/2026-05-31-chat-user-message-double-send.md)
 - [2026-05-31 对话页桌宠动作气泡多余与主动提醒重复问题记录](fix-records/2026-05-31-chat-motion-card-and-proactive-duplicate.md)
 - [2026-05-31 关闭应用窗口后桌宠恢复与桌宠气泡同源问题记录](fix-records/2026-05-31-desktop-pet-restore-and-shared-bubble-source.md)
 - [2026-05-31 桌宠气泡重复展示与 Agent/Dog Persona 逻辑未对齐问题记录](fix-records/2026-05-31-desktop-bubble-repeat-and-agent-persona-runtime.md)
+- [2026-05-31 非 AI 外观气泡与 Hook/Persona 未完整闭环问题记录](fix-records/2026-05-31-non-ai-appearance-bubble-and-hook-persona-gap.md)
+- [2026-05-31 Cron 定时陪伴被误做成固定视频脚本问题记录](fix-records/2026-05-31-cron-loop-hardcoded-demo-beats-misalignment.md)
 - [2026-05-31 市集推荐页泄露推荐过程说明问题记录](fix-records/2026-05-31-market-recommendation-process-copy-leak.md)
 - [2026-05-31 对话页内部 Thread ID 暴露与用户激励闭环缺失问题记录](fix-records/2026-05-31-incentive-loop-and-thread-id-ui-leak.md)
 - [2026-05-31 用户激励子页返回按钮与应用关闭按钮重叠问题记录](fix-records/2026-05-31-incentive-subpage-back-close-overlap.md)
+- [2026-05-31 状态页返回按钮与应用关闭按钮重叠问题记录](fix-records/2026-05-31-status-page-back-close-overlap.md)
+- [2026-05-31 点击桌宠跳过“开始陪伴”初始页问题记录](fix-records/2026-05-31-desktop-pet-click-skips-welcome-page.md)
+- [2026-05-31 入口页 Logo 图标素材修正记录](fix-records/2026-05-31-welcome-logo-asset-correction.md)
 - [2026-05-31 对话页发送后等待态同时显示文案和省略点问题记录](fix-records/2026-05-31-chat-pending-indicator-duplicate-cue.md)
 - [2026-05-31 状态页未严格对齐参考项目交互问题记录](fix-records/2026-05-31-status-page-reference-interaction-misalignment.md)
 - [2026-05-31 桌宠显示橙色像素宠物而不是小狗问题记录](fix-records/2026-05-31-orange-pixel-pet-instead-of-dog.md)
+- [2026-05-31 海报初稿误做成主视觉而非图文丰富项目海报问题记录](fix-records/2026-05-31-poster-visual-only-not-content-rich.md)
 
 ## 已有验证证据
 

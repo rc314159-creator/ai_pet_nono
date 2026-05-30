@@ -4,7 +4,7 @@ description: 明确 AI Pet 中 Agent Runtime、Dog Persona、后台数据 Hook�
 status: 已批准
 created: 2026-05-31
 updated: 2026-05-31
-update_reason: 对齐用户要求：先把 Agent 大脑、狗狗伙伴表达和气泡短时展示逻辑写清楚，再开发验证。
+update_reason: 修正 Cron 定时陪伴语义：默认循环由 Agent 按当前时间和上下文生成陪伴话，固定视频脚本只作为手动 Storyboard Hook。
 doc_type: architecture-spec
 domain_taxa:
   - agent-runtime
@@ -77,8 +77,10 @@ Dog Persona 的职责：
 - 展示时长固定为 5-10 秒，当前 Demo 取 8 秒。
 - 展示结束后隐藏，不在下一轮轮询中重复显示同一条消息。
 - 动作循环、appearance 轮询、窗口恢复和定时轮询都不能重播已经展示过的 `messageId`。
+- 桌宠启动、刷新或 API 恢复时，第一次读到的服务端最新消息只作为水位线，不展示历史消息。
 - 如果应用窗口关闭时最新消息已经在桌宠上展示过，桌宠恢复后不再重复播报。
 - 如果应用窗口关闭时存在桌宠从未展示过的新消息，则恢复后展示一次 8 秒。
+- 非对话类短提示（例如外观同步 note）也必须有稳定事件 key，走同样的 8 秒短时展示通道，不能因为轮询生成新 `updatedAt` 而重复出现。
 
 ## 主动性来源
 
@@ -100,14 +102,27 @@ Timer/DomainHook
   -> App Chat + Desktop Speech Bubble + Motion Command
 ```
 
-## 当前实现偏差
+## 当前实现状态
 
-当前代码仍有以下偏差，后续开发必须纠正：
+2026-05-31 当前 Demo 已落地最小 Agent Runtime 闭环：
 
-- OpenCode/opencode 目前是通过 CLI adapter 一次性调用，不是长期运行的宠物大脑。
-- `createProactiveAgentMessage` 仍是项目侧手写规则，不是由 Agent Runtime 的 timer/hook 主循环统一触发。
-- 部分主动文案仍偏管理员，例如“今天我会盯住三个重点”。
-- 桌宠 runtime 曾把同一条最新消息在轮询、窗口恢复和可见性变化时反复展示。
+- `server/petEventRuntime.ts` 是当前最小宠物事件运行时。
+- `startPetEventRuntime()` 在 API 服务启动后开启 Agent Cron，默认 5 秒首 tick、随后按 `AI_PET_COMPANION_CRON`/`AI_PET_COMPANION_CRON_INTERVAL_MS` 定时触发；默认等价于每 1 分钟一次，可通过 `AI_PET_PROACTIVE_DISABLED=1` 禁用。
+- 默认 Cron 事件是 `cron.companion_checkin`：它不是固定脚本，而是把当前时间、时间段、最近群聊、宠物状态和可选主人场景交给 Agent 生成情感陪伴话。
+- `POST /api/agent/hooks` 是领域 Hook 入口，当前支持 `cron.companion_checkin`、`timer.daily_life`（兼容别名）、`demo.window_sun`、`demo.bird_watch`、`demo.nap`、`owner.returned`、`health.scratch_high`、`food.ate_more`、`appearance.changed`。
+- Cron 事件按 tick 槽位去重，保证一分钟循环可持续；同一 `ThreadMessage.id` 在桌宠上最多展示一次。
+- `demo.window_sun/demo.bird_watch/demo.nap/owner.returned` 只用于手动 Storyboard Hook 或录制排练，不能进入默认 Cron 循环。
+- Runtime 会用 llmmelon 生成 Dog Persona 消息；如果模型失败，才用本地狗狗语气模板兜底。
+- Runtime 生成的可见文本先写入 `server/threadStore.ts`，再用 `ExpressionCommand.context.messageId` 和 `context.bubbleText` 通知桌宠，保证应用对话页和桌宠气泡同源。
+- `desktop-photo-pet/runtime.js` 不再直接展示 `appearance.note`；外观状态只更新形象，用户可见气泡必须来自 `ThreadMessage.text`。
+- `ChatHome` 会轮询主 thread，合并 timer/hook 在窗口外产生的新消息。
+
+仍需区分的后续工程方向：
+
+- OpenCode/opencode 当前仍主要服务用户发起的对话工具调用；`PetEventRuntime` 是项目侧最小主动运行时，不等同于完整开源 Agent 常驻进程。
+- 当前 Hook 总线是 Express API + 本地事件函数，尚未接真实硬件后台流、消息队列或生产数据库。
+- 当前持久层是 `.ai-pet-data/thread-store.json`，生产方向仍应迁移到 SQLite、PostgreSQL 或正式应用数据库。
+- 当前没有真实桌面活动识别或摄像头/日历接入时，Cron 只能按时间段温和推测主人场景，例如“是不是在吃午饭呀”，不能假装真实看见主人行为。
 
 ## 开发准则
 

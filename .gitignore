@@ -3,6 +3,9 @@
 # Local automation state
 /.playwright-mcp/
 
+# Generated handoff packages and export bundles
+/exports/
+
 # Root-level temporary screenshots and ad-hoc captures.
 /*.png
 

@@ -4,7 +4,7 @@ description: 明确桌宠点击打开应用窗口的基础跳转协议，以及�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 补充应用窗口关闭后桌宠恢复兜底，以及桌宠气泡和对话页主动消息同源的事件协议。
+update_reason: 统一桌宠点击默认入口：无显式目标视图时先打开欢迎/开始陪伴页，再由用户进入对话主页。
 doc_type: architecture-protocol
 domain_taxa:
   - desktop-runtime
@@ -43,13 +43,14 @@ related:
 - 如果应用窗口未启动：启动 Electron 应用窗口。
 - 如果应用窗口已启动但在后台：聚焦已有窗口。
 - 如果带有目标视图：跳转到对应应用窗口页签。
-- 如果没有目标视图：默认进入陪伴对话页。
+- 如果没有目标视图：默认进入欢迎/开始陪伴初始页。
+- 用户在欢迎页点击“开始陪伴”后：进入陪伴对话页。
 - 应用窗口关闭、隐藏或销毁后：桌宠必须恢复显示；恢复后桌宠应读取最新同源宠物事件作为气泡。
 
 ### 最小事件字段
 
 ```ts
-type AppWindowTargetView = "chat" | "status" | "outfit" | "tasks";
+type AppWindowTargetView = "welcome" | "chat" | "status" | "outfit" | "tasks";
 
 type OpenAppWindowEvent = {
   type: "pet.open_app_window";
@@ -65,7 +66,8 @@ type OpenAppWindowEvent = {
 
 | 触发来源 | 默认目标 |
 |---|---|
-| 点击桌宠本体 | `chat` |
+| 点击桌宠本体 | `welcome` |
+| 欢迎页点击“开始陪伴” | `chat` |
 | 点击异常气泡 | `status` |
 | 点击照护任务提醒 | `tasks` |
 | 点击换装/装扮反馈 | `outfit` |
@@ -158,7 +160,7 @@ type ExpressionCommand = {
     messageId?: string;
     bubbleText?: string;
     conversationId?: string;
-    targetView?: "chat" | "status" | "outfit" | "tasks";
+    targetView?: "welcome" | "chat" | "status" | "outfit" | "tasks";
   };
 };
 ```
@@ -186,6 +188,8 @@ type ExpressionCommand = {
 - 展示结束后隐藏 speech bubble，不保持常驻。
 - 定时轮询、窗口恢复、visibilitychange 和 motion command 都不能绕过去重重播旧消息。
 - 如果有新 `ThreadMessage.id`，可立即替换当前气泡并重新计时。
+- 桌宠启动、刷新或 API 恢复后的第一次服务端最新消息只建立水位线，不补播历史。
+- appearance note、换装提示等非对话短提示也必须有稳定事件 key，并走同一套 8 秒展示和去重规则。
 
 ## 应用窗口关闭恢复协议
 

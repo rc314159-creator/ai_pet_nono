@@ -51,8 +51,8 @@ related:
 
 - 开始前必须执行 `git status --short`，识别其他开发线的未提交改动。
 - 不要回滚、格式化或重写自己工作流之外的文件。
-- 应用窗口端默认不修改 `desktop-photo-pet/`、`public/assets/pets/mochi/motions/`、`scripts/motion_pack/` 和 `reports/desktop-photo-pet-*`。
-- 桌宠形象端默认不修改 `src/App.tsx`、`src/styles.css`、`desktop-app/` 和应用窗口截图报告。
+- 应用窗口端默认不修改 `desktop/photo-pet/`、`public/assets/pets/mochi/motions/`、`scripts/motion_pack/` 和 `reports/desktop-photo-pet-*`。
+- 桌宠形象端默认不修改 `src/app/App.tsx`、`src/app/styles.css`、`desktop/app-window/` 和应用窗口截图报告。
 - 共享领域数据修改必须保持 `src/domain/` 的纯函数和类型边界，不能把完整后台、agent loop 或远程服务塞进 React 组件。
 - 每个工作流完成后必须更新相关知识库文档或实施记录，不能只改代码。
 - 视觉类工作必须留下截图证据；入口和联动类工作必须留下可复现的启动/点击/日志证据。
@@ -75,9 +75,9 @@ related:
 
 ### 优先文件
 
-- `ai-pet/src/App.tsx`
-- `ai-pet/src/styles.css`
-- `ai-pet/desktop-app/main.cjs`
+- `ai-pet/src/app/App.tsx`
+- `ai-pet/src/app/styles.css`
+- `ai-pet/desktop/app-window/main.cjs`
 - `ai-pet/vite.config.ts`
 - `reports/application-window-ui-2026-05-30/`
 - `ai-pet/docs/plan/implementation-log-2026-05-30.md`
@@ -86,7 +86,7 @@ related:
 
 - 不做桌宠照片级形象、动作帧和透明窗口调参。
 - 不把应用窗口当成浏览器 HTML 展示页。
-- 不改桌宠形象线正在使用的 `desktop-photo-pet/`。
+- 不改桌宠形象线正在使用的 `desktop/photo-pet/`。
 
 ### 验收
 
@@ -115,7 +115,7 @@ related:
 - `ai-pet/src/domain/types.ts`
 - `ai-pet/src/domain/mockData.ts`
 - `ai-pet/src/domain/engine.ts`
-- `ai-pet/src/App.tsx` 中只做必要接入。
+- `ai-pet/src/app/App.tsx` 中只做必要接入。
 - `ai-pet/docs/architecture/technical-architecture-2026-05-30.md`
 - `ai-pet/docs/modules/INDEX.md`
 
@@ -150,7 +150,7 @@ related:
 
 ### 优先文件
 
-- `ai-pet/desktop-app/`
+- `ai-pet/desktop/app-window/`
 - `ai-pet/server/openpets.ts`
 - `ai-pet/src/domain/types.ts`
 - `ai-pet/docs/architecture/technical-architecture-2026-05-30.md`
@@ -159,7 +159,7 @@ related:
 
 ### 禁止/谨慎
 
-- 该工作流会碰到桌宠形象线边界。若需要改 `desktop-photo-pet/`，必须确认当前对话明确领取了联动工作，且先检查该目录是否有他人未提交改动。
+- 该工作流会碰到桌宠形象线边界。若需要改 `desktop/photo-pet/`，必须确认当前对话明确领取了联动工作，且先检查该目录是否有他人未提交改动。
 - 不在联动协议里耦合具体宠物动作帧生成逻辑。
 - 不让应用窗口、agent 或手环数据绕过动作仲裁直接控制桌宠渲染器。
 - 不在对话页组件里直接解析“转圈/跳一下”等自然语言并控制桌宠；这些必须走 agent 工具接口。
@@ -196,7 +196,7 @@ related:
 
 ### 禁止/谨慎
 
-- 不把模型调用直接写在 `src/App.tsx`。
+- 不把模型调用直接写在 `src/app/App.tsx`。
 - 不把私有 key 写入仓库或知识库。
 - 不把未完成 agent 能力描述为已完成后台。
 
@@ -221,7 +221,7 @@ related:
 
 ### 优先文件
 
-- `ai-pet/desktop-photo-pet/`
+- `ai-pet/desktop/photo-pet/`
 - `ai-pet/public/assets/pets/mochi/`
 - `ai-pet/scripts/motion_pack/`
 - `reports/desktop-photo-pet-*`
@@ -273,33 +273,33 @@ related:
 - `_GAP.md` 记录仍未解决的问题。
 - 根目录没有新增临时截图或日志。
 
-## 工作流 G：旧宽屏 MVP 组件清理或迁移
+## 工作流 G：过时 MVP 组件清理
 
 ### 目标
 
-清理当前手机比例应用窗口未引用的早期宽屏 MVP 组件，降低后续并行开发误读成本。
+已完成。当前项目只有一个 App，不保留旧宽屏 MVP 或旧源码目录，避免后续并行开发误读。
 
 ### 范围
 
-- 审计 `ai-pet/src/components/` 的真实引用关系。
-- 决定删除、迁移到 `src/legacy/`，或拆出仍有价值的组件。
-- 更新文档说明旧组件状态。
+- `ai-pet/src/components/` 只保留当前 App 实际引用的组件。
+- `ai-pet/src/app/App.tsx` 和 `ai-pet/src/app/styles.css` 是应用窗口唯一主入口。
+- 过时组件已删除，不再迁移到任何旧源码目录。
 
 ### 优先文件
 
 - `ai-pet/src/components/`
-- `ai-pet/src/App.tsx`
+- `ai-pet/src/app/App.tsx`
 - `ai-pet/docs/knowledge-base/project-directory-map-2026-05-30.md`
 - `ai-pet/docs/_GAP.md`
 
 ### 禁止/谨慎
 
-- 该工作流需要用户或负责人确认后再执行删除。
-- 不要在视觉工作未稳定前大规模重构组件目录。
+- 不要重新创建旧源码目录。
+- 不要恢复旧宽屏 MVP 组件作为备用入口。
 
 ### 验收
 
-- `rg "from './components|from \"./components|components/" ai-pet/src` 确认引用关系。
+- `rg "旧宽屏|早期宽屏" ai-pet/src` 无结果。
 - `npm run typecheck` 和 `npm run build` 通过。
 - 目录地图和 `_GAP.md` 同步更新。
 
@@ -319,7 +319,7 @@ related:
 
 暂缓：
 
-1. 工作流 G：旧宽屏 MVP 组件清理或迁移。
+1. 无。工作流 G 已完成，不再暂缓。
 
 ## 依赖关系
 
@@ -353,7 +353,7 @@ Mock 数据/领域层对话：
 桌宠形象对话：
 
 ```text
-请先读取 AI Pet 知识库和并行开发工作流，领取工作流 E：桌宠形象与动作包线。只处理 desktop-photo-pet、宠物素材和动作报告，不改应用窗口布局。
+请先读取 AI Pet 知识库和并行开发工作流，领取工作流 E：桌宠形象与动作包线。只处理 `desktop/photo-pet/`、宠物素材和动作报告，不改应用窗口布局。
 ```
 
 联动协议对话：

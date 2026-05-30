@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>毛球伙伴 - 状态监测</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-warm: #FF9A76;
+            --primary-soft: #FFB4A2;
+            --cream-bg: #FFF8F3;
+            --cream-light: #FFFCFA;
+            --text-primary: #2D2D2D;
+            --text-secondary: #6B6B6B;
+            --text-muted: #9B9B9B;
+            --accent-blue: #7EC8E3;
+            --accent-blue-bg: #EBF5FB;
+            --accent-green: #7ED3A8;
+            --accent-green-bg: #E8F8F0;
+            --accent-pink: #F4A9A8;
+            --accent-pink-bg: #FFF0EF;
+            --accent-orange: #FF8A65;
+            --accent-orange-bg: #FFF3ED;
+            --shadow-soft: 0 2px 12px rgba(0,0,0,0.05);
+            --shadow-medium: 0 6px 24px rgba(0,0,0,0.08);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #F5F0ED 0%, #EDE5E0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ===== 设备外框 ===== */
+        .device-frame {
+            width: 430px;
+            height: 932px;
+            background: var(--cream-bg);
+            border-radius: 48px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.15), 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #F0F0F0;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            background: var(--cream-bg);
+        }
+
+        /* ===== 主页面滚动区域 ===== */
+        .status-page {
+            width: 100%;
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 20px;
+        }
+
+        /* ===== 顶部导航 ===== */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--cream-bg);
+        }
+
+        .nav-back {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.2s;
+        }
+        .nav-back:hover { transform: scale(1.05); }
+        .nav-back svg { width: 18px; height: 18px; stroke: var(--text-secondary); }
+
+        .nav-title-group { text-align: center; }
+        .nav-title { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+        .nav-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        .nav-settings {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow-soft);
+        }
+        .nav-settings svg { width: 18px; height: 18px; stroke: var(--text-secondary); }
+
+        /* ===== 快捷入口按钮 ===== */
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            padding: 12px 24px 16px;
+        }
+
+        .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+        .action-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-medium); }
+
+        .action-btn.history {
+            background: var(--accent-orange-bg);
+            color: var(--accent-orange);
+        }
+        .action-btn.health {
+            background: var(--accent-blue-bg);
+            color: var(--accent-blue);
+        }
+
+        .action-btn svg { width: 18px; height: 18px; }
+
+        /* ===== 宠物状态卡片 ===== */
+        .pet-status-card {
+            margin: 0 20px 16px;
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pet-status-card::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(126,200,227,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .pet-image-wrapper {
+            width: 130px;
+            height: 130px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            background: #f5f0ed;
+        }
+
+        .pet-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        /* 睡眠ZZZ动画 */
+        .zzz-animation {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+        .zzz {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            opacity: 0;
+            animation: zzzFloat 2.5s ease-in-out infinite;
+        }
+        .zzz:nth-child(1) { animation-delay: 0s; font-size: 10px; }
+        .zzz:nth-child(2) { animation-delay: 0.8s; font-size: 13px; }
+        .zzz:nth-child(3) { animation-delay: 1.6s; font-size: 16px; }
+
+        @keyframes zzzFloat {
+            0% { opacity: 0; transform: translateY(0) translateX(0); }
+            30% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-20px) translateX(8px); }
+        }
+
+        .status-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pet-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .pet-location svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--primary-warm);
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .status-icon-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.85); }
+        }
+
+        .status-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .status-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ===== 日历选择器 ===== */
+        .calendar-strip {
+            display: flex;
+            justify-content: center;
+            padding: 4px 24px 16px;
+            gap: 4px;
+        }
+
+        .cal-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            min-width: 44px;
+        }
+        .cal-day:hover { background: rgba(255,255,255,0.6); }
+
+        .cal-day.active {
+            background: white;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .cal-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .cal-day.active .cal-label { color: var(--primary-warm); }
+
+        .cal-num {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ===== 数据模块卡片 ===== */
+        .data-modules {
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .data-module {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .data-module:hover { box-shadow: var(--shadow-medium); }
+
+        /* 左侧色条 */
+        .data-module::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 16px;
+            bottom: 16px;
+            width: 4px;
+            border-radius: 0 4px 4px 0;
+        }
+        .data-module.sleep::before { background: var(--accent-blue); }
+        .data-module.activity::before { background: var(--accent-green); }
+        .data-module.rest::before { background: var(--accent-pink); }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-left: 8px;
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .module-icon svg { width: 20px; height: 20px; }
+
+        .data-module.sleep .module-icon { background: var(--accent-blue-bg); }
+        .data-module.sleep .module-icon svg { stroke: var(--accent-blue); }
+        .data-module.activity .module-icon { background: var(--accent-green-bg); }
+        .data-module.activity .module-icon svg { stroke: var(--accent-green); }
+        .data-module.rest .module-icon { background: var(--accent-pink-bg); }
+        .data-module.rest .module-icon svg { stroke: var(--accent-pink); }
+
+        .module-title-group { flex: 1; }
+        .module-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .module-duration {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .module-duration small {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .module-more {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .module-more svg { width: 16px; height: 16px; stroke: var(--text-muted); }
+
+        /* 子分类数据 */
+        .sub-items {
+            display: flex;
+            gap: 0;
+            padding-left: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .sub-items::-webkit-scrollbar { display: none; }
+
+        .sub-item {
+            flex: 1;
+            min-width: 62px;
+            text-align: center;
+            padding: 12px 4px;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+        }
+        .sub-item:hover { background: rgba(0,0,0,0.02); }
+
+        .sub-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 0 auto 6px;
+        }
+        .data-module.sleep .sub-dot { background: var(--accent-blue); }
+        .data-module.activity .sub-dot { background: var(--accent-green); }
+        .data-module.rest .sub-dot { background: var(--accent-pink); }
+
+        .sub-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .sub-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .sub-value small {
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* ===== 底部导航 ===== */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 8px 20px;
+            box-shadow: 0 -2px 16px rgba(0,0,0,0.04);
+            z-index: 50;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 6px 10px;
+            border-radius: 10px;
+        }
+        .nav-item svg { width: 22px; height: 22px; stroke: var(--text-muted); transition: all 0.2s; }
+        .nav-item span { font-size: 10px; color: var(--text-muted); transition: all 0.2s; }
+        .nav-item.active svg { stroke: var(--primary-warm); }
+        .nav-item.active span { color: var(--primary-warm); font-weight: 500; }
+
+        /* ===== 遮罩层 ===== */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 60;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ===== 异常历史 - 左侧滑出面板 ===== */
+        .history-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 85%;
+            height: 100%;
+            background: var(--cream-bg);
+            z-index: 70;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 8px 0 30px rgba(0,0,0,0.1);
+        }
+        .history-panel.open { transform: translateX(0); }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .panel-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            flex: 1;
+        }
+        .panel-close {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow-soft);
+        }
+        .panel-close svg { width: 16px; height: 16px; stroke: var(--text-secondary); }
+
+        .week-nav-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow-soft); transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .week-nav-btn:hover { transform: scale(1.05); box-shadow: var(--shadow-medium); }
+        .week-nav-btn svg { width: 18px; height: 18px; stroke: var(--text-secondary); }
+
+        .week-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 12px 20px;
+        }
+        .week-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: center;
+            min-width: 180px;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        /* 异常事件卡片 */
+        .alert-card {
+            background: white;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            cursor: pointer;
+        }
+
+        .alert-badge {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .alert-badge.watch {
+            background: var(--accent-orange-bg);
+            color: var(--accent-orange);
+        }
+        .alert-badge.resolved {
+            background: var(--accent-green-bg);
+            color: var(--accent-green);
+        }
+
+        .alert-info { flex: 1; min-width: 0; }
+        .alert-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .alert-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .alert-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .alert-summary {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .alert-toggle {
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+        .alert-toggle svg { width: 16px; height: 16px; stroke: var(--text-muted); }
+        .alert-card.expanded .alert-toggle { transform: rotate(180deg); }
+
+        /* 展开详情 */
+        .alert-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .alert-card.expanded .alert-detail {
+            max-height: 500px;
+        }
+
+        .alert-detail-inner {
+            padding: 0 16px 16px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .detail-section {
+            margin-top: 14px;
+        }
+        .detail-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .detail-section-title svg { width: 14px; height: 14px; }
+
+        .detail-data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+        .detail-data-label { font-size: 12px; color: var(--text-secondary); }
+        .detail-data-value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .detail-data-value.negative { color: var(--accent-orange); }
+
+        /* AI诊断区域 */
+        .ai-diagnosis {
+            background: linear-gradient(135deg, var(--accent-blue-bg) 0%, rgba(126,200,227,0.08) 100%);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .ai-diagnosis-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .ai-badge {
+            padding: 2px 8px;
+            background: var(--accent-blue);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+        .ai-diagnosis-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+        .ai-diagnosis-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== 健康评估 - 右侧滑出面板 ===== */
+        .health-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 85%;
+            height: 100%;
+            background: var(--cream-bg);
+            z-index: 70;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -8px 0 30px rgba(0,0,0,0.1);
+        }
+        .health-panel.open { transform: translateX(0); }
+
+        .health-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        /* 健康评分卡 */
+        .health-score-card {
+            background: linear-gradient(135deg, #FF9A76 0%, #FFB4A2 50%, #FFCCBC 100%);
+            border-radius: var(--radius-xl);
+            padding: 28px 24px;
+            text-align: center;
+            color: white;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .health-score-card::before {
+            content: '';
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+        }
+
+        .score-label {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .score-value {
+            font-size: 52px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .score-max {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+        .score-date {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
+
+        /* 评分环 */
+        .score-ring {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+        .score-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .score-ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.25);
+            stroke-width: 8;
+        }
+        .score-ring-fill {
+            fill: none;
+            stroke: white;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 251;
+            stroke-dashoffset: 251;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .score-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* 健康维度模块 */
+        .health-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .health-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .health-section-title svg { width: 18px; height: 18px; }
+
+        /* 维度评分条 */
+        .dimension-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .dimension-row:last-child { margin-bottom: 0; }
+
+        .dimension-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            width: 48px;
+            flex-shrink: 0;
+        }
+        .dimension-bar {
+            flex: 1;
+            height: 8px;
+            background: #F0F0F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .dimension-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0;
+        }
+        .dimension-fill.blue { background: var(--accent-blue); }
+        .dimension-fill.green { background: var(--accent-green); }
+        .dimension-fill.pink { background: var(--accent-pink); }
+
+        .dimension-score {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            width: 32px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .dimension-analysis {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        .dimension-analysis.warning {
+            background: var(--accent-orange-bg);
+            color: var(--accent-orange);
+            border-left: 3px solid var(--accent-orange);
+        }
+
+        /* 趋势指示 */
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .trend-up {
+            color: var(--accent-green);
+            background: var(--accent-green-bg);
+        }
+        .trend-down {
+            color: var(--accent-orange);
+            background: var(--accent-orange-bg);
+        }
+        .trend-stable {
+            color: var(--text-muted);
+            background: #F0F0F0;
+        }
+        .trend-indicator svg { width: 10px; height: 10px; }
+
+        /* 健康建议 */
+        .health-advice {
+            background: var(--accent-blue-bg);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .advice-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .advice-title svg { width: 14px; height: 14px; }
+        .advice-item {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            padding-left: 16px;
+            position: relative;
+            margin-bottom: 4px;
+        }
+        .advice-item::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 8px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+        }
+
+        /* 周趋势迷你图 */
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 60px;
+            padding: 8px 0;
+        }
+        .mini-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            min-height: 4px;
+        }
+        .mini-bar-label {
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar { width: 0; height: 0; }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="app-container">
+
+            <!-- ===== 主状态页面 ===== -->
+            <div class="status-page" id="statusPage">
+                <!-- 顶部导航 -->
+                <div class="top-nav">
+                    <div class="nav-back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </div>
+                    <div class="nav-title-group">
+                        <div class="nav-title">状态监测</div>
+                        <div class="nav-subtitle">05-30 数据已同步</div>
+                    </div>
+                    <div class="nav-settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 快捷入口 -->
+                <div class="quick-actions">
+                    <button class="action-btn history" onclick="openHistory()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        异常历史
+                    </button>
+                    <button class="action-btn health" onclick="openHealth()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        健康评估
+                    </button>
+                </div>
+
+                <!-- 宠物状态卡片 -->
+                <div class="pet-status-card">
+                    <div class="pet-image-wrapper">
+                        <img src="dog.jpg" alt="旺财">
+                        <div class="zzz-animation">
+                            <span class="zzz">Z</span>
+                            <span class="zzz">Z</span>
+                            <span class="zzz">Z</span>
+                        </div>
+                    </div>
+                    <div class="status-info">
+                        <div class="pet-location">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span>旺财大宅</span>
+                        </div>
+                        <div class="status-main">
+                            <span class="status-icon-dot"></span>
+                            <span class="status-value">睡眠中</span>
+                        </div>
+                        <div class="status-desc">旺财美梦生成中 ZZZ</div>
+                    </div>
+                </div>
+
+                <!-- 日历选择器 -->
+                <div class="calendar-strip">
+                    <div class="cal-day">
+                        <span class="cal-label">六</span>
+                        <span class="cal-num">24</span>
+                    </div>
+                    <div class="cal-day">
+                        <span class="cal-label">日</span>
+                        <span class="cal-num">25</span>
+                    </div>
+                    <div class="cal-day">
+                        <span class="cal-label">一</span>
+                        <span class="cal-num">26</span>
+                    </div>
+                    <div class="cal-day">
+                        <span class="cal-label">二</span>
+                        <span class="cal-num">27</span>
+                    </div>
+                    <div class="cal-day">
+                        <span class="cal-label">三</span>
+                        <span class="cal-num">28</span>
+                    </div>
+                    <div class="cal-day">
+                        <span class="cal-label">四</span>
+                        <span class="cal-num">29</span>
+                    </div>
+                    <div class="cal-day active">
+                        <span class="cal-label">五</span>
+                        <span class="cal-num">30</span>
+                    </div>
+                </div>
+
+                <!-- 数据模块 -->
+                <div class="data-modules">
+                    <!-- 睡眠模块 -->
+                    <div class="data-module sleep">
+                        <div class="module-header">
+                            <div class="module-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                </svg>
+                            </div>
+                            <div class="module-title-group">
+                                <div class="module-title">睡眠</div>
+                                <div class="module-duration">3时38分<small> 今日总计</small></div>
+                            </div>
+                            <div class="module-more">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="sub-items">
+                            <div class="sub-item">
+                                <div class="sub-dot"></div>
+                                <div class="sub-label">深度睡眠</div>
+                                <div class="sub-value">2时24分</div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.5"></div>
+                                <div class="sub-label">浅度睡眠</div>
+                                <div class="sub-value">1时14分</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 活动模块 -->
+                    <div class="data-module activity">
+                        <div class="module-header">
+                            <div class="module-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div class="module-title-group">
+                                <div class="module-title">活动</div>
+                                <div class="module-duration">58分<small>50秒</small><small> 今日总计</small></div>
+                            </div>
+                            <div class="module-more">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="sub-items">
+                            <div class="sub-item">
+                                <div class="sub-dot"></div>
+                                <div class="sub-label">行走</div>
+                                <div class="sub-value">42分<small>18秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.7"></div>
+                                <div class="sub-label">奔跑</div>
+                                <div class="sub-value">8分<small>22秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.5"></div>
+                                <div class="sub-label">打滚</div>
+                                <div class="sub-value">5分<small>06秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.3"></div>
+                                <div class="sub-label">跳跃</div>
+                                <div class="sub-value">3分<small>04秒</small></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 休闲模块 -->
+                    <div class="data-module rest">
+                        <div class="module-header">
+                            <div class="module-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div class="module-title-group">
+                                <div class="module-title">休闲</div>
+                                <div class="module-duration">3时07分<small> 今日总计</small></div>
+                            </div>
+                            <div class="module-more">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="sub-items">
+                            <div class="sub-item">
+                                <div class="sub-dot"></div>
+                                <div class="sub-label">嗅闻</div>
+                                <div class="sub-value">48分<small>12秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.8"></div>
+                                <div class="sub-label">摄食</div>
+                                <div class="sub-value">22分<small>30秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.6"></div>
+                                <div class="sub-label">发呆</div>
+                                <div class="sub-value">35分<small>08秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.4"></div>
+                                <div class="sub-label">舔舐</div>
+                                <div class="sub-value">18分<small>45秒</small></div>
+                            </div>
+                            <div class="sub-item">
+                                <div class="sub-dot" style="opacity:0.3"></div>
+                                <div class="sub-label">磨爪</div>
+                                <div class="sub-value">3分<small>15秒</small></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 遮罩层 ===== -->
+            <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+            <!-- ===== 异常历史面板（左侧滑出） ===== -->
+            <div class="history-panel" id="historyPanel">
+                <div class="panel-header">
+                    <span class="panel-title">异常历史</span>
+                    <div class="panel-close" onclick="closeAllPanels()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <!-- 异常事件1 -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge watch">WATCH</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">进食下降 + 抓挠升高</span>
+                                    <span class="alert-time">05-29 14:32</span>
+                                </div>
+                                <div class="alert-summary">早餐摄入低于7日基线14%，抓挠频率较基线升高16%</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">早餐摄入量</span>
+                                        <span class="detail-data-value negative">45g（基线 60g）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">抓挠频率</span>
+                                        <span class="detail-data-value negative">19次/时（基线 12次）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">持续时间</span>
+                                        <span class="detail-data-value">约 3 小时</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            结合近7日数据分析，进食量下降可能与以下因素相关：<br>
+                                            1. 抓挠频率升高提示可能存在皮肤不适，建议检查腹部是否有红点<br>
+                                            2. 进食下降伴随抓挠行为，不排除口腔不适的可能性<br>
+                                            3. 建议今晚复查腹部皮肤状况，如持续异常建议就医
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 异常事件2 -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge watch">WATCH</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">运动量显著偏低</span>
+                                    <span class="alert-time">05-28 09:15</span>
+                                </div>
+                                <div class="alert-summary">活动量较7日基线下降32%，持续静止超过4小时</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">当日活动量</span>
+                                        <span class="detail-data-value negative">28分钟（基线 58分钟）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">持续静止</span>
+                                        <span class="detail-data-value negative">4小时12分</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            运动量下降可能原因：<br>
+                                            1. 天气因素：昨日气温偏高，宠物活动意愿降低<br>
+                                            2. 前日进食量偏低，能量摄入不足可能导致活动减少<br>
+                                            3. 如今日活动量恢复正常，可暂不处理；若持续偏低需关注
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 异常事件3（已解决） -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge resolved">RESOLVED</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">夜间醒来频繁</span>
+                                    <span class="alert-time">05-26 02:18</span>
+                                </div>
+                                <div class="alert-summary">夜间醒来5次，较基线增加3次，已于次日恢复正常</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">夜间醒来次数</span>
+                                        <span class="detail-data-value negative">5次（基线 2次）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">恢复时间</span>
+                                        <span class="detail-data-value">05-27 已恢复</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            夜间醒来频繁可能由环境噪音或温度变化导致，该异常已于次日自动恢复，无需特别处理。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 异常事件4 -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge resolved">RESOLVED</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">饮水频率升高</span>
+                                    <span class="alert-time">05-25 16:45</span>
+                                </div>
+                                <div class="alert-summary">饮水量较基线升高22%，持续约2小时后恢复正常</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">饮水量</span>
+                                        <span class="detail-data-value">180ml（基线 148ml）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">持续时间</span>
+                                        <span class="detail-data-value">约 2 小时</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            短暂饮水频率升高可能与当日气温较高或运动后补水有关，该异常已自动恢复，无需特别处理。如频繁出现建议关注肾脏相关指标。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 异常事件5 -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge watch">WATCH</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">舔舐频率异常升高</span>
+                                    <span class="alert-time">05-24 11:20</span>
+                                </div>
+                                <div class="alert-summary">舔舐频率较基线升高28%，持续约4小时</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">舔舐频率</span>
+                                        <span class="detail-data-value negative">32次/时（基线 25次）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">持续时间</span>
+                                        <span class="detail-data-value negative">约 4 小时</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            舔舐频率升高可能原因：<br>
+                                            1. 皮肤局部瘙痒，建议检查四肢及腹部是否有红肿<br>
+                                            2. 焦虑或压力导致的行为代偿，需结合环境变化判断<br>
+                                            3. 如持续超过24小时建议就医检查
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 异常事件6 -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge resolved">RESOLVED</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">深夜异常活动</span>
+                                    <span class="alert-time">05-22 02:45</span>
+                                </div>
+                                <div class="alert-summary">凌晨2:45检测到15分钟异常活动，随后恢复正常睡眠</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">活动时长</span>
+                                        <span class="detail-data-value">15分钟</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">恢复时间</span>
+                                        <span class="detail-data-value">05-22 03:00 已恢复</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            深夜短暂活动可能由外界噪音（如车辆、邻居）引起，宠物短暂警觉后迅速恢复睡眠。该类偶发事件无需特别关注。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 异常事件7 -->
+                    <div class="alert-card" onclick="toggleAlert(this)">
+                        <div class="alert-header">
+                            <span class="alert-badge watch">WATCH</span>
+                            <div class="alert-info">
+                                <div class="alert-title-row">
+                                    <span class="alert-name">进食速度异常加快</span>
+                                    <span class="alert-time">05-20 08:30</span>
+                                </div>
+                                <div class="alert-summary">早餐进食速度较基线加快35%，2分钟内完成进食</div>
+                            </div>
+                            <div class="alert-toggle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="alert-detail">
+                            <div class="alert-detail-inner">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                        </svg>
+                                        具体数据
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">进食速度</span>
+                                        <span class="detail-data-value negative">2分钟（基线 5分钟）</span>
+                                    </div>
+                                    <div class="detail-data-row">
+                                        <span class="detail-data-label">进食量</span>
+                                        <span class="detail-data-value">正常（62g）</span>
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="ai-diagnosis">
+                                        <div class="ai-diagnosis-header">
+                                            <span class="ai-badge">AI</span>
+                                            <span class="ai-diagnosis-title">智能诊断分析</span>
+                                        </div>
+                                        <div class="ai-diagnosis-text">
+                                            进食速度加快但进食量正常，可能原因：<br>
+                                            1. 前一餐间隔时间较长，饥饿感较强<br>
+                                            2. 进食速度偶尔加快属正常波动范围<br>
+                                            3. 如持续加快需关注是否存在竞争性进食心理或消化系统问题
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 健康评估面板（右侧滑出） ===== -->
+            <div class="health-panel" id="healthPanel">
+                <div class="panel-header">
+                    <span class="panel-title" style="flex:1;text-align:left;">健康评估报告</span>
+                    <div class="panel-close" onclick="closeAllPanels()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="week-selector">
+                    <div class="week-nav-btn" onclick="switchWeek(-1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </div>
+                    <span class="week-label" id="healthPanelTitle">本周（5月24日 - 5月30日）</span>
+                    <div class="week-nav-btn" onclick="switchWeek(1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="health-body" id="healthBody">
+                    <!-- 健康评分卡 -->
+                    <div class="health-score-card">
+                        <div class="score-ring">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="score-ring-bg" cx="50" cy="50" r="40"/>
+                                <circle class="score-ring-fill" id="scoreRing" cx="50" cy="50" r="40"/>
+                            </svg>
+                            <span class="score-ring-text" id="scoreText">0</span>
+                        </div>
+                        <div class="score-label">综合健康评分</div>
+                        <div class="score-date">2026年5月24日 - 5月30日</div>
+                    </div>
+
+                    <!-- 各维度评分 -->
+                    <div class="health-section">
+                        <div class="health-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-warm)" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                            健康维度分析
+                        </div>
+
+                        <div class="dimension-row">
+                            <span class="dimension-label">睡眠</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill blue" data-width="85"></div>
+                            </div>
+                            <span class="dimension-score">85</span>
+                            <span class="trend-indicator trend-stable">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                持平
+                            </span>
+                        </div>
+                        <div class="dimension-analysis">
+                            深度睡眠占比稳定在63%左右，睡眠节律规律，整体睡眠质量良好。夜间醒来次数处于正常范围，建议保持当前作息环境。
+                        </div>
+
+                        <div class="dimension-row" style="margin-top:14px">
+                            <span class="dimension-label">活动</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill green" data-width="62"></div>
+                            </div>
+                            <span class="dimension-score">62</span>
+                            <span class="trend-indicator trend-down">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                下降
+                            </span>
+                        </div>
+                        <div class="dimension-analysis warning">
+                            本周活动量较上周下降约18%，周三、四连续两日活动量低于基线30%以上。可能与气温升高或进食减少导致的能量不足有关，建议关注。
+                        </div>
+
+                        <div class="dimension-row" style="margin-top:14px">
+                            <span class="dimension-label">饮食</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill pink" data-width="58"></div>
+                            </div>
+                            <span class="dimension-score">58</span>
+                            <span class="trend-indicator trend-down">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                下降
+                            </span>
+                        </div>
+                        <div class="dimension-analysis warning">
+                            近两日进食量持续低于7日基线，05-29早餐摄入仅为基线的86%。伴随抓挠行为升高，需警惕口腔不适或皮肤问题，建议密切观察。
+                        </div>
+
+                        <div class="dimension-row" style="margin-top:14px">
+                            <span class="dimension-label">行为</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill blue" data-width="78"></div>
+                            </div>
+                            <span class="dimension-score">78</span>
+                            <span class="trend-indicator trend-up">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="18 15 12 9 6 15"/>
+                                </svg>
+                                上升
+                            </span>
+                        </div>
+                        <div class="dimension-analysis">
+                            整体行为模式健康，嗅闻、发呆等正常休闲行为占比较为合理。抓挠频率需持续关注，其他行为指标均在正常范围内。
+                        </div>
+                    </div>
+
+                    <!-- 本周趋势 -->
+                    <div class="health-section">
+                        <div class="health-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-warm)" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            本周活动趋势
+                        </div>
+                        <div class="mini-chart" id="weeklyChart">
+                            <div class="mini-bar" style="background:var(--accent-green); height:0" data-height="75%">
+                                <span class="mini-bar-label">六</span>
+                            </div>
+                            <div class="mini-bar" style="background:var(--accent-green); height:0" data-height="90%">
+                                <span class="mini-bar-label">日</span>
+                            </div>
+                            <div class="mini-bar" style="background:var(--accent-green); height:0" data-height="60%">
+                                <span class="mini-bar-label">一</span>
+                            </div>
+                            <div class="mini-bar" style="background:var(--accent-green); height:0" data-height="85%">
+                                <span class="mini-bar-label">二</span>
+                            </div>
+                            <div class="mini-bar" style="background:var(--accent-orange); height:0" data-height="35%">
+                                <span class="mini-bar-label">三</span>
+                            </div>
+                            <div class="mini-bar" style="background:var(--accent-orange); height:0" data-height="40%">
+                                <span class="mini-bar-label">四</span>
+                            </div>
+                            <div class="mini-bar" style="background:var(--accent-green); height:0" data-height="70%">
+                                <span class="mini-bar-label">五</span>
+                            </div>
+                        </div>
+                        <div class="dimension-analysis" style="margin-top:20px">
+                            本周活动量呈先升后降再回升趋势。周三、四为本周活动低谷，可能与气温偏高及进食减少有关。周五活动量已开始恢复，需持续观察周末数据。
+                        </div>
+                    </div>
+
+                    <!-- 异常事件回顾 -->
+                    <div class="health-section">
+                        <div class="health-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            本周异常事件
+                        </div>
+                        <div class="detail-data-row" style="margin-bottom:8px">
+                            <span class="detail-data-label">05-29 进食下降+抓挠升高</span>
+                            <span class="trend-indicator trend-down">待观察</span>
+                        </div>
+                        <div class="detail-data-row" style="margin-bottom:8px">
+                            <span class="detail-data-label">05-28 运动量偏低</span>
+                            <span class="trend-indicator trend-down">待观察</span>
+                        </div>
+                        <div class="detail-data-row">
+                            <span class="detail-data-label">05-26 夜间醒来频繁</span>
+                            <span class="trend-indicator trend-up">已恢复</span>
+                        </div>
+                        <div class="dimension-analysis" style="margin-top:12px">
+                            本周共触发3次异常预警，其中1次已自动恢复，2次待持续观察。异常集中在周四至周五，建议本周末重点关注进食与活动恢复情况。
+                        </div>
+                    </div>
+
+                    <!-- 健康建议 -->
+                    <div class="health-section">
+                        <div class="health-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                            本周健康建议
+                        </div>
+                        <div class="health-advice">
+                            <div class="advice-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+                                    <line x1="9" y1="21" x2="15" y2="21"/>
+                                </svg>
+                                AI 综合建议
+                            </div>
+                            <div class="advice-item">活动量本周下降明显，建议增加每日互动散步时间至少15分钟</div>
+                            <div class="advice-item">进食量连续两日偏低，建议检查食物新鲜度及更换口味尝试</div>
+                            <div class="advice-item">抓挠行为需持续关注，建议今晚检查腹部皮肤状况</div>
+                            <div class="advice-item">整体睡眠质量稳定，深度睡眠占比良好，继续保持当前作息规律</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 底部导航 ===== -->
+            <div class="bottom-nav">
+                <div class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span>市集</span>
+                </div>
+                <div class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>社区</span>
+                </div>
+                <div class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                    <span>对话</span>
+                </div>
+                <div class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span>状态</span>
+                </div>
+                <div class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>我的</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ===== 面板开关逻辑 ===== */
+        function openHistory() {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('historyPanel').classList.add('open');
+        }
+
+        function openHealth() {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('healthPanel').classList.add('open');
+            // 触发动画
+            setTimeout(animateHealthPanel, 400);
+        }
+
+        function closeAllPanels() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('historyPanel').classList.remove('open');
+            document.getElementById('healthPanel').classList.remove('open');
+        }
+
+        /* ===== 异常卡片展开/折叠 ===== */
+        function toggleAlert(card) {
+            const wasExpanded = card.classList.contains('expanded');
+            // 先折叠所有
+            document.querySelectorAll('.alert-card').forEach(c => c.classList.remove('expanded'));
+            // 如果之前没展开，则展开当前
+            if (!wasExpanded) {
+                card.classList.add('expanded');
+            }
+        }
+
+        /* ===== 健康面板动画 ===== */
+        function animateHealthPanel() {
+            // 评分环动画
+            const score = 78;
+            const ring = document.getElementById('scoreRing');
+            const circumference = 2 * Math.PI * 40; // r=40
+            const offset = circumference - (score / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+
+            // 数字递增动画
+            const scoreText = document.getElementById('scoreText');
+            let current = 0;
+            const step = () => {
+                current += 2;
+                if (current > score) current = score;
+                scoreText.textContent = current;
+                if (current < score) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+
+            // 维度进度条动画
+            document.querySelectorAll('.dimension-fill').forEach(bar => {
+                const w = bar.dataset.width;
+                setTimeout(() => { bar.style.width = w + '%'; }, 200);
+            });
+
+            // 柱状图动画
+            document.querySelectorAll('.mini-bar').forEach((bar, i) => {
+                const h = bar.dataset.height;
+                setTimeout(() => { bar.style.height = h; }, 300 + i * 100);
+            });
+        }
+
+        /* ===== 日历切换 ===== */
+        document.querySelectorAll('.cal-day').forEach(day => {
+            day.addEventListener('click', function() {
+                document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        /* ===== 健康评估周切换 ===== */
+        let currentWeekOffset = 0;
+
+        const weekData = [
+            {
+                title: '本周（5月24日 - 5月30日）',
+                date: '2026年5月24日 - 5月30日',
+                score: 78,
+                dims: [
+                    { name: '睡眠', score: 85, trend: 'stable', color: 'blue', analysis: '深度睡眠占比稳定在63%左右，睡眠节律规律，整体睡眠质量良好。夜间醒来次数处于正常范围，建议保持当前作息环境。' },
+                    { name: '活动', score: 62, trend: 'down', color: 'green', analysis: '本周活动量较上周下降约18%，周三、四连续两日活动量低于基线30%以上。可能与气温升高或进食减少导致的能量不足有关，建议关注。', warn: true },
+                    { name: '饮食', score: 58, trend: 'down', color: 'pink', analysis: '近两日进食量持续低于7日基线，05-29早餐摄入仅为基线的86%。伴随抓挠行为升高，需警惕口腔不适或皮肤问题，建议密切观察。', warn: true },
+                    { name: '行为', score: 78, trend: 'up', color: 'blue', analysis: '整体行为模式健康，嗅闻、发呆等正常休闲行为占比较为合理。抓挠频率需持续关注，其他行为指标均在正常范围内。' }
+                ],
+                chartHeights: ['75%','90%','60%','85%','35%','40%','70%'],
+                chartColors: ['green','green','green','green','orange','orange','green'],
+                chartAnalysis: '本周活动量呈先升后降再回升趋势。周三、四为本周活动低谷，可能与气温偏高及进食减少有关。周五活动量已开始恢复，需持续观察周末数据。',
+                alerts: [
+                    { text: '05-29 进食下降+抓挠升高', status: 'down', label: '待观察' },
+                    { text: '05-28 运动量偏低', status: 'down', label: '待观察' },
+                    { text: '05-26 夜间醒来频繁', status: 'up', label: '已恢复' }
+                ],
+                alertAnalysis: '本周共触发3次异常预警，其中1次已自动恢复，2次待持续观察。异常集中在周四至周五，建议本周末重点关注进食与活动恢复情况。',
+                advice: ['活动量本周下降明显，建议增加每日互动散步时间至少15分钟', '进食量连续两日偏低，建议检查食物新鲜度及更换口味尝试', '抓挠行为需持续关注，建议今晚检查腹部皮肤状况', '整体睡眠质量稳定，深度睡眠占比良好，继续保持当前作息规律']
+            },
+            {
+                title: '上周（5月17日 - 5月23日）',
+                date: '2026年5月17日 - 5月23日',
+                score: 82,
+                dims: [
+                    { name: '睡眠', score: 88, trend: 'up', color: 'blue', analysis: '深度睡眠占比提升至66%，较前一周有所改善。夜间醒来次数减少，睡眠连续性增强。' },
+                    { name: '活动', score: 76, trend: 'up', color: 'green', analysis: '活动量较前一周上升12%，每日活动时间稳定在55-65分钟区间。奔跑和跳跃行为有所增加，精神状态良好。' },
+                    { name: '饮食', score: 80, trend: 'stable', color: 'pink', analysis: '进食量稳定，日均摄入62g，进食速度正常。饮水规律，无明显异常。' },
+                    { name: '行为', score: 72, trend: 'down', color: 'blue', analysis: '舔舐频率略有升高，可能与换季皮肤干燥有关。其他行为指标正常。', warn: true }
+                ],
+                chartHeights: ['65%','70%','80%','75%','85%','72%','68%'],
+                chartColors: ['green','green','green','green','green','green','green'],
+                chartAnalysis: '上周活动量整体平稳，周五为本周活动高峰。周末活动量略有回落属正常现象。',
+                alerts: [
+                    { text: '05-22 深夜异常活动', status: 'up', label: '已恢复' },
+                    { text: '05-20 进食速度加快', status: 'down', label: '待观察' }
+                ],
+                alertAnalysis: '上周共触发2次异常预警，均为轻微事件。整体健康状况良好。',
+                advice: ['上周整体健康状况良好，继续保持当前养宠习惯', '舔舐频率略有升高，建议关注是否有皮肤干燥问题，可适当补充鱼油', '活动量充足，精神状态佳，可维持当前运动量']
+            },
+            {
+                title: '两周前（5月10日 - 5月16日）',
+                date: '2026年5月10日 - 5月16日',
+                score: 85,
+                dims: [
+                    { name: '睡眠', score: 82, trend: 'stable', color: 'blue', analysis: '睡眠质量稳定，深度睡眠占比约60%。作息规律，无明显异常。' },
+                    { name: '活动', score: 68, trend: 'down', color: 'green', analysis: '活动量较上两周下降约10%，可能与连续阴雨天气导致外出减少有关。室内活动占比增加。', warn: true },
+                    { name: '饮食', score: 85, trend: 'up', color: 'pink', analysis: '进食量充足且规律，日均摄入65g。饮水正常，消化良好。' },
+                    { name: '行为', score: 82, trend: 'up', color: 'blue', analysis: '各项行为指标均在健康范围内。嗅闻探索行为活跃，精神状态良好。' }
+                ],
+                chartHeights: ['55%','50%','45%','48%','60%','58%','65%'],
+                chartColors: ['orange','orange','orange','orange','green','green','green'],
+                chartAnalysis: '受阴雨天气影响，前半周活动量偏低，后半周天气转好后活动量逐步恢复。',
+                alerts: [
+                    { text: '05-15 连续静止超时', status: 'up', label: '已恢复' },
+                    { text: '05-13 活动量偏低', status: 'up', label: '已恢复' }
+                ],
+                alertAnalysis: '两周前异常事件均与天气因素相关，天气好转后自动恢复，无需特别处理。',
+                advice: ['阴雨天气需注意室内互动，避免活动量过低', '饮食状态良好，可维持当前喂养方案', '建议在天气不佳时增加室内玩具互动时间']
+            }
+        ];
+
+        function switchWeek(direction) {
+            const newOffset = currentWeekOffset + direction;
+            if (newOffset < 0 || newOffset >= weekData.length) return;
+            currentWeekOffset = newOffset;
+
+            const body = document.getElementById('healthBody');
+            const title = document.getElementById('healthPanelTitle');
+
+            // 滑出动画
+            body.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+            body.style.transform = `translateX(${direction > 0 ? -30 : 30}px)`;
+            body.style.opacity = '0';
+
+            setTimeout(() => {
+                renderWeek(weekData[currentWeekOffset]);
+                title.textContent = weekData[currentWeekOffset].title;
+
+                // 滑入动画
+                body.style.transform = `translateX(${direction > 0 ? 30 : -30}px)`;
+                requestAnimationFrame(() => {
+                    body.style.transform = 'translateX(0)';
+                    body.style.opacity = '1';
+                });
+
+                setTimeout(() => animateHealthPanel(), 200);
+            }, 300);
+        }
+
+        function renderWeek(data) {
+            const body = document.getElementById('healthBody');
+            const trendIcons = {
+                up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>',
+                down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>',
+                stable: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+            };
+            const trendLabels = { up: '上升', down: '下降', stable: '持平' };
+
+            let dimsHTML = data.dims.map(d => `
+                <div class="dimension-row">
+                    <span class="dimension-label">${d.name}</span>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill ${d.color}" data-width="${d.score}"></div>
+                    </div>
+                    <span class="dimension-score">${d.score}</span>
+                    <span class="trend-indicator trend-${d.trend}">
+                        ${trendIcons[d.trend]} ${trendLabels[d.trend]}
+                    </span>
+                </div>
+                <div class="dimension-analysis${d.warn ? ' warning' : ''}">${d.analysis}</div>
+            `).join('<div style="height:14px"></div>');
+
+            let chartHTML = data.chartHeights.map((h, i) => {
+                const dayLabels = ['一','二','三','四','五','六','日'];
+                return `<div class="mini-bar" style="background:var(--accent-${data.chartColors[i]}); height:0" data-height="${h}">
+                    <span class="mini-bar-label">${dayLabels[i]}</span>
+                </div>`;
+            }).join('');
+
+            let alertsHTML = data.alerts.map(a => `
+                <div class="detail-data-row" style="margin-bottom:8px">
+                    <span class="detail-data-label">${a.text}</span>
+                    <span class="trend-indicator trend-${a.status}">${a.label}</span>
+                </div>
+            `).join('');
+
+            let adviceHTML = data.advice.map(a => `<div class="advice-item">${a}</div>`).join('');
+
+            body.innerHTML = `
+                <div class="health-score-card">
+                    <div class="score-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="40"/>
+                            <circle class="score-ring-fill" id="scoreRing" cx="50" cy="50" r="40"/>
+                        </svg>
+                        <span class="score-ring-text" id="scoreText">0</span>
+                    </div>
+                    <div class="score-label">综合健康评分</div>
+                    <div class="score-date">${data.date}</div>
+                </div>
+                <div class="health-section">
+                    <div class="health-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-warm)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        健康维度分析
+                    </div>
+                    ${dimsHTML}
+                </div>
+                <div class="health-section">
+                    <div class="health-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-warm)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        本周活动趋势
+                    </div>
+                    <div class="mini-chart" id="weeklyChart">${chartHTML}</div>
+                    <div class="dimension-analysis" style="margin-top:20px">${data.chartAnalysis}</div>
+                </div>
+                <div class="health-section">
+                    <div class="health-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        本周异常事件
+                    </div>
+                    ${alertsHTML}
+                    <div class="dimension-analysis" style="margin-top:12px">${data.alertAnalysis}</div>
+                </div>
+                <div class="health-section">
+                    <div class="health-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        本周健康建议
+                    </div>
+                    <div class="health-advice">
+                        <div class="advice-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+                            AI 综合建议
+                        </div>
+                        ${adviceHTML}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>毛球伙伴 A4 项目海报</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #e8ded5;
+        font-family: "PingFang SC", "STHeiti", "Heiti SC", "Microsoft YaHei", sans-serif;
+        color: #2b2622;
+      }
+
+      .poster {
+        position: relative;
+        width: 1240px;
+        height: 1754px;
+        overflow: hidden;
+        padding: 34px 55px 30px;
+        background:
+          radial-gradient(circle at 16% 22%, rgba(255, 126, 96, 0.18), transparent 24%),
+          radial-gradient(circle at 86% 26%, rgba(95, 185, 158, 0.2), transparent 26%),
+          radial-gradient(circle at 45% 92%, rgba(240, 174, 80, 0.14), transparent 28%),
+          linear-gradient(180deg, #fffaf6 0%, #fff1e9 100%);
+      }
+
+      .poster::before {
+        content: "";
+        position: absolute;
+        inset: 260px 0 auto;
+        height: 560px;
+        opacity: 0.42;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.72) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.72) 1px, transparent 1px);
+        background-size: 44px 44px;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .kicker {
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        color: #8a7163;
+        font-weight: 700;
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 38px;
+        align-items: start;
+      }
+
+      h1 {
+        margin: 12px 0 0;
+        font-size: 78px;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin-top: 20px;
+        font-size: 28px;
+        color: #5b4f48;
+      }
+
+      .tagline {
+        margin-top: 12px;
+        font-size: 18px;
+        color: #806d62;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 17px;
+      }
+
+      .chip {
+        padding: 7px 14px;
+        border-radius: 999px;
+        color: #fff;
+        font-weight: 800;
+        font-size: 14px;
+      }
+
+      .coral { background: #ff7a60; }
+      .mint { background: #5fb99e; }
+      .gold { background: #f0ae50; }
+      .blue { background: #6a96b9; }
+
+      .brief {
+        padding: 16px 18px;
+        border: 1px solid rgba(255, 122, 96, 0.22);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.66);
+        box-shadow: 0 14px 42px rgba(136, 83, 54, 0.08);
+      }
+
+      .brief strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 19px;
+      }
+
+      .brief p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.62;
+        color: #706057;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 510px 1fr;
+        gap: 34px;
+        margin-top: 24px;
+        padding: 24px;
+        border-radius: 34px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow: 0 28px 80px rgba(130, 83, 58, 0.12);
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: 27px;
+        line-height: 1.2;
+      }
+
+      .body-copy {
+        margin: 12px 0 0;
+        font-size: 17px;
+        line-height: 1.62;
+        color: #5f534d;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 13px;
+        margin-top: 17px;
+      }
+
+      .flow-card {
+        min-height: 82px;
+        padding: 13px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(255, 122, 96, 0.18);
+      }
+
+      .num {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        margin-right: 8px;
+        border-radius: 50%;
+        background: #ff7a60;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .flow-card h3 {
+        display: inline;
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .flow-card p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        line-height: 1.42;
+        color: #7a6a60;
+      }
+
+      .visual {
+        position: relative;
+        min-height: 335px;
+        overflow: hidden;
+        border-radius: 28px;
+        background: #fff;
+      }
+
+      .visual img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .visual-badge {
+        position: absolute;
+        left: 28px;
+        bottom: 28px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .visual-badge span {
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.86);
+        color: #4f433d;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .block-title {
+        margin: 26px 0 6px;
+        font-size: 28px;
+      }
+
+      .block-subtitle {
+        margin: 0 0 14px;
+        color: #7a6a60;
+        font-size: 15px;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .feature {
+        min-height: 122px;
+        padding: 15px 17px 14px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(244, 215, 202, 0.88);
+        box-shadow: 0 16px 34px rgba(132, 82, 58, 0.06);
+      }
+
+      .feature .icon {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        margin-bottom: 9px;
+        border-radius: 15px;
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .feature h3 {
+        margin: 0 0 8px;
+        font-size: 19px;
+      }
+
+      .feature p {
+        margin: 0;
+        font-size: 13.6px;
+        line-height: 1.5;
+        color: #74645b;
+      }
+
+      .evidence {
+        display: grid;
+        grid-template-columns: 530px 1fr;
+        gap: 24px;
+        margin-top: 12px;
+      }
+
+      .screens {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .phone {
+        position: relative;
+        height: 308px;
+        overflow: hidden;
+        border-radius: 24px;
+        background: #fff;
+        box-shadow: 0 15px 36px rgba(112, 73, 52, 0.12);
+      }
+
+      .phone img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .phone-label {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        padding: 9px 10px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        text-align: center;
+      }
+
+      .phone-label b {
+        display: block;
+        font-size: 15px;
+      }
+
+      .phone-label span {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+        color: #7b6d64;
+      }
+
+      .architecture {
+        padding: 18px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(244, 215, 202, 0.88);
+      }
+
+      .architecture h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .architecture .small {
+        margin: 0 0 12px;
+        color: #76675f;
+        font-size: 13px;
+      }
+
+      .chain {
+        display: grid;
+        gap: 8px;
+      }
+
+      .chain-row {
+        display: grid;
+        grid-template-columns: 148px 1fr;
+        gap: 14px;
+        align-items: center;
+        padding: 10px 13px;
+        border-radius: 18px;
+        background: rgba(255, 247, 242, 0.95);
+        border: 1px solid rgba(255, 122, 96, 0.18);
+      }
+
+      .chain-row b {
+        font-size: 14px;
+      }
+
+      .chain-row span {
+        color: #74645b;
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+
+      .scenario {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 14px;
+      }
+
+      .scenario-card {
+        padding: 14px 16px 15px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(244, 215, 202, 0.88);
+      }
+
+      .scenario-card b {
+        display: block;
+        font-size: 17px;
+        margin-bottom: 6px;
+      }
+
+      .scenario-card p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.48;
+        color: #716158;
+      }
+
+      .bottom {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 170px;
+        gap: 28px;
+        align-items: center;
+        min-height: 96px;
+        margin-top: 17px;
+        padding: 17px 26px;
+        border-radius: 27px;
+        background: #2d2622;
+        color: #fff;
+        box-shadow: 0 20px 52px rgba(50, 32, 22, 0.2);
+      }
+
+      .bottom .label {
+        color: #ffd5c8;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .bottom strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 21px;
+      }
+
+      .bottom p {
+        margin: 6px 0 0;
+        color: #e8d7cf;
+        font-size: 12.5px;
+      }
+
+      .date {
+        text-align: right;
+        color: #ffd5c8;
+        font-weight: 900;
+        font-size: 15px;
+      }
+
+      .date span {
+        display: block;
+        margin-top: 8px;
+        color: #fff;
+        font-size: 19px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="poster">
+      <div class="content">
+        <section class="header">
+          <div>
+            <div class="kicker">AI PET DESKTOP COMPANION · PROJECT DEMO POSTER</div>
+            <h1>毛球伙伴</h1>
+            <div class="subtitle">AI 电子宠物陪伴 × 真实宠物数字分身</div>
+            <div class="tagline">让陪伴有温度，让记录有故事，让爱被看见</div>
+            <div class="chips">
+              <span class="chip coral">系统级桌宠</span>
+              <span class="chip mint">点击弹窗</span>
+              <span class="chip gold">长期记忆</span>
+              <span class="chip blue">照护闭环</span>
+            </div>
+          </div>
+          <aside class="brief">
+            <strong>当前目标：可运行项目展示 Demo</strong>
+            <p>不是静态网页看板。第一入口是常驻桌面宠物，点击后打开手机比例应用窗口，复杂功能在面板完成并同步回桌宠。</p>
+          </aside>
+        </section>
+
+        <section class="hero">
+          <div>
+            <h2 class="section-title">一句话产品闭环</h2>
+            <p class="body-copy">AI Pet 用系统级桌宠承载陪伴存在感，用应用窗口承载完整功能，用 Agent 把对话、记忆、状态、照护任务、奖励解锁和桌宠动作串成同一只宠物的连续体验。</p>
+            <div class="flow">
+              <div class="flow-card"><span class="num">1</span><h3>桌宠常驻</h3><p>状态、气泡、轻互动，让宠物先存在于桌面。</p></div>
+              <div class="flow-card"><span class="num">2</span><h3>点击展开</h3><p>进入手机比例应用窗口，承载对话、数据和任务。</p></div>
+              <div class="flow-card"><span class="num">3</span><h3>AI 理解</h3><p>长期主群聊、宠物记忆、主动提醒和工具调用。</p></div>
+              <div class="flow-card"><span class="num">4</span><h3>照护反馈</h3><p>任务、积分、排行榜、奖励和装扮形成闭环。</p></div>
+            </div>
+          </div>
+          <div class="visual">
+            <img src="ai-pet-a4-poster-visual-base.png" alt="毛球伙伴主视觉" />
+            <div class="visual-badge">
+              <span>真实小狗数字分身</span>
+              <span>宠物功能面板</span>
+            </div>
+          </div>
+        </section>
+
+        <h2 class="block-title">内容架构：从“宠物存在感”到“照护结果”</h2>
+        <p class="block-subtitle">面向已有真实宠物的人群，同时兼容无宠陪伴用户。海报需要讲清产品、功能、Demo 链路和展示价值。</p>
+        <section class="feature-grid">
+          <article class="feature"><span class="icon coral">宠</span><h3>桌宠核心入口</h3><p>常驻桌面、气泡提醒、点击展开、关闭应用后恢复桌宠。</p></article>
+          <article class="feature"><span class="icon mint">聊</span><h3>陪伴对话 Agent</h3><p>单宠物长期主群聊，记住主人安排，狗狗语气主动沟通。</p></article>
+          <article class="feature"><span class="icon coral">康</span><h3>状态与健康解释</h3><p>进食、活动、睡眠、抓挠等数据解释成可执行建议。</p></article>
+          <article class="feature"><span class="icon blue">任</span><h3>每日照护任务</h3><p>异常、库存、互动事件转成任务；完成后即时反馈积分。</p></article>
+          <article class="feature"><span class="icon gold">奖</span><h3>奖励与装扮闭环</h3><p>连续照护、排行榜、可解锁服饰与桌宠配饰同步。</p></article>
+          <article class="feature"><span class="icon mint">AI</span><h3>成熟 Agent Runtime</h3><p>OpenCode/opencode + MCP tools，业务能力通过工具调用。</p></article>
+        </section>
+
+        <h2 class="block-title">可运行 Demo 证据与界面</h2>
+        <p class="block-subtitle">桌宠不是装饰，应用窗口不是 HTML 展示页；完整验收看桌宠窗口、点击弹窗、Agent 对话和状态/任务联动。</p>
+        <section class="evidence">
+          <div class="screens">
+            <div class="phone"><img src="../../exports/ai-pet-images-2026-05-30/ai-pet-mochi-01-welcome.png" alt="入口页" /><div class="phone-label"><b>入口页</b><span>开始陪伴</span></div></div>
+            <div class="phone"><img src="../../exports/ai-pet-images-2026-05-30/ai-pet-mochi-02-chat.png" alt="陪伴对话" /><div class="phone-label"><b>陪伴对话</b><span>长期主群聊</span></div></div>
+            <div class="phone"><img src="../../exports/ai-pet-images-2026-05-30/ai-pet-mochi-03-status.png" alt="状态监测" /><div class="phone-label"><b>状态监测</b><span>异常解释</span></div></div>
+          </div>
+          <aside class="architecture">
+            <h3>完整链路</h3>
+            <p class="small">desktop-photo-pet Electron 桌宠集成进程</p>
+            <div class="chain">
+              <div class="chain-row"><b>系统级桌宠</b><span>透明桌宠窗口 / Mochi 多帧动作资产</span></div>
+              <div class="chain-row"><b>点击后应用窗口</b><span>430×932 手机比例功能面板 / 五个主入口</span></div>
+              <div class="chain-row"><b>Agent + MCP Tools</b><span>OpenCode runtime 调用宠物业务工具</span></div>
+              <div class="chain-row"><b>Domain Service</b><span>档案、状态机、任务、库存、推荐、记忆</span></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="scenario">
+          <article class="scenario-card"><b>真实宠物用户</b><p>把进食、活动、睡眠、抓挠、库存和照护记录解释成今天该做什么。</p></article>
+          <article class="scenario-card"><b>AI 陪伴用户</b><p>领养或生成一个电子宠物，通过聊天、喂养、玩耍、清洁、装扮建立关系。</p></article>
+          <article class="scenario-card"><b>展示话术</b><p>主人点击桌宠后，宠物把今天的状态、异常、任务和奖励用自己的语气讲出来。</p></article>
+        </section>
+      </div>
+
+      <footer class="bottom">
+        <div>
+          <div class="label">海报重点文案</div>
+          <strong>AI 宠物不是聊天皮肤，而是一只持续存在的数字生命：看得见、叫得动、记得住、能提醒、会反馈。</strong>
+          <p>Demo 范围：桌宠入口 / 应用窗口 / 陪伴对话 / 状态监测 / 每日任务 / 积分奖励 / 装扮同步 / Agent 工具调用</p>
+        </div>
+        <div class="date">A4 项目展示版<span>2026.05.31</span></div>
+      </footer>
+    </main>
+  </body>
+</html>

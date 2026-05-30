@@ -4,7 +4,7 @@ description: 当前可运行 Demo 的整体架构真相源，明确桌宠、应�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 同步用户激励独立子流程、奖励/服饰解锁和“我的”页边界。
+update_reason: 补强 Electron 桌宠 App 验收红线：浏览器 localhost 只能做 renderer smoke test，不能替代 App 可用性验证。
 doc_type: architecture-spec
 domain_taxa:
   - system-architecture
@@ -38,7 +38,7 @@ related:
 
 AI Pet 当前不是 HTML 展示页，也不是单独的网页前端项目。当前可运行系统是：
 
-`desktop-photo-pet` Electron 桌宠集成进程 + Electron 应用窗口 + React/Vite renderer + Express API + OpenCode/opencode Agent runtime + AI Pet MCP tools + 共享 Domain + Mochi 照片级动作资产。
+`desktop/photo-pet` Electron 桌宠集成进程 + Electron 应用窗口 + React/Vite renderer + Express API + OpenCode/opencode Agent runtime + AI Pet MCP tools + 共享 Domain + Mochi 照片级动作资产。
 
 React、Vite、HTML、CSS 是 Electron `BrowserWindow` 里的 renderer 技术，不是产品交付形态。产品交付形态是桌面 App 链路：系统级桌宠常驻桌面，用户点击桌宠后弹出应用窗口。
 
@@ -48,15 +48,15 @@ React、Vite、HTML、CSS 是 Electron `BrowserWindow` 里的 renderer 技术，
 flowchart LR
   User["用户"]
 
-  subgraph ElectronMain["Electron 主进程: desktop-photo-pet/main.cjs"]
-    PetWindow["透明桌宠窗口<br/>desktop-photo-pet/renderer.html + runtime.js"]
+  subgraph ElectronMain["Electron 主进程: desktop/photo-pet/main.cjs"]
+    PetWindow["透明桌宠窗口<br/>desktop/photo-pet/renderer.html + runtime.js"]
     AppWindow["应用窗口 BrowserWindow<br/>430x932 手机比例"]
     IPC["IPC 桥接<br/>点击/拖拽/关闭/导航"]
   end
 
   subgraph Renderer["应用窗口 renderer"]
-    ReactApp["src/App.tsx"]
-    Styles["src/styles.css"]
+    ReactApp["src/app/App.tsx"]
+    Styles["src/app/styles.css"]
     DomainClient["src/domain/* 当前共享领域逻辑"]
     MotionAvatar["MochiMotionAvatar<br/>读取 motion manifest"]
   end
@@ -99,34 +99,43 @@ flowchart LR
 
 | 命令 | 启动内容 | 当前用途 | 是否可作为完整验收 |
 |---|---|---|---|
-| `npm run dev` | API + Vite renderer + `desktop-photo-pet` | 当前完整 Demo 默认入口 | 是 |
-| `npm run dev:photo-pet` | `desktop-photo-pet/main.cjs` | 桌宠集成入口单独调试，通常需要 API/renderer 已运行 | 可验桌宠链路 |
-| `npm run dev:desktop` | `desktop-photo-pet/main.cjs` | 当前小狗桌宠入口别名，避免误启动旧像素宠物 | 可验桌宠链路 |
-| `npm run dev:app` | `desktop-app/main.cjs` | standalone 应用窗口 UI 调试 | 否 |
+| `npm run dev` | API + Vite renderer + `desktop/photo-pet` | 当前完整 Demo 默认入口 | 是 |
+| `npm run dev:photo-pet` | `desktop/photo-pet/main.cjs` | 桌宠集成入口单独调试，通常需要 API/renderer 已运行 | 可验桌宠链路 |
+| `npm run dev:desktop` | `desktop/photo-pet/main.cjs` | 当前小狗桌宠入口别名，避免误启动旧像素宠物 | 可验桌宠链路 |
+| `npm run dev:app` | `desktop/app-window/main.cjs` | standalone 应用窗口 UI 调试 | 否 |
 | `npm run dev:renderer` | Vite `127.0.0.1:5180` | renderer smoke test | 否 |
-| `npm run dev:openpets-app` | API + renderer + OpenPets + standalone 应用窗口 | 旧 OpenPets 调试入口 | 否 |
-| `npm run dev:openpets-desktop` | OpenPets built-in pet | 旧像素宠物调试入口，只用于 OpenPets 兼容验证 | 否 |
 | `npm run mcp:ai-pet` | `server/mcp.ts` | AI Pet MCP tools 本地服务 | 工具层验证 |
 | `npm run agent:opencode:test` | `opencode run --agent ai-pet-companion ...` | OpenCode/opencode Agent 路径测试 | Agent 层验证 |
 
-完整验收必须从 `npm run dev` 或等价的 `desktop-photo-pet` 集成链路开始。浏览器 `localhost` 只能说明 renderer 可渲染，不能证明桌面 App、桌宠点击、窗口显隐或桌宠同步成立。
+完整验收必须从 `npm run dev` 或等价的 `desktop/photo-pet` 集成链路开始。浏览器 `localhost` 只能说明 renderer 可渲染，不能证明桌面 App、桌宠点击、窗口显隐或桌宠同步成立。
 
-`desktop` 命名在当前项目中只能指照片级小狗桌宠。OpenPets 旧像素宠物必须使用显式 `openpets` 命令名，避免用户或试用者误把橙色 built-in pet 当成当前 Demo。
+`desktop` 命名在当前项目中只能指照片级小狗桌宠。OpenPets 旧像素宠物的运行脚本和 API 桥接已删除，避免用户或试用者误把橙色 built-in pet 当成当前 Demo。
+
+## App 验收红线
+
+当用户说“App 不能用”“桌宠 App 呢”“不是 HTML”或任何涉及真实产品可用性的反馈时，执行和回复都必须以桌面 App 链路为目标：
+
+- 先检查或启动 `npm run dev`，确保 API、Vite renderer 和 `desktop/photo-pet` Electron 进程同时存在。
+- 如果验证的是交付态 App，应该直接启动 `release/mac-arm64/AI Pet Demo.app` 或解压后的 `.app`；打包 App 会加载内置 `dist/index.html` 并启动 bundled API，不依赖 `127.0.0.1:5180`。
+- 最终验证必须在 `desktop/photo-pet` 创建的桌宠窗口和应用窗口中完成；可以使用 Computer Use 查看和操作本机 Electron 窗口。
+- `http://127.0.0.1:5180/` 只允许作为 renderer smoke test。它打不开时，只能说明 Vite renderer dev server 未运行，不能把该浏览器页面称为 App，也不能把它作为交付入口。
+- `desktop/app-window/main.cjs` 只用于 standalone 应用窗口调试；它没有桌宠窗口和显隐联动，不能替代完整桌面 App 验收。
+- 如果验证截图来自浏览器，必须明确标注为 renderer smoke test；最终结论必须另有 Electron 桌宠/应用窗口截图或实际操作记录支撑。
 
 ## 进程与窗口边界
 
-### `desktop-photo-pet` 集成进程
+### `desktop/photo-pet` 集成进程
 
-`desktop-photo-pet/main.cjs` 是当前完整 Demo 的桌面入口。它负责：
+`desktop/photo-pet/main.cjs` 是当前完整 Demo 的桌面入口。它负责：
 
 - 创建透明、置顶、跳过任务栏的桌宠窗口。
-- 加载 `desktop-photo-pet/renderer.html` 和 `runtime.js` 播放 Mochi 照片级动作帧。
+- 加载 `desktop/photo-pet/renderer.html` 和 `runtime.js` 播放 Mochi 照片级动作帧。
 - 处理桌宠拖拽。
 - 处理桌宠点击，并创建或聚焦应用窗口。
 - 应用窗口打开或聚焦时隐藏桌宠窗口。
 - 应用窗口关闭时恢复桌宠窗口。
 
-`desktop-photo-pet/runtime.js` 是桌宠 renderer。它负责：
+`desktop/photo-pet/runtime.js` 是桌宠 renderer。它负责：
 
 - 读取 `public/assets/pets/mochi/motions/manifest.json`。
 - 播放完整多帧动作序列。
@@ -146,11 +155,11 @@ flowchart LR
 - “我的”页内保留宠物资料、宠物知识库、用户激励入口和装扮功能；用户激励再进入每日任务、排行榜和奖励/可解锁服饰详情页。
 - 将关键结果同步回桌宠，例如配饰外观、动作命令、提醒和状态。
 
-应用窗口可以由 `desktop-photo-pet/main.cjs` 创建，也可以由 `desktop-app/main.cjs` 单独调试。只有前者能验证完整桌宠联动。
+应用窗口可以由 `desktop/photo-pet/main.cjs` 创建，也可以由 `desktop/app-window/main.cjs` 单独调试。只有前者能验证完整桌宠联动。
 
 ### Renderer
 
-`src/App.tsx`、`src/styles.css`、`index.html` 和 Vite dev server 是应用窗口 renderer。它们不是静态网页交付物。
+`src/app/App.tsx`、`src/app/styles.css`、`index.html` 和 Vite dev server 是应用窗口 renderer。它们不是静态网页交付物。
 
 renderer 负责：
 
@@ -162,20 +171,20 @@ renderer 负责：
 
 renderer 不应该直接拥有业务真相。后续 Domain Service 成熟后，renderer 应只做呈现和交互。
 
-### `desktop-app`
+### `desktop/app-window`
 
-`desktop-app/main.cjs` 只创建 standalone 应用窗口。它保留用于应用窗口 UI 调试和快速复查，不创建桌宠窗口，不控制桌宠显隐，也不能作为完整产品验收入口。
+`desktop/app-window/main.cjs` 只创建 standalone 应用窗口。它保留用于应用窗口 UI 调试和快速复查，不创建桌宠窗口，不控制桌宠显隐，也不能作为完整产品验收入口。
 
 ## 代码目录职责
 
 | 路径 | 架构职责 |
 |---|---|
-| `desktop-photo-pet/` | 当前完整桌宠集成入口、透明桌宠窗口、桌宠 renderer、点击打开应用窗口、显隐联动 |
-| `desktop-app/` | standalone 应用窗口调试入口 |
-| `src/App.tsx` | 应用窗口主 renderer，承载五个主入口和交互流程 |
-| `src/styles.css` | 应用窗口视觉样式 |
+| `desktop/photo-pet/` | 当前完整桌宠集成入口、透明桌宠窗口、桌宠 renderer、点击打开应用窗口、显隐联动 |
+| `desktop/app-window/` | standalone 应用窗口调试入口 |
+| `src/app/App.tsx` | 应用窗口主 renderer，承载五个主入口和交互流程 |
+| `src/app/styles.css` | 应用窗口视觉样式 |
 | `src/domain/` | 当前共享领域模型、mock 数据、状态、动作、档案和推荐规则；后续要抽到端无关 Domain Service |
-| `src/components/` | 早期或复用组件；不是当前架构入口 |
+| `src/components/` | 当前 App 实际使用的共享组件；过时 MVP 组件不保留 |
 | `server/` | Express API、OpenCode/opencode Agent 主路径、AI Pet MCP tools、OpenAI Agents SDK fallback、语音、动作命令和外观状态 |
 | `server/appearance.ts` | 宠物外观单一真相源，保存和读取当前真实同步配饰状态；Demo 阶段持久化到 `.ai-pet-data/appearance.json` |
 | `server/threadStore.ts` | Demo 阶段的主群聊消息和长期记忆持久化 store；默认写入 `.ai-pet-data/thread-store.json` |
@@ -207,8 +216,8 @@ renderer 不应该直接拥有业务真相。后续 Domain Service 成熟后，r
 ### 点击桌宠打开应用窗口
 
 1. 用户点击透明桌宠窗口。
-2. `desktop-photo-pet/runtime.js` 判断不是拖拽后，通过 preload/IPC 请求打开应用窗口。
-3. `desktop-photo-pet/main.cjs` 创建或聚焦应用窗口。
+2. `desktop/photo-pet/runtime.js` 判断不是拖拽后，通过 preload/IPC 请求打开应用窗口。
+3. `desktop/photo-pet/main.cjs` 创建或聚焦应用窗口。
 4. 主进程隐藏桌宠窗口。
 5. 应用窗口加载 Vite dev server 或 `dist/index.html`。
 6. 用户关闭应用窗口后，主进程恢复桌宠窗口。
@@ -222,7 +231,7 @@ renderer 不应该直接拥有业务真相。后续 Domain Service 成熟后，r
 3. `server/appearance.ts` 校验配饰 ID，计算资产状态，并把当前 `PetAppearanceState` 持久化到 `.ai-pet-data/appearance.json`。
 4. API 返回新的 `PetAppearanceState`；应用窗口根状态更新 `accessoryId`。
 5. 欢迎页、对话页、状态页和“我的/装扮”已保存状态都用同一个 `accessoryId` 渲染 `MochiMotionAvatar`。
-6. `desktop-photo-pet/runtime.js` 轮询外观状态，应用窗口关闭时还必须强制刷新一次外观状态。
+6. `desktop/photo-pet/runtime.js` 轮询外观状态，应用窗口关闭时还必须强制刷新一次外观状态。
 7. 桌宠按配饰选择对应完整动作帧图；缺失帧可回退原始帧，但不能显示另一套状态。
 
 当前真实桌宠换装只承诺配饰同步。服装、毛发、妆容如果出现在 UI 中，只能作为应用窗口预览或后续方案，不能写成已真实同步到桌宠。
@@ -295,9 +304,9 @@ OpenAI Agents SDK 路径只作为 fallback，不能描述为最终 Agent 底座�
 
 ## 与 OpenPets 的关系
 
-OpenPets 是早期桌宠底座和调试参考，不是当前完整 Demo 的默认运行入口。
+OpenPets 是早期桌宠底座调研材料，不是当前完整 Demo 的运行入口，也不再保留项目内启动脚本、API 桥接或 UI 组件。
 
-当前默认入口是 `desktop-photo-pet`，原因是它已经承载：
+当前默认入口是 `desktop/photo-pet`，原因是它已经承载：
 
 - 照片级 Mochi 多帧动作。
 - 透明桌面窗口。
@@ -305,7 +314,7 @@ OpenPets 是早期桌宠底座和调试参考，不是当前完整 Demo 的默�
 - 应用窗口打开/关闭时桌宠隐藏/恢复。
 - 配饰外观状态轮询。
 
-只有当 OpenPets renderer 能承载同等照片级动作帧、点击联动和应用窗口生命周期控制时，OpenPets 才能重新成为主入口。
+历史调研文档可以保留 OpenPets 的评估结论，但当前交付版不能再启动或控制 OpenPets built-in pet。
 
 ## 验证标准
 
@@ -329,11 +338,11 @@ OpenPets 是早期桌宠底座和调试参考，不是当前完整 Demo 的默�
 
 ## 禁止误读
 
-- 禁止把 `src/App.tsx` 或 Vite dev server 说成产品是前端 HTML。
-- 禁止把 `desktop-photo-pet/renderer.html` 说成 HTML 展示页；它是 Electron 桌宠窗口 renderer。
+- 禁止把 `src/app/App.tsx` 或 Vite dev server 说成产品是前端 HTML。
+- 禁止把 `desktop/photo-pet/renderer.html` 说成 HTML 展示页；它是 Electron 桌宠窗口 renderer。
 - 禁止用浏览器截图替代 Electron 应用窗口验收。
-- 禁止把 `desktop-app/main.cjs` 当成完整产品入口。
-- 禁止把 OpenPets 旧入口当成当前默认 Demo 入口。
+- 禁止把 `desktop/app-window/main.cjs` 当成完整产品入口。
+- 禁止重新加入 OpenPets built-in pet 运行入口，除非先完成新的架构评审并能证明它承载的是当前照片级小狗形象。
 - 禁止把 reports 下的 HTML 调研报告当成产品页面。
 - 禁止把 OpenAI Agents SDK fallback 写成当前主 Agent 底座。
 
@@ -343,4 +352,4 @@ OpenPets 是早期桌宠底座和调试参考，不是当前完整 Demo 的默�
 
 1. 把 `src/domain/*` 抽成可被 API、Agent tools、桌宠和未来端复用的 Domain Service。
 2. 继续扩大 AI Pet MCP tools 覆盖面，并保持 OpenCode/opencode 主路径稳定；OpenAI Agents SDK 仅保留 fallback。
-3. 保持 `desktop-photo-pet` 完整 App 链路稳定，再扩展桌宠动作、配饰同步、健康任务和商业推荐。
+3. 保持 `desktop/photo-pet` 完整 App 链路稳定，再扩展桌宠动作、配饰同步、健康任务和商业推荐。

@@ -11,7 +11,7 @@ import {
   subscribeKnowledgeBase
 } from "./knowledgeBase";
 import { getMotionSnapshot, submitAgentMotion, submitBraceletMirror, submitMotionCommand, submitRandomMotion } from "./motion";
-import { getDiscoverySnapshot, getOpenPetsStatus, sayOpenPets } from "./openpets";
+import { getPetEventRuntimeStatus, handlePetRuntimeEvent, isPetEventKind, startPetEventRuntime, type PetEventKind } from "./petEventRuntime";
 import { appendThreadMessages, getLatestPetThreadMessage, getThreadMemories, getThreadMessages, replaceThreadMemories } from "./threadStore";
 import type { AgentChatMessage } from "../src/domain/agent";
 import type { ExpressionCommand, PetMotionAction, StreamPacket, VirtualPetState } from "../src/domain/types";
@@ -20,7 +20,7 @@ const app = express();
 const port = Number(process.env.AI_PET_API_PORT || 8788);
 const llmBaseUrl = process.env.LLMMELON_BASE_URL || "https://llmmelon.cloud/v1";
 const llmModel = process.env.LLMMELON_MODEL || "gpt-4o-mini";
-const desktopRuntime = process.env.AI_PET_DESKTOP_RUNTIME || "desktop-photo-pet";
+const desktopRuntime = process.env.AI_PET_DESKTOP_RUNTIME || "desktop/photo-pet";
 
 const allowedOrigins = new Set(["http://127.0.0.1:5180", "http://localhost:5180", "null"]);
 
@@ -59,12 +59,11 @@ app.get("/api/health", (_req, res) => {
     llm: process.env.LLMMELON_API_KEY ? "llmmelon-configured" : "local-fallback",
     model: process.env.LLMMELON_API_KEY ? llmModel : "rule-engine",
     desktopPet: desktopRuntime,
-    desktopPetDisplayName: "旺财",
-    legacyOpenPets: getDiscoverySnapshot() ? "openpets-discovered" : "openpets-not-discovered"
+    desktopPetDisplayName: "旺财"
   });
 });
 
-app.get("/api/desktop-pet/status", async (_req, res) => {
+app.get("/api/desktop-pet/status", (_req, res) => {
   res.json({
     configured: true,
     connected: true,
@@ -76,8 +75,7 @@ app.get("/api/desktop-pet/status", async (_req, res) => {
       id: "pet_mochi",
       displayName: "旺财",
       builtIn: false
-    },
-    legacyOpenPets: getDiscoverySnapshot() ? "openpets-discovered" : "openpets-not-discovered"
+    }
   });
 });
 
@@ -98,6 +96,16 @@ app.post("/api/desktop-pet/appearance", (req, res) => {
 
   const petId = typeof req.body?.petId === "string" && req.body.petId.trim() ? req.body.petId.trim() : "pet_mochi";
   const appearance = updateDesktopPetAppearance(accessoryId, petId);
+  void handlePetRuntimeEvent({
+    kind: "appearance.changed",
+    source: "appearance",
+    payload: {
+      petId: appearance.petId,
+      accessoryId: appearance.accessoryId,
+      accessoryLabel: appearance.accessoryLabel,
+      eventKey: `appearance:${appearance.accessoryId}:${appearance.updatedAt}`
+    }
+  });
   recordKnowledgeBaseEvent({
     kind: "appearance_saved",
     accessoryId: appearance.accessoryId,
@@ -155,7 +163,7 @@ app.post("/api/desktop-pet/say", async (req, res) => {
     authorName: "旺财",
     text: message,
     createdAt: now,
-    provider: "desktop-photo-pet"
+    provider: "desktop/photo-pet"
   };
   appendThreadMessages("pet_mochi_main", [petMessage]);
   recordKnowledgeBaseMessages("pet_mochi_main", [petMessage]);
@@ -169,28 +177,6 @@ app.post("/api/desktop-pet/say", async (req, res) => {
       createdAt: petMessage.createdAt
     }
   });
-});
-
-app.get("/api/legacy/openpets/status", async (_req, res) => {
-  res.json(await getOpenPetsStatus());
-});
-
-app.post("/api/legacy/openpets/say", async (req, res) => {
-  const message = String(req.body?.message || "").trim();
-  const reaction = String(req.body?.reaction || "success").trim();
-  if (!message) {
-    res.status(400).json({ ok: false, error: "message_required" });
-    return;
-  }
-
-  try {
-    res.json(await sayOpenPets(message, reaction));
-  } catch (error) {
-    res.status(503).json({
-      ok: false,
-      error: error instanceof Error ? error.message : String(error)
-    });
-  }
 });
 
 app.get("/api/desktop-pet/bubble", (req, res) => {
@@ -217,7 +203,63 @@ app.get("/api/desktop-pet/bubble", (req, res) => {
 });
 
 app.get("/api/agent/status", (_req, res) => {
-  res.json(getAgentRuntimeStatus());
+  res.json({
+    ...getAgentRuntimeStatus(),
+    petEventRuntime: getPetEventRuntimeStatus()
+  });
+});
+
+app.post("/api/agent/hooks", async (req, res) => {
+  try {
+    const kind = String(req.body?.kind || "").trim();
+    if (!isPetEventKind(kind)) {
+      res.status(400).json({ error: "supported_pet_event_kind_required" });
+      return;
+    }
+
+    const result = await handlePetRuntimeEvent({
+      kind: kind as PetEventKind,
+      source: typeof req.body?.source === "string" ? req.body.source : "api-hook",
+      payload: req.body?.payload && typeof req.body.payload === "object" ? req.body.payload : undefined,
+      createdAt: typeof req.body?.createdAt === "string" ? req.body.createdAt : undefined
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post("/api/agent/timer/tick", async (req, res) => {
+  try {
+    const result = await handlePetRuntimeEvent({
+      kind: "cron.companion_checkin",
+      source: "manual-cron",
+      createdAt: typeof req.body?.createdAt === "string" ? req.body.createdAt : undefined
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post("/api/agent/cron/tick", async (req, res) => {
+  try {
+    const result = await handlePetRuntimeEvent({
+      kind: "cron.companion_checkin",
+      source: "manual-cron",
+      payload: req.body?.payload && typeof req.body.payload === "object" ? req.body.payload : undefined,
+      createdAt: typeof req.body?.createdAt === "string" ? req.body.createdAt : undefined
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
 });
 
 app.get("/api/knowledge-base", (_req, res) => {
@@ -308,13 +350,49 @@ app.post("/api/agent/threads/:threadId/proactive", (req, res) => {
 
 app.post("/api/agent/chat", async (req, res) => {
   try {
+    const requestedThreadId = String(req.body?.threadId || req.body?.context?.mainThreadId || "pet_mochi_main").trim() || "pet_mochi_main";
+    const clientMessageId =
+      typeof req.body?.clientMessageId === "string" && req.body.clientMessageId.trim()
+        ? req.body.clientMessageId.trim().slice(0, 160)
+        : `user-${new Date().toISOString()}-${Math.random().toString(16).slice(2, 8)}`;
+    const clientTurnId =
+      typeof req.body?.clientTurnId === "string" && req.body.clientTurnId.trim()
+        ? req.body.clientTurnId.trim().slice(0, 160)
+        : clientMessageId;
+    const clientCreatedAt =
+      typeof req.body?.clientCreatedAt === "string" && !Number.isNaN(new Date(req.body.clientCreatedAt).getTime())
+        ? req.body.clientCreatedAt
+        : new Date().toISOString();
+    const existingMessages = getThreadMessages(requestedThreadId);
+    const existingUser = existingMessages.find((message) => message.id === clientMessageId);
+    const existingPet = existingMessages.find((message) => message.speaker === "pet" && message.clientTurnId === clientTurnId);
+    if (existingUser && existingPet) {
+      res.json({
+        provider: existingPet.provider || "thread-store",
+        model: "thread-store",
+        personaId: "existing-turn",
+        threadId: requestedThreadId,
+        answer: existingPet.text,
+        responseMode: existingPet.responseMode || "text",
+        message: existingPet,
+        memory: getThreadMemories(requestedThreadId),
+        toolCalls: [],
+        toolCards: existingPet.toolCards || []
+      });
+      return;
+    }
+
+    req.body.clientMessageId = clientMessageId;
+    req.body.clientTurnId = clientTurnId;
+    req.body.clientCreatedAt = clientCreatedAt;
     const result = await createPetAgentReply(req.body);
     const userMessage: AgentChatMessage = {
-      id: `user-${new Date().toISOString()}-${Math.random().toString(16).slice(2, 8)}`,
+      id: clientMessageId,
       speaker: "user",
       authorName: "主人",
       text: String(req.body?.input || "").trim(),
-      createdAt: new Date().toISOString(),
+      createdAt: clientCreatedAt,
+      clientTurnId,
       responseMode: "text"
     };
     appendThreadMessages(result.threadId, [userMessage, result.message]);
@@ -400,4 +478,5 @@ app.post("/api/ask", async (req, res) => {
 
 app.listen(port, "127.0.0.1", () => {
   console.log(`AI Pet API listening on http://127.0.0.1:${port}`);
+  startPetEventRuntime();
 });

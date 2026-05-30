@@ -64,12 +64,10 @@ related:
 
 ### 6. 物理目录整理需要持续收口
 
-已处理一部分：已新增 [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md)，并把根目录散落截图归档到 `reports/application-window-ui-2026-05-30/` 和 `reports/legacy-root-screenshots/`。
+已处理：已更新 [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md)，并把根目录散落截图归档到 `reports/application-window-ui-2026-05-30/` 下的任务子目录。过时宽屏 MVP 组件已删除，不再保留 `legacy` 源码目录；当前 App 入口只保留在 `src/app/`。
 
 仍待处理：
 
-- `src/components/` 中的早期宽屏 MVP 组件当前未被手机比例应用窗口引用，后续需确认迁移到 legacy 还是删除。
-- 桌宠形象线的 `desktop-photo-pet/`、`public/assets/pets/mochi/motions/` 和 `reports/desktop-photo-pet-*` 仍在独立进程中演进，本线暂不整理。
 - 旧文档 frontmatter 和报告索引仍需逐步补齐。
 
 ### 7. 桌宠动作接口已具备服务端仲裁，真实运行时消费仍待接入
@@ -84,7 +82,7 @@ related:
 
 已处理：已新增 [应用窗口被误当成前端 HTML 与实际 App 架构记录不足问题记录](fix-records/2026-05-30-app-window-vs-html-architecture-drift.md)，并回补 [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md) 的“当前实际运行架构”和 [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md) 的运行入口表。
 
-待处理：后续每次涉及应用窗口或桌宠的验证记录，都必须显式写明验证对象是 `desktop-photo-pet` 集成 Electron 链路、standalone `desktop-app` 调试入口，还是浏览器 renderer smoke test。
+待处理：后续每次涉及应用窗口或桌宠的验证记录，都必须显式写明验证对象是 `desktop/photo-pet` 集成 Electron 链路、standalone `desktop/app-window` 调试入口，还是浏览器 renderer smoke test。
 
 ### 9. 整体系统架构真相源缺失
 

@@ -1,7 +1,7 @@
-node_modules/
-dist/
-build/
-release/
+/node_modules/
+/dist/
+/build/
+/release/
 *.tsbuildinfo
 .ai-pet-data/
 .env

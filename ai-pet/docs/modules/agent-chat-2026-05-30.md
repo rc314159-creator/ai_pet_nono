@@ -4,7 +4,7 @@ description: 记录对话页作为单宠物唯一长期主群聊的产品机制�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 补充长期主群聊持久化、主动开场、狗狗语气、记忆召回、动作卡片隐藏和主动提醒去重的当前实现边界。
+update_reason: 补充用户消息发送幂等机制，修复乐观消息与服务端历史回流导致同一主人消息重复展示的问题。
 doc_type: module-spec
 domain_taxa:
   - agent-runtime
@@ -99,6 +99,41 @@ Dog Persona 是可见表达层，不是后台 Agent Runtime 本身。Agent Runti
 - 用户明确要求语音或 UI 选择语音模式时，Agent 才调用 `reply_with_voice`。
 - “陪我说话”“和我聊聊”不等同于语音请求；只有“语音、声音、出声、读出来、念出来、voice、tts”等明确词才触发语音。
 
+### 角色卡式 Prompt 结构
+
+2026-05-31 根据公开角色卡/角色扮演 Prompt 资料补强当前 Dog Persona。参考结论：
+
+- 成熟角色卡不会只写“你是某角色”，而是拆成 `name/description/personality/scenario/first message/example dialogues/system prompt/post-history instruction` 等层级。
+- 示例对话是稳定语气的重要手段；比单纯写“可爱、温暖”更能约束模型输出。
+- 角色卡可以非常简单，也可以包含详细世界观、多段示例对话和专属预设；AI Pet 当前应采用中等复杂度，避免短 Prompt 导致系统播报口吻。
+- 角色关系必须写清楚：用户不是客户，宠物不是客服；对话发生在长期家庭群聊中。
+- 对宠物产品尤其需要“后台事实 -> 宠物感受/请求”的转写表，避免把 `status/task/inventory/appearance` 直接说成系统文案。
+
+当前 Prompt 分层：
+
+1. `Visible identity`：当前可见宠物是谁，和桌宠/对话页是同一只。
+2. `Relationship with the owner`：主人关系、依恋感、照护请求方式。
+3. `Inner personality`：忠诚、好奇、贪吃、亲近、轻微调皮。
+4. `Living scene`：窗边阳光、阳台小鸟、垫子、饭碗、湿巾、门口钥匙声等场景锚点。
+5. `Speech style`：中文短句、最多一个动作描写、最多一个“汪”、桌宠气泡 1-2 句。
+6. `Care transformation rules`：抓挠、吃多、库存、无配饰、任务提醒都必须转成狗狗感受。
+7. `Proactive demo beats`：窗边晒太阳、看小鸟、打盹、主人回家、吃多变圆一点。
+8. `Example dialogue`：用 `<START>` 样例固定口吻。
+9. `Hard boundaries`：不暴露工程词，不诊断，不替主人做决定，不输出系统播报。
+
+当前代码入口：
+
+- `.opencode/prompts/ai-pet-companion.md`：OpenCode/opencode 主 Prompt。
+- `src/domain/agent.ts`：本地 persona、OpenAI Agents fallback 与本地兜底回复。
+- `server/petEventRuntime.ts`：Timer/Hook 主动事件的 Dog Persona 事件 Prompt。
+
+参考资料：
+
+- SillyTavern Prompts 文档：Prompt 可包含角色定义、用户定义、世界信息、外部数据、历史消息和最终生成指令。
+- SillyTavern Character Design 文档：角色卡常用 `personality`、`scenario`、`mesExamples` 等字段，示例对话用于约束角色说话方式。
+- Luker 角色卡基础文档：角色卡是角色说明书，告诉 AI 扮演谁、角色是什么样、对话发生在什么场景、如何开始。
+- Character Tavern 猫娘角色卡示例：可借鉴其“角色简介、性格行为、喜欢/讨厌、语言习惯、互动指南、禁令”的组织方式；AI Pet 只借鉴结构，不照搬成人向或不适合宠物陪伴产品的内容。
+
 ## 群聊身份
 
 当前对话页呈现为多人群聊，而不是单一用户和助手的问答框。
@@ -128,6 +163,7 @@ Demo 群聊：
 - `server/threadStore.ts`：本地 JSON store，默认路径 `.ai-pet-data/thread-store.json`。
 - `ChatHome`：挂载时先读历史，空历史才使用 seed 消息；发送请求时把当前历史交给后端。
 - `server/agent.ts`：每轮合并持久化历史和前端当前历史，再传给 OpenCode/opencode；用户说“记住/记一下/以后/下次”时会写入结构化长期记忆；“还记得/之前我说过/几点/什么时候”等问题优先从 memory 召回。
+- 发送幂等：`ChatHome` 每次发送生成稳定 `clientMessageId` 和 `clientTurnId`；前端乐观用户消息、`/api/agent/chat` 入库用户消息和 Agent 宠物回复共享同一 turn。历史水合按 `id` 和 `clientTurnId` 去重，避免同一主人消息因为“本地乐观消息 + 服务端回流消息”显示两遍。
 
 当前 JSON store 不是正式生产数据库。生产方向仍应迁移到 SQLite、PostgreSQL 或应用内正式数据库，但不能再退回“只有 React state”的临时方案。
 
@@ -157,6 +193,34 @@ Demo 群聊：
 - 每个 `ThreadMessage.id` 最多展示一次。
 - 展示 5-10 秒后隐藏，当前 Demo 为 8 秒。
 - 轮询、窗口恢复或可见性变化不得重复展示旧消息。
+
+## Cron 与 Hook 运行时
+
+当前 Demo 的主动对话不只绑定进入对话页，还包含最小后台运行时：
+
+- `server/petEventRuntime.ts` 负责接收 `PetRuntimeEvent`，生成狗狗语气消息并写入主 thread。
+- `startPetEventRuntime()` 默认启动 Agent Cron，当前 Demo 等价于每 60 秒一次 `cron.companion_checkin`。
+- `cron.companion_checkin` 不是固定内容轮播。它只负责唤醒 Agent，由 Agent 根据当前时间、时间段、最近群聊、宠物状态和可选主人场景生成情感陪伴话。
+- `POST /api/agent/hooks` 是领域 Hook 入口，用于健康异常、主人回家、进食变化、外观变化等事件。
+- `POST /api/agent/cron/tick` 可手动触发一次 Cron 陪伴事件，便于端到端验证和录制前排练。
+- `POST /api/agent/timer/tick` 保留为兼容入口，但语义也指向 `cron.companion_checkin`。
+- `GET /api/agent/status` 的 `petEventRuntime` 字段暴露当前 Cron 状态、表达式、interval、nextRunAt、threadId 和已发送事件数。
+
+Cron 陪伴的生成要求：
+
+- 中午可以围绕“主人可能在吃午饭或准备午休”主动说话，但在没有真实传感器证据时必须用温和推测，例如“是不是在吃饭呀”。
+- 上午、下午、傍晚、晚上和深夜分别对应开工陪伴、犯困缓冲、等主人回家、安静收尾和提醒休息。
+- 具体话术由 Agent 生成，不在代码里硬编码固定句子。
+- 输出仍然必须落成一条 `ThreadMessage`，对话页和桌宠气泡同源展示。
+
+Storyboard Hook 只用于手动演示或视频排练，不是默认 Cron：
+
+1. `demo.window_sun`：窗边晒太阳。
+2. `demo.bird_watch`：阳台小鸟。
+3. `demo.nap`：小鸟飞走后垫子打盹。
+4. `owner.returned`：听到主人回来，跑向门口。
+
+这些 Hook 生成的文本也必须是小狗自己对主人说的话，并且是应用对话页、桌宠气泡和后续左右分屏视频的同一条内容来源。
 
 ## Memory
 

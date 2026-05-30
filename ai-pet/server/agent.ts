@@ -32,6 +32,9 @@ type AgentChatPayload = {
   responseMode?: AgentResponseMode;
   threadId?: string;
   history?: AgentChatMessage[];
+  clientTurnId?: string;
+  clientMessageId?: string;
+  clientCreatedAt?: string;
   context?: AgentContextSnapshot;
 };
 
@@ -45,6 +48,7 @@ type PetAgentRuntimeContext = {
   toolCards: AgentToolCard[];
   voiceResult?: VoiceResult;
   voiceAllowed: boolean;
+  clientTurnId?: string;
 };
 
 type AgentChatResult = {
@@ -426,6 +430,7 @@ function createMessageFromResult({
     authorName: getPersonaForProfile(runtime.snapshot.profile).displayName,
     text: voice?.transcript || answer,
     createdAt: new Date().toISOString(),
+    clientTurnId: runtime.clientTurnId,
     responseMode,
     provider,
     voiceProvider: voice?.provider,
@@ -483,7 +488,8 @@ async function createLlmmelonFastMotionReply(input: string, snapshot: AgentConte
                 content: [
                   `你是 AI Pet 主群聊里的宠物「${persona.displayName}」。`,
                   "主人提出了一个明确动作请求；动作工具已由系统触发，你只需要像宠物本人一样回复一句中文。",
-                  "不要提模型、接口、工具、JSON、fallback。不要使用 emoji。最多一句动作描写加一句短回复。"
+                  "回复要有宠物身体感和陪伴感，可以说摇尾巴、凑近、歪头、爪爪、想被摸摸。",
+                  "不要提模型、接口、工具、JSON、fallback、动作命令或系统实现。不要使用 emoji。最多一句动作描写加一句短回复。"
                 ].join("\n")
               },
               {
@@ -680,7 +686,8 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
     history,
     toolCalls: [],
     toolCards: [],
-    voiceAllowed
+    voiceAllowed,
+    clientTurnId: typeof payload.clientTurnId === "string" ? payload.clientTurnId.trim() : undefined
   };
   const explicitMemory = extractExplicitMemory(input);
   if (explicitMemory && !runtime.memory.some((item) => item.type === "participant_memory" && item.content === explicitMemory && item.source === "user_explicit")) {

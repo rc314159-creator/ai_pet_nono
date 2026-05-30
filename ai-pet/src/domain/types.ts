@@ -215,7 +215,7 @@ export type ExpressionCommand = {
     messageId?: string;
     bubbleText?: string;
     conversationId?: string;
-    targetView?: "chat" | "status" | "outfit" | "tasks" | "care";
+    targetView?: "welcome" | "chat" | "status" | "outfit" | "tasks" | "care";
   };
 };
 
