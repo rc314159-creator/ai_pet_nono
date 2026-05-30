@@ -1,8 +1,41 @@
 {
-  "version": 5,
-  "defaultMotion": "walk",
+  "version": 6,
+  "defaultMotion": "idle",
   "demoMode": "motion-pack-v1-partial",
   "motions": {
+    "idle": {
+      "label": "待机",
+      "frameCount": 24,
+      "fps": 8,
+      "loop": true,
+      "speech": "Mochi 在桌面上等你。",
+      "frames": [
+        "motions/idle-v1/000.png",
+        "motions/idle-v1/001.png",
+        "motions/idle-v1/002.png",
+        "motions/idle-v1/003.png",
+        "motions/idle-v1/004.png",
+        "motions/idle-v1/005.png",
+        "motions/idle-v1/006.png",
+        "motions/idle-v1/007.png",
+        "motions/idle-v1/008.png",
+        "motions/idle-v1/009.png",
+        "motions/idle-v1/010.png",
+        "motions/idle-v1/011.png",
+        "motions/idle-v1/012.png",
+        "motions/idle-v1/013.png",
+        "motions/idle-v1/014.png",
+        "motions/idle-v1/015.png",
+        "motions/idle-v1/016.png",
+        "motions/idle-v1/017.png",
+        "motions/idle-v1/018.png",
+        "motions/idle-v1/019.png",
+        "motions/idle-v1/020.png",
+        "motions/idle-v1/021.png",
+        "motions/idle-v1/022.png",
+        "motions/idle-v1/023.png"
+      ]
+    },
     "walk": {
       "label": "走路",
       "frameCount": 28,

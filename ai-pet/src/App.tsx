@@ -311,22 +311,6 @@ function MarketView({ recommendations }: { recommendations: ReturnType<typeof re
         </div>
       </section>
 
-      <div className="product-grid">
-        {products.map((product) => (
-          <button key={product.id} className="product-card" onClick={() => setSelectedProductId(product.id)}>
-            <div className={`product-image ${product.art}`}>
-              <ShoppingBag size={44} />
-              <span>{product.tag}</span>
-            </div>
-            <div className="product-info">
-              <strong>{product.title}</strong>
-              <p>{product.reason}</p>
-              <span>¥{product.price}</span>
-            </div>
-          </button>
-        ))}
-      </div>
-
       {selectedProduct ? (
         <section className="detail-sheet" aria-label="商品详情">
           <button className="sheet-close" onClick={() => setSelectedProductId(undefined)}>
@@ -342,6 +326,22 @@ function MarketView({ recommendations }: { recommendations: ReturnType<typeof re
           <button className="primary-pill">加入 Mock 购物车</button>
         </section>
       ) : null}
+
+      <div className="product-grid">
+        {products.map((product) => (
+          <button key={product.id} className="product-card" onClick={() => setSelectedProductId(product.id)}>
+            <div className={`product-image ${product.art}`}>
+              <ShoppingBag size={44} />
+              <span>{product.tag}</span>
+            </div>
+            <div className="product-info">
+              <strong>{product.title}</strong>
+              <p>{product.reason}</p>
+              <span>¥{product.price}</span>
+            </div>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }
@@ -657,6 +657,22 @@ function StatusDataView({
         </button>
       </div>
 
+      {reportOpen ? (
+        <section className="detail-sheet report-sheet" aria-label="健康报告详情">
+          <button className="sheet-close" onClick={() => setReportOpen(false)}>
+            返回状态
+          </button>
+          <FileText size={42} />
+          <span>Mock Health Report</span>
+          <h2>{selectedDaily.date} 健康报告</h2>
+          <p>综合评分 {selectedDaily.healthIndex}。睡眠 {selectedDaily.sleepScore}，活动 {selectedDaily.activityIndex}，抓挠 {selectedDaily.scratchMinutes} 分钟，饮水 {selectedDaily.waterMl}ml。</p>
+          <div className="report-line">
+            <strong>建议</strong>
+            <p>今晚继续观察腹部红点，减少高强度奔跑，完成低刺激清洁并记录照片。</p>
+          </div>
+        </section>
+      ) : null}
+
       <section className="status-showcase">
         <PetFigure state={state} outfit={outfit} accent="#ff8f73" />
         <div className="current-status">
@@ -741,22 +757,6 @@ function StatusDataView({
           ))}
         </div>
       </section>
-
-      {reportOpen ? (
-        <section className="detail-sheet report-sheet" aria-label="健康报告详情">
-          <button className="sheet-close" onClick={() => setReportOpen(false)}>
-            返回状态
-          </button>
-          <FileText size={42} />
-          <span>Mock Health Report</span>
-          <h2>{selectedDaily.date} 健康报告</h2>
-          <p>综合评分 {selectedDaily.healthIndex}。睡眠 {selectedDaily.sleepScore}，活动 {selectedDaily.activityIndex}，抓挠 {selectedDaily.scratchMinutes} 分钟，饮水 {selectedDaily.waterMl}ml。</p>
-          <div className="report-line">
-            <strong>建议</strong>
-            <p>今晚继续观察腹部红点，减少高强度奔跑，完成低刺激清洁并记录照片。</p>
-          </div>
-        </section>
-      ) : null}
     </section>
   );
 }

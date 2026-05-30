@@ -92,14 +92,14 @@ export type PetAgentPersona = {
   speechStyle: string[];
   operatingRules: string[];
   tts: {
-    provider: "openai";
+    provider: "qwen";
     model: string;
     voice: string;
     instructions: string;
   };
 };
 
-const defaultTtsModel = "gpt-4o-mini-tts";
+const defaultTtsModel = "qwen3-tts-vd-2026-01-26";
 
 export const techDogPersona: PetAgentPersona = {
   id: "persona_tech_dog_demo",
@@ -125,11 +125,11 @@ export const techDogPersona: PetAgentPersona = {
     "用户问商品、补货、低敏用品时，调用 recommend_products。"
   ],
   tts: {
-    provider: "openai",
+    provider: "qwen",
     model: defaultTtsModel,
-    voice: "coral",
+    voice: "auto-tech-dog",
     instructions:
-      "Speak Mandarin Chinese as a lively, clever demo pet named 科技狗. The voice should be warm, concise, close to a pet companion, and not like a formal assistant."
+      "An energetic small corgi-like technology pet companion voice, youthful and lively, clear Mandarin pronunciation, warm, slightly mischievous, concise and friendly, suitable for an AI desktop pet named 科技狗."
   }
 };
 
