@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Pet 产品框架看板</title>
+    <style>
+      :root {
+        --ink: #171410;
+        --muted: #665f55;
+        --paper: #f7f2e8;
+        --paper-strong: #fffaf0;
+        --line: #d8cbbb;
+        --dark: #20282a;
+        --teal: #0f6b63;
+        --teal-2: #dff0ec;
+        --red: #c0442e;
+        --yellow: #e5a72f;
+        --blue: #416f9e;
+        --green: #6f8c42;
+        --shadow: 0 18px 55px rgba(30, 24, 18, 0.13);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(90deg, rgba(32, 40, 42, 0.04) 1px, transparent 1px) 0 0 / 34px 34px,
+          linear-gradient(rgba(32, 40, 42, 0.035) 1px, transparent 1px) 0 0 / 34px 34px,
+          var(--paper);
+        font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif;
+        line-height: 1.65;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        min-height: 100vh;
+      }
+
+      .hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+        gap: 44px;
+        min-height: 90vh;
+        padding: 42px clamp(22px, 5vw, 72px) 34px;
+        border-bottom: 1px solid var(--line);
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: auto -8vw -12vw auto;
+        width: 34vw;
+        height: 34vw;
+        min-width: 340px;
+        min-height: 340px;
+        border: 1px solid rgba(15, 107, 99, 0.34);
+        border-radius: 999px;
+        pointer-events: none;
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 42px;
+        max-width: 760px;
+      }
+
+      .eyebrow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 24px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .stamp {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 3px 10px;
+        border: 1px solid var(--ink);
+        background: var(--paper-strong);
+        color: var(--ink);
+        font-size: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 720px;
+        font-family: "Songti SC", "STSong", "SimSun", serif;
+        font-size: clamp(46px, 7vw, 104px);
+        line-height: 0.94;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .hero-lede {
+        max-width: 680px;
+        margin: 28px 0 0;
+        color: var(--dark);
+        font-size: clamp(18px, 2.2vw, 24px);
+        line-height: 1.55;
+        font-weight: 650;
+      }
+
+      .answer-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+        box-shadow: var(--shadow);
+      }
+
+      .answer-strip div {
+        min-height: 130px;
+        padding: 18px;
+        background: var(--paper-strong);
+      }
+
+      .answer-strip b {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: var(--red);
+      }
+
+      .answer-strip p {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .hero-visual {
+        position: relative;
+        z-index: 1;
+        align-self: stretch;
+        display: grid;
+        grid-template-rows: 1fr auto;
+        gap: 16px;
+      }
+
+      .visual-frame {
+        position: relative;
+        min-height: 420px;
+        border: 1px solid var(--ink);
+        background: var(--dark);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .visual-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: saturate(0.88) contrast(1.03);
+      }
+
+      .visual-frame::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(32, 40, 42, 0.04), rgba(32, 40, 42, 0.68)),
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08) 1px, transparent 1px, transparent 5px);
+        pointer-events: none;
+      }
+
+      .visual-caption {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 18px;
+        z-index: 1;
+        color: #fffaf0;
+      }
+
+      .visual-caption strong {
+        display: block;
+        font-family: "Songti SC", "STSong", "SimSun", serif;
+        font-size: clamp(24px, 3vw, 38px);
+        line-height: 1.05;
+      }
+
+      .visual-caption span {
+        display: block;
+        max-width: 520px;
+        margin-top: 10px;
+        color: rgba(255, 250, 240, 0.82);
+        font-size: 14px;
+      }
+
+      .status-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .status-row div {
+        min-height: 86px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.86);
+      }
+
+      .status-row b {
+        display: block;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .status-row span {
+        display: block;
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        gap: 2px;
+        padding: 0 clamp(22px, 5vw, 72px);
+        border-bottom: 1px solid var(--ink);
+        background: rgba(247, 242, 232, 0.92);
+        backdrop-filter: blur(14px);
+      }
+
+      .nav a {
+        display: block;
+        padding: 13px 14px;
+        color: var(--dark);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .nav a:hover {
+        background: var(--ink);
+        color: var(--paper-strong);
+      }
+
+      section {
+        padding: 78px clamp(22px, 5vw, 72px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.36fr) minmax(0, 0.64fr);
+        gap: 38px;
+        align-items: start;
+        margin-bottom: 34px;
+      }
+
+      .kicker {
+        margin: 0 0 10px;
+        color: var(--red);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      h2 {
+        margin: 0;
+        font-family: "Songti SC", "STSong", "SimSun", serif;
+        font-size: clamp(30px, 4vw, 58px);
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--dark);
+        font-size: 17px;
+      }
+
+      .decision-chain {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1px;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+      }
+
+      .chain-step {
+        position: relative;
+        min-height: 270px;
+        padding: 20px;
+        background: var(--paper-strong);
+      }
+
+      .chain-step:nth-child(2) {
+        background: #eef4f1;
+      }
+
+      .chain-step:nth-child(3) {
+        background: #f7ead6;
+      }
+
+      .chain-step:nth-child(4) {
+        background: #ecf0f6;
+      }
+
+      .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        margin-bottom: 26px;
+        border: 1px solid currentColor;
+        color: var(--red);
+        font-weight: 900;
+      }
+
+      .chain-step h3,
+      .branch h3,
+      .ability h3,
+      .kb-cell h3 {
+        margin: 0 0 12px;
+        font-size: 21px;
+        line-height: 1.25;
+      }
+
+      .chain-step p,
+      .branch p,
+      .ability p,
+      .kb-cell p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .taxonomy {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(230px, 0.42fr) minmax(0, 1fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .branch,
+      .shared-core {
+        border: 1px solid var(--ink);
+        background: var(--paper-strong);
+        box-shadow: var(--shadow);
+      }
+
+      .branch {
+        display: flex;
+        flex-direction: column;
+        min-height: 520px;
+      }
+
+      .branch-head {
+        padding: 20px;
+        border-bottom: 1px solid var(--ink);
+      }
+
+      .branch.real .branch-head {
+        background: var(--teal-2);
+      }
+
+      .branch.virtual .branch-head {
+        background: #f9e5dc;
+      }
+
+      .branch-head span {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .branch-list {
+        display: grid;
+        gap: 1px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        background: var(--line);
+      }
+
+      .branch-list li {
+        padding: 18px 20px;
+        background: rgba(255, 250, 240, 0.94);
+      }
+
+      .branch-list b {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .branch-list span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .shared-core {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 520px;
+        padding: 24px;
+        background: var(--dark);
+        color: var(--paper-strong);
+      }
+
+      .shared-core h3 {
+        margin: 0 0 18px;
+        font-family: "Songti SC", "STSong", "SimSun", serif;
+        font-size: 36px;
+        line-height: 1.05;
+      }
+
+      .shared-core p {
+        margin: 0 0 22px;
+        color: rgba(255, 250, 240, 0.76);
+        font-size: 14px;
+      }
+
+      .core-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .core-tags span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 3px 10px;
+        border: 1px solid rgba(255, 250, 240, 0.28);
+        color: rgba(255, 250, 240, 0.92);
+        font-size: 12px;
+      }
+
+      .mvp-band {
+        background: var(--dark);
+        color: var(--paper-strong);
+      }
+
+      .mvp-band .section-head p,
+      .mvp-band .kicker {
+        color: rgba(255, 250, 240, 0.72);
+      }
+
+      .mvp-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(300px, 0.55fr);
+        gap: 22px;
+        align-items: start;
+      }
+
+      .mvp-flow {
+        display: grid;
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 250, 240, 0.35);
+        background: rgba(255, 250, 240, 0.35);
+      }
+
+      .flow-row {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 0;
+        background: rgba(255, 250, 240, 0.08);
+      }
+
+      .flow-row b {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid rgba(255, 250, 240, 0.35);
+        color: var(--yellow);
+        font-size: 18px;
+      }
+
+      .flow-row span {
+        padding: 18px 18px;
+        color: rgba(255, 250, 240, 0.9);
+      }
+
+      .mvp-note {
+        padding: 22px;
+        border: 1px solid rgba(255, 250, 240, 0.35);
+        background: rgba(255, 250, 240, 0.08);
+      }
+
+      .mvp-note h3 {
+        margin: 0 0 12px;
+        font-size: 21px;
+      }
+
+      .mvp-note p {
+        margin: 0 0 16px;
+        color: rgba(255, 250, 240, 0.74);
+      }
+
+      .mvp-note img {
+        width: 100%;
+        display: block;
+        border: 1px solid rgba(255, 250, 240, 0.26);
+        filter: saturate(0.96);
+      }
+
+      .ability-grid,
+      .kb-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .ability,
+      .kb-cell {
+        min-height: 190px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.82);
+      }
+
+      .ability b,
+      .kb-cell b {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        margin-bottom: 18px;
+        padding: 3px 9px;
+        border: 1px solid currentColor;
+        color: var(--teal);
+        font-size: 12px;
+      }
+
+      .kb-cell b {
+        color: var(--blue);
+      }
+
+      .open-questions {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1px;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+      }
+
+      .question {
+        min-height: 170px;
+        padding: 18px;
+        background: var(--paper-strong);
+      }
+
+      .question b {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--red);
+        font-size: 13px;
+      }
+
+      .question span {
+        display: block;
+        font-size: 14px;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 28px clamp(22px, 5vw, 72px);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 1100px) {
+        .hero,
+        .section-head,
+        .mvp-grid,
+        .taxonomy {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .hero-visual {
+          min-height: 520px;
+        }
+
+        .decision-chain,
+        .ability-grid,
+        .kb-grid,
+        .open-questions {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        .hero {
+          padding-top: 28px;
+        }
+
+        .answer-strip,
+        .decision-chain,
+        .ability-grid,
+        .kb-grid,
+        .open-questions,
+        .status-row {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-visual,
+        .visual-frame,
+        .branch,
+        .shared-core {
+          min-height: auto;
+        }
+
+        .visual-frame {
+          height: 420px;
+        }
+
+        .nav {
+          overflow-x: auto;
+          padding: 0 16px;
+        }
+
+        .nav a {
+          flex: 0 0 auto;
+        }
+
+        section {
+          padding-top: 56px;
+          padding-bottom: 56px;
+        }
+
+        .footer {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero" id="top">
+        <div class="hero-copy">
+          <div>
+            <div class="eyebrow">
+              <span class="stamp">2026-05-30 会议整理</span>
+              <span>产品定位 / 受众 / 功能板块 / KB 分类</span>
+            </div>
+            <h1>AI Pet 产品框架看板</h1>
+            <p class="hero-lede">
+              当前讨论的结果是：我们不是单纯做宠物硬件、问诊工具或桌宠玩具，而是做一个以宠物形象承载 AI 陪伴、真实照护解释、虚拟养成和商业推荐的情感陪伴型产品。
+            </p>
+          </div>
+
+          <div class="answer-strip" aria-label="核心结论">
+            <div>
+              <b>一句话定位</b>
+              <p>从人的陪伴需求出发，用宠物形象建立长期关系。</p>
+            </div>
+            <div>
+              <b>两条主线</b>
+              <p>已有宠物用户走真实宠物关联；无宠物用户走纯电子宠物。</p>
+            </div>
+            <div>
+              <b>MVP 取舍</b>
+              <p>第一版先用真实宠物数字分身做完整 demo，虚拟宠物作为扩展线。</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-visual" aria-label="AI Pet visual">
+          <div class="visual-frame">
+            <img src="../pet-sandbox-overnight/screenshots/openpets-running.png" alt="OpenPets 桌宠运行截图" />
+            <div class="visual-caption">
+              <strong>把宠物从数据里带到桌面上</strong>
+              <span>真实档案、mock 设备数据、照护任务和 AI 对话共同驱动一个可表达的宠物形象。</span>
+            </div>
+          </div>
+          <div class="status-row">
+            <div><b>2</b><span>产品主线：真实宠物关联 / 纯电子宠物</span></div>
+            <div><b>6</b><span>共享能力：聊天、记忆、状态、推荐、形象、多端</span></div>
+            <div><b>1</b><span>MVP 第一闭环：真实宠物数字分身</span></div>
+          </div>
+        </aside>
+      </header>
+
+      <nav class="nav" aria-label="页面导航">
+        <a href="#chain">讨论链路</a>
+        <a href="#taxonomy">产品分类</a>
+        <a href="#mvp">MVP 结果</a>
+        <a href="#capability">功能板块</a>
+        <a href="#kb">KB 结构</a>
+        <a href="#questions">待定问题</a>
+      </nav>
+
+      <section id="chain">
+        <div class="section-head">
+          <div>
+            <p class="kicker">DISCUSSION FRAME</p>
+            <h2>我们讨论的框架</h2>
+          </div>
+          <p>
+            讨论不是从功能清单开始，而是按“定位、受众、板块、分工”的顺序收敛。这个顺序很重要：只有先定产品为什么存在，后面的硬件、AI、换装、电商才知道该服务谁。
+          </p>
+        </div>
+
+        <div class="decision-chain">
+          <article class="chain-step">
+            <span class="step-num">1</span>
+            <h3>先定产品定位</h3>
+            <p>在“宠物出发”和“人出发”之间做选择。结果更倾向从人的情感陪伴需求出发，再把宠物数据和硬件能力作为增强层接入。</p>
+          </article>
+          <article class="chain-step">
+            <span class="step-num">2</span>
+            <h3>再定目标受众</h3>
+            <p>用户被分成两类：已经有真实宠物的人，以及没有真实宠物但需要陪伴和互动的人。两类用户共用宠物形象，但任务不同。</p>
+          </article>
+          <article class="chain-step">
+            <span class="step-num">3</span>
+            <h3>然后拆产品板块</h3>
+            <p>围绕 AI 聊天、真实数据绑定、健康解释、照护记录、纯电子宠物养成、换装电商和多端入口拆分功能。</p>
+          </article>
+          <article class="chain-step">
+            <span class="step-num">4</span>
+            <h3>最后定分工和节奏</h3>
+            <p>真实宠物方向继续细化需求和数据；纯电子宠物方向细化玩法和留存；技术方向找开源项目、桌面端和通讯软件接入方案。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="taxonomy">
+        <div class="section-head">
+          <div>
+            <p class="kicker">PRODUCT TAXONOMY</p>
+            <h2>目前形成的产品分类</h2>
+          </div>
+          <p>
+            现在的产品不是单点功能，而是一个双主线产品：真实宠物关联解决“我想更懂自己的宠物”，纯电子宠物解决“我想要低门槛陪伴”。中间的共享能力决定技术和内容资产能否复用。
+          </p>
+        </div>
+
+        <div class="taxonomy">
+          <article class="branch real">
+            <div class="branch-head">
+              <span>BRANCH A</span>
+              <h3>真实宠物关联主线</h3>
+              <p>面向已经养宠物的人，把真实宠物档案、行为数据和照护记录转换成可解释、可互动、可提醒的 AI 宠物。</p>
+            </div>
+            <ul class="branch-list">
+              <li><b>宠物档案</b><span>物种、品种、年龄、体重、健康史、饮食偏好、外观特征。</span></li>
+              <li><b>数据绑定</b><span>手动记录、CSV/mock 数据、未来可接项圈或手环设备。</span></li>
+              <li><b>照护任务</b><span>喂食、换水、遛狗、清洁、梳毛、用药提醒和异常观察。</span></li>
+              <li><b>健康解释</b><span>把一周或一个月的数据变成报告、趋势、异常提示和问诊证据。</span></li>
+              <li><b>安全边界</b><span>给风险提示和就医建议，不替代兽医诊断，不自动处方。</span></li>
+            </ul>
+          </article>
+
+          <aside class="shared-core">
+            <h3>共享能力层</h3>
+            <p>两条主线不应各做一套。真正要沉淀的是 AI 对话、记忆、状态、形象、推荐和多端入口。</p>
+            <div class="core-tags">
+              <span>AI 聊天</span>
+              <span>宠物记忆</span>
+              <span>状态机</span>
+              <span>桌宠表达</span>
+              <span>商品推荐</span>
+              <span>Web/桌面/通讯软件</span>
+            </div>
+          </aside>
+
+          <article class="branch virtual">
+            <div class="branch-head">
+              <span>BRANCH B</span>
+              <h3>纯电子宠物主线</h3>
+              <p>面向没有真实宠物但有陪伴需求的人，提供一个可聊天、可养成、可互动、可装扮的 AI 虚拟宠物。</p>
+            </div>
+            <ul class="branch-list">
+              <li><b>陪伴聊天</b><span>用户不是查百科，而是在和一个持续存在的宠物角色建立关系。</span></li>
+              <li><b>养成成长</b><span>状态、亲密度、习惯、任务和升级构成长线留存。</span></li>
+              <li><b>互动玩法</b><span>喂养、玩耍、清洁、训练、日常陪伴和桌面反馈。</span></li>
+              <li><b>换装定制</b><span>电子服装、宠物形象、现实同款和定制商品形成商业入口。</span></li>
+              <li><b>社区挑战</b><span>排行榜、分享、挑战和活动可作为后续扩展，不进入第一版核心闭环。</span></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="mvp-band" id="mvp">
+        <div class="section-head">
+          <div>
+            <p class="kicker">CURRENT RESULT</p>
+            <h2>目前讨论结果</h2>
+          </div>
+          <p>
+            现有实现和文档更适合把“真实宠物数字分身”作为第一版演示闭环。这样既能利用已有 OpenPets、mock 数据、照护任务和商品推荐，也能在汇报中说明它属于更大的 AI 情感陪伴产品。
+          </p>
+        </div>
+
+        <div class="mvp-grid">
+          <div class="mvp-flow" aria-label="MVP flow">
+            <div class="flow-row"><b>01</b><span>用户创建真实宠物档案，系统生成或选择匹配的虚拟宠物形象。</span></div>
+            <div class="flow-row"><b>02</b><span>手动记录和 mock 设备数据驱动活动、睡眠、心率、体温、GPS、安全围栏等状态。</span></div>
+            <div class="flow-row"><b>03</b><span>AI 基于宠物档案和最近数据生成今日照护任务、健康趋势解释和异常提示。</span></div>
+            <div class="flow-row"><b>04</b><span>桌宠窗口和 Web 控制台展示宠物状态、气泡提醒和用户互动反馈。</span></div>
+            <div class="flow-row"><b>05</b><span>库存不足或任务需要时触发商品推荐，但保留人工确认，不做自动下单。</span></div>
+            <div class="flow-row"><b>06</b><span>汇报叙事中补充纯电子宠物主线，说明后续可复用同一套共享能力层。</span></div>
+          </div>
+
+          <aside class="mvp-note">
+            <h3>MVP 的边界</h3>
+            <p>不把第一版押注在真实硬件 API、自研桌宠 runtime、兽医诊断、复杂社区或自动购买上。第一版重点是演示完整闭环。</p>
+            <img src="../pet-sandbox-overnight/screenshots/ai-desktop-pet-frontend.png" alt="AI Pet 前端运行截图" />
+          </aside>
+        </div>
+      </section>
+
+      <section id="capability">
+        <div class="section-head">
+          <div>
+            <p class="kicker">CAPABILITY MAP</p>
+            <h2>功能板块怎么拆</h2>
+          </div>
+          <p>
+            功能不按“好不好玩”散列，而是按价值链分类：先建立关系，再接入数据，再解释照护，再承接商业化，最后扩展渠道和社区。
+          </p>
+        </div>
+
+        <div class="ability-grid">
+          <article class="ability">
+            <b>入口</b>
+            <h3>AI 宠物聊天与陪伴</h3>
+            <p>用户通过对话、状态反馈、气泡提醒和桌宠表达建立持续关系。</p>
+          </article>
+          <article class="ability">
+            <b>证据</b>
+            <h3>真实宠物数据绑定</h3>
+            <p>档案、喂养、饮水、睡眠、活动、心率、体温、GPS 和行为异常。</p>
+          </article>
+          <article class="ability">
+            <b>解释</b>
+            <h3>健康与照护报告</h3>
+            <p>不只展示数字，而是生成趋势、异常原因、照护建议和就医提示。</p>
+          </article>
+          <article class="ability">
+            <b>留存</b>
+            <h3>纯电子宠物养成</h3>
+            <p>聊天、互动、状态成长、任务、升级和排行榜形成持续使用理由。</p>
+          </article>
+          <article class="ability">
+            <b>商业</b>
+            <h3>换装与电商推荐</h3>
+            <p>虚拟试装、同款推荐、定制宠物服装和用品推荐成为转化入口。</p>
+          </article>
+          <article class="ability">
+            <b>渠道</b>
+            <h3>多端陪伴入口</h3>
+            <p>桌面端和 Web 先跑通，后续再考虑飞书、微信等通讯软件接入。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="kb">
+        <div class="section-head">
+          <div>
+            <p class="kicker">KNOWLEDGE BASE</p>
+            <h2>知识库该怎么分类</h2>
+          </div>
+          <p>
+            KB 不是资料仓库，而是项目决策缓存。分类上要把“当前真相”和“证据材料”分开，把产品 taxon 和技术 taxon 分开，再用 INDEX 做入口。
+          </p>
+        </div>
+
+        <div class="kb-grid">
+          <article class="kb-cell">
+            <b>当前真相</b>
+            <h3>product / architecture / modules</h3>
+            <p>产品定位、受众、功能边界、架构裁决和模块契约属于权威 spec。</p>
+          </article>
+          <article class="kb-cell">
+            <b>证据来源</b>
+            <h3>research / meetings / verification</h3>
+            <p>调研、会议记录和运行报告支撑判断，但不能直接替代当前 spec。</p>
+          </article>
+          <article class="kb-cell">
+            <b>执行过程</b>
+            <h3>plan / fix-records</h3>
+            <p>计划记录步骤和验收标准；问题记录保存时间线、根因、修复和验证。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="questions">
+        <div class="section-head">
+          <div>
+            <p class="kicker">OPEN QUESTIONS</p>
+            <h2>下一轮要拍板的问题</h2>
+          </div>
+          <p>
+            这些不是阻塞当前框架的问题，但会影响明天汇报和第一版 demo 的范围。建议下午继续围绕这些问题收敛。
+          </p>
+        </div>
+
+        <div class="open-questions">
+          <div class="question"><b>01</b><span>汇报时是否明确以真实宠物关联为主 demo，纯电子宠物作为扩展场景？</span></div>
+          <div class="question"><b>02</b><span>纯电子宠物是否进入第一版可演示范围，还是只作为产品框架说明？</span></div>
+          <div class="question"><b>03</b><span>换装和电商先做静态推荐、虚拟试装，还是只做商业模式说明？</span></div>
+          <div class="question"><b>04</b><span>通讯软件入口优先验证飞书、微信，还是先保证 Web 和桌面端稳定？</span></div>
+          <div class="question"><b>05</b><span>健康报告如何表达安全边界，避免被理解为 AI 兽医诊断？</span></div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>AI Pet 产品框架看板 / 2026-05-30</span>
+        <span>来源：会议记录、AI Pet Docs Index、产品定位与 KB taxonomy 文档</span>
+      </footer>
+    </main>
+  </body>
+</html>

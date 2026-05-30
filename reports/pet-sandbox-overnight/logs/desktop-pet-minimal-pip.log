@@ -1,0 +1,22 @@
+Collecting Pillow>=10
+  Using cached pillow-11.3.0-cp39-cp39-macosx_11_0_arm64.whl (4.7 MB)
+Collecting screeninfo
+  Downloading screeninfo-0.8.1-py3-none-any.whl (12 kB)
+Collecting pystray
+  Downloading pystray-0.19.5-py2.py3-none-any.whl (49 kB)
+Collecting pyobjc-framework-Cocoa
+  Using cached pyobjc_framework_cocoa-12.0-cp39-cp39-macosx_10_9_universal2.whl
+Collecting Cython
+  Using cached cython-3.2.5-cp39-cp39-macosx_11_0_arm64.whl (3.0 MB)
+Collecting pyobjc-framework-Quartz>=7.0
+  Using cached pyobjc_framework_quartz-12.0-cp39-cp39-macosx_10_9_universal2.whl
+Collecting six
+  Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+Collecting pyobjc-core>=12.0
+  Using cached pyobjc_core-12.0-cp39-cp39-macosx_10_9_universal2.whl
+WARNING: The candidate selected for download or install is a yanked version: 'pyobjc-core' candidate (version 12.0 at https://files.pythonhosted.org/packages/ab/dc/6d63019133e39e2b299dfbab786e64997fff0f145c45a417e1dd51faaf3f/pyobjc_core-12.0.tar.gz#sha256=7e05c805a776149a937b61b892a0459895d32d9002bedc95ce2be31ef1e37a29 (from https://pypi.org/simple/pyobjc-core/) (requires-python:>=3.8))
+Reason for being yanked: python_requires erroneously claims support for Python 3.9
+Installing collected packages: pyobjc-core, pyobjc-framework-Cocoa, six, pyobjc-framework-Quartz, Pillow, Cython, screeninfo, pystray
+Successfully installed Cython-3.2.5 Pillow-11.3.0 pyobjc-core-12.0 pyobjc-framework-Cocoa-12.0 pyobjc-framework-Quartz-12.0 pystray-0.19.5 screeninfo-0.8.1 six-1.17.0
+WARNING: You are using pip version 21.2.4; however, version 26.0.1 is available.
+You should consider upgrading via the '/Users/rencan/Library/Application Support/MeetingCopilot/sessions/2026-05-09T02-18-28Z/pet-sandbox-repos/desktop-pet/.venv/bin/python3 -m pip install --upgrade pip' command.

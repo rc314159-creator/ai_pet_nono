@@ -1,0 +1,25 @@
+[     334ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:5174/node_modules/.vite/deps/chunk-NXESFFTV.js?v=3c2e4b97:21608
+[     351ms] [ERROR] Warning: %s: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.%s MessageList 
+    at MessageList (http://127.0.0.1:5174/src/components/Chat/MessageList.jsx:19:24)
+    at div
+    at MainPage (http://127.0.0.1:5174/src/pages/MainPage.jsx:39:35)
+    at App @ http://127.0.0.1:5174/node_modules/.vite/deps/chunk-NXESFFTV.js?v=3c2e4b97:520
+[     380ms] [LOG] 
+ %c %c %c PixiJS 6.5.10 - ✰ WebGL 2 ✰  %c  %c  http://www.pixijs.com/  %c %c ♥%c♥%c♥ 
+
+ background: #ff66a5; padding:5px 0; background: #ff66a5; padding:5px 0; color: #ff66a5; background: #030307; padding:5px 0; background: #ff66a5; padding:5px 0; background: #ffc3dc; padding:5px 0; background: #ff66a5; padding:5px 0; color: #ff2424; background: #fff; padding:5px 0; color: #ff2424; background: #fff; padding:5px 0; color: #ff2424; background: #fff; padding:5px 0; @ http://127.0.0.1:5174/node_modules/.vite/deps/chunk-FYYHEUDO.js?v=3c2e4b97:5026
+[     780ms] [LOG] [CSM][I]Live2D Cubism Core version: 05.00.0000 (83886080)
+ @ http://127.0.0.1:5174/node_modules/.vite/deps/pixi-live2d-display_cubism4.js?v=91c8afcb:868
+[     780ms] [LOG] [CSM][I]CubismFramework.startUp() is complete.
+ @ http://127.0.0.1:5174/node_modules/.vite/deps/pixi-live2d-display_cubism4.js?v=91c8afcb:868
+[     781ms] [LOG] [CSM][I]CubismFramework.initialize() is complete.
+ @ http://127.0.0.1:5174/node_modules/.vite/deps/pixi-live2d-display_cubism4.js?v=91c8afcb:868
+[     819ms] [LOG] Live2D Cubism SDK Core Version 5.0.0 @ http://127.0.0.1:5174/libs/live2dcubismcore.min.js:8
+[     831ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:8000/ws' failed: Error during WebSocket handshake: Unexpected response code: 403 @ http://127.0.0.1:5174/src/hooks/useNeuroSocket.js:13
+[     832ms] [LOG] Live2D Cubism SDK Core Version 5.0.0 @ http://127.0.0.1:5174/libs/live2dcubismcore.min.js:8
+[     836ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:8000/ws' failed: Error during WebSocket handshake: Unexpected response code: 403 @ http://127.0.0.1:5174/src/hooks/useNeuroSocket.js:13
+[     836ms] [ERROR] WS Error: Event @ http://127.0.0.1:5174/src/hooks/useNeuroSocket.js:29
+[     837ms] [LOG] ❌ 连接断开 @ http://127.0.0.1:5174/src/hooks/useNeuroSocket.js:31
+[     842ms] [ERROR] WS Error: Event @ http://127.0.0.1:5174/src/hooks/useNeuroSocket.js:29
+[     842ms] [LOG] ❌ 连接断开 @ http://127.0.0.1:5174/src/hooks/useNeuroSocket.js:31
+[     853ms] [LOG] Model loaded: Live2DModel @ http://127.0.0.1:5174/src/components/Live2D/Live2DModel.jsx:100

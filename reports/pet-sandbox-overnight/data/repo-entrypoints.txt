@@ -1,0 +1,85 @@
+
+### BongoCat
+- pet-sandbox-repos/BongoCat/Cargo.toml
+- pet-sandbox-repos/BongoCat/README.md
+- pet-sandbox-repos/BongoCat/package.json
+- pet-sandbox-repos/BongoCat/src-tauri/Cargo.toml
+
+### clawd-on-desk
+- pet-sandbox-repos/clawd-on-desk/README.md
+- pet-sandbox-repos/clawd-on-desk/package.json
+
+### Shijima-Qt
+- pet-sandbox-repos/Shijima-Qt/Makefile
+- pet-sandbox-repos/Shijima-Qt/Platform/Makefile
+- pet-sandbox-repos/Shijima-Qt/README.md
+
+### desktop-pet
+- pet-sandbox-repos/desktop-pet/requirements.txt
+- pet-sandbox-repos/desktop-pet/README.md
+
+### ZcChat
+- pet-sandbox-repos/ZcChat/CMakeLists.txt
+- pet-sandbox-repos/ZcChat/README.md
+
+### Alive
+- pet-sandbox-repos/Alive/README.md
+
+### kkclaw
+- pet-sandbox-repos/kkclaw/README.md
+- pet-sandbox-repos/kkclaw/package.json
+
+### AI-Desktop-Pet
+- pet-sandbox-repos/AI-Desktop-Pet/frontend/package.json
+- pet-sandbox-repos/AI-Desktop-Pet/backend/requirements.txt
+- pet-sandbox-repos/AI-Desktop-Pet/backend/readme.md
+- pet-sandbox-repos/AI-Desktop-Pet/README.md
+
+### live2d-copilot
+- pet-sandbox-repos/live2d-copilot/README.md
+- pet-sandbox-repos/live2d-copilot/package.json
+
+### Chatty_desktop_pet
+- pet-sandbox-repos/Chatty_desktop_pet/README.md
+- pet-sandbox-repos/Chatty_desktop_pet/project.godot
+
+### codex-pet-companion
+- pet-sandbox-repos/codex-pet-companion/requirements.txt
+- pet-sandbox-repos/codex-pet-companion/README.md
+
+### Agentic-Desktop-Pet
+- pet-sandbox-repos/Agentic-Desktop-Pet/backend/pyproject.toml
+- pet-sandbox-repos/Agentic-Desktop-Pet/backend/README.md
+- pet-sandbox-repos/Agentic-Desktop-Pet/README.md
+- pet-sandbox-repos/Agentic-Desktop-Pet/godot/project.godot
+
+### openpets
+- pet-sandbox-repos/openpets/README.md
+- pet-sandbox-repos/openpets/package.json
+
+### PetGPT
+- pet-sandbox-repos/PetGPT/readme.md
+- pet-sandbox-repos/PetGPT/package.json
+- pet-sandbox-repos/PetGPT/src-tauri/Cargo.toml
+- pet-sandbox-repos/PetGPT/memory module documents/README.md
+
+### tama96
+- pet-sandbox-repos/tama96/tama-tui/Cargo.toml
+- pet-sandbox-repos/tama96/Cargo.toml
+- pet-sandbox-repos/tama96/website/package.json
+- pet-sandbox-repos/tama96/mcp-server/package.json
+- pet-sandbox-repos/tama96/README.md
+- pet-sandbox-repos/tama96/tama-core/Cargo.toml
+
+### VPet
+- pet-sandbox-repos/VPet/VPet.sln
+- pet-sandbox-repos/VPet/VPet-Simulator.Tool/VPet-Simulator.Tool.csproj
+- pet-sandbox-repos/VPet/README.md
+- pet-sandbox-repos/VPet/VPet-Simulator.Core/VPet-Simulator.Core.csproj
+- pet-sandbox-repos/VPet/README_en.md
+- pet-sandbox-repos/VPet/VPet-Simulator.Windows/VPet-Simulator.Windows.csproj
+- pet-sandbox-repos/VPet/VPet-Simulator.Windows.Interface/VPet-Simulator.Windows.Interface.csproj
+- pet-sandbox-repos/VPet/VPet.Solution/VPet.Solution.csproj
+
+### DyberPet
+- pet-sandbox-repos/DyberPet/README.md

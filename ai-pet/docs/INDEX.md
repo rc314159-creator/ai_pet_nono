@@ -1,0 +1,105 @@
+# AI Pet Docs Index
+
+本目录记录 AI 宠物项目的产品定位、调研、架构、Demo 计划、验证证据和修复记录。进入项目工作时先读本页，再按任务读取对应分类文档。
+
+当前硬约束：不要从零开发桌宠前端或 agent 框架，优先复用已经能运行的开源项目和成熟工具协议。
+当前交付约束：团队角色是开发，不是展陈或 PPT 包装；目标是明天汇报可实际运行的一版项目展示 Demo，不按多版本路线讨论。开发讨论必须围绕产品到底解决什么问题、需要跑通哪些功能闭环、怎么实现；AI Key 和算力不作为限制条件，AI 功能必须优先接成熟 agent、成熟模型服务或成熟工具协议。项目没有 HTML 展示页；产品第一入口是系统级桌宠，点击桌宠后弹出应用窗口/功能面板承载复杂功能。
+
+## 新对话必读顺序
+
+1. 本页。
+2. [AI Pet 当前产品规格](product/product-spec-2026-05-30.md)。
+3. [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md)。
+4. [AI Pet 模块分类索引](modules/INDEX.md)。
+
+## 当前结论
+
+- 总定位：AI 情感陪伴型宠物产品；宠物形象是 AI 陪伴、真实照护解释、虚拟养成和商业推荐的统一载体。
+- 产品主线：AI 电子宠物陪伴和真实宠物数字分身共存；电子宠物可以是纯虚拟宠物，也可以是真实宠物在系统中的分身。
+- 用户优先级：优先服务已有真实宠物的人群，同时兼顾没有真实宠物但需要 AI 电子宠物陪伴的人群。
+- Demo 主闭环：系统级桌宠 + 点击桌宠弹出的应用窗口必须同时跑通，用真实宠物档案、设备/手动数据、照护任务、AI 解释、桌宠核心入口和装扮/后续推荐形成完整开发闭环。
+- 桌面宠物底座优先级：OpenPets > codex-pet-companion/DyberPet 逻辑移植 > BongoCat/AI-Desktop-Pet Live2D 参考。
+- 桌宠定位：桌宠是核心入口，不是表现层；必须支持常驻、提醒、状态表达、点击展开和轻交互。复杂操作在弹出的应用窗口中完成，并同步回桌宠。
+- 应用窗口定位：应用窗口不是 HTML 展示页或营销页，而是点击桌宠后展开的产品功能面板；可用 React/Vite 等前端技术渲染，但产品口径统一称为应用窗口/宠物面板。
+- AI/agent 底座：凡涉及 AI 的地方优先接成熟 agent；当前方向为 OpenCode SDK / opencode runtime + MCP 或等价工具协议。
+- 健康监测：Demo 不等待真实硬件 API；用足够完整的 mock/手动数据把健康解释、任务、桌宠提醒和汇报闭环跑通。
+- 换装与商业化：MVP 换装先作为娱乐和陪伴玩法，用内置模板同步到对话主页和桌宠；商品推荐、电商、真实宠物试装和同款推荐作为后续商业化入口预留。
+- 安全边界：当前不作为产品讨论焦点；实现层可保留必要底线，但不再作为待用户拍板的问题。
+
+## 知识库治理
+
+- [AI Pet 知识库分类体系](knowledge-base/taxonomy.md)
+- [AI Pet 知识库缺口记录](_GAP.md)
+
+## 产品与会议框架
+
+- [AI Pet 当前产品规格](product/product-spec-2026-05-30.md)
+- [AI 宠物产品定位与讨论框架 2026-05-30](product/positioning-framework-2026-05-30.md)
+
+## Demo 计划与范围
+
+- [Demo 范围与产品假设](plan/mvp-scope.md)（历史文件名保留，当前口径以 product spec 为准）
+- [Demo 功能锁定](plan/feature-lock.md)
+- [MVP 功能设计对齐 2026-05-30](plan/mvp-feature-design-2026-05-30.md)
+- [展示阶段并行开发协调 2026-05-30](plan/display-development-coordination-2026-05-30.md)
+- [Demo 实施计划](plan/mvp-plan.md)（早期计划，需按新 spec 更新后执行）
+- [Demo 实现记录 2026-05-29](plan/implementation-log-2026-05-29.md)
+- [宠物游戏与 AI 虚拟宠物调研计划记录 2026-05-30](plan/pet-game-ai-research-plan-2026-05-30.md)
+
+## 架构与数据契约
+
+- [AI Pet 技术架构](architecture/technical-architecture-2026-05-30.md)
+- [历史 MVP 架构](architecture/mvp-architecture.md)（已由技术架构接管）
+- [Mock 设备数据规格](research/mock-device-data-spec.md)
+
+## 模块分类
+
+- [AI Pet 模块分类索引](modules/INDEX.md)
+- [AI Pet 功能范围与对齐问题](modules/function-scope-2026-05-30.md)
+- [AI Pet 基于现有产品和开源项目的功能映射](modules/research-grounded-function-map-2026-05-30.md)
+
+## 调研证据
+
+### 技术底座
+
+- [AI Pet 框架化竞品与开源项目调研 2026-05-30](research/framework-comparative-research-2026-05-30/INDEX.md)
+- [开源项目目录化调研 2026-05-30](research/framework-comparative-research-2026-05-30/open-source-projects/INDEX.md)
+- [开源桌面宠物底座调研](research/desktop-pet-foundations.md)
+- [真实宠物桌面形象路线](research/desktop-real-pet-avatar-2026-05-30.md)
+- [AI/Agent 底座调研](research/agent-foundations.md)
+- [Agent 仓库快速校验记录](research/agent-repo-scan-2026-05-29.md)
+
+### 健康与设备
+
+- [健康监测与设备数据调研](research/health-monitoring.md)
+- [AI+宠物健康项目调研 2026-05-30](research/ai-pet-health-projects-2026-05-30.md)
+- [现有宠物健康产品调研 2026-05-30](research/existing-pet-health-products-2026-05-30.md)
+
+### 产品、社区与虚拟宠物
+
+- [现有商业产品目录化调研 2026-05-30](research/framework-comparative-research-2026-05-30/existing-products/INDEX.md)
+- [现有宠物相关商业产品调研](research/existing-pet-products/INDEX.md)
+- [已存在宠物产品生态层级地图](research/existing-pet-products/ecosystem-product-map.md)
+- [宠物情感陪伴与 AI 项目全景调研](research/pet-emotional-ai/INDEX.md)
+- [宠物情感陪伴与 AI 分项目卡片](research/pet-emotional-ai/project-cards.md)
+- [现有宠物情感陪伴与 AI 产品专项调研](research/pet-emotional-ai/existing-products.md)
+- [宠物情感陪伴与 AI 来源地图](research/pet-emotional-ai/source-map.md)
+- [宠物社区与 AI 宠物生态调研](research/pet-community-ai-ecosystem/INDEX.md)
+- [宠物游戏与 AI 虚拟宠物项目调研](research/pet-game-ai-projects/INDEX.md)
+
+### 商业化与电商
+
+- [开源电商项目调研 2026-05-30](research/open-source-ecommerce/INDEX.md)
+
+## 修复记录
+
+- [2026-05-29 桌面宠物未出现问题记录](fix-records/2026-05-29-desktop-pet-not-visible.md)
+- [2026-05-30 桌宠形象 Demo 开源参考边界不清问题记录](fix-records/2026-05-30-desktop-avatar-reference-ambiguity.md)
+- [2026-05-30 真实宠物桌宠需 3D/桌面运行时问题记录](fix-records/2026-05-30-desktop-avatar-3d-runtime-requirement.md)
+- [2026-05-30 低保真 3D 桌宠形象方向错误问题记录](fix-records/2026-05-30-low-fidelity-3d-avatar-wrong-direction.md)
+
+## 已有验证证据
+
+- [AI Pet 产品框架历史 HTML 看板](../../reports/ai-pet-framework-summary/index.html)（历史验证材料，不代表当前产品形态）
+- [宠物沙箱 overnight 历史 HTML 报告](../../reports/pet-sandbox-overnight/index.html)（历史验证材料，不代表当前产品形态）
+- [宠物沙箱运行结构化结果](../../reports/pet-sandbox-overnight/run-results.json)

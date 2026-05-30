@@ -1,0 +1,1341 @@
+import { writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const reportDir = resolve(scriptDir, "..");
+
+const nowText = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "full",
+  timeStyle: "medium",
+  timeZone: "Asia/Shanghai",
+}).format(new Date());
+
+const sources = [
+  ["OpenPets", "https://github.com/alvinunreal/openpets"],
+  ["PetGPT", "https://github.com/JulesLiu390/PetGPT"],
+  ["tama96", "https://github.com/siegerts/tama96"],
+  ["VPet", "https://github.com/LorisYounger/VPet"],
+  ["DyberPet", "https://github.com/ChaozhongLiu/DyberPet"],
+  ["BongoCat", "https://github.com/ayangweb/BongoCat"],
+  ["clawd-on-desk", "https://github.com/rullerzhou-afk/clawd-on-desk"],
+  ["Shijima-Qt", "https://github.com/pixelomer/Shijima-Qt"],
+  ["desktop-pet", "https://github.com/ALearningCurve/desktop-pet"],
+  ["ZcChat", "https://github.com/Zao-chen/ZcChat"],
+  ["Alive", "https://github.com/TopSea/Alive"],
+  ["kkclaw", "https://github.com/kk43994/kkclaw"],
+  ["AI-Desktop-Pet", "https://github.com/ruguo0119/AI-Desktop-Pet"],
+  ["live2d-copilot", "https://github.com/ai-zen/live2d-copilot"],
+  ["Chatty_desktop_pet", "https://github.com/ExtraNick/Chatty_desktop_pet"],
+  ["codex-pet-companion", "https://github.com/pixel-raccoon/codex-pet-companion"],
+  ["Agentic-Desktop-Pet", "https://github.com/jihe520/Agentic-Desktop-Pet"],
+  ["Mate-Engine", "https://github.com/shinyflvre/Mate-Engine"],
+];
+
+const projects = [
+  {
+    name: "OpenPets",
+    repo: "https://github.com/alvinunreal/openpets",
+    commit: "21cf70b",
+    stack: "Electron + TypeScript + React + local IPC + MCP/CLI",
+    status: "pass",
+    statusText: "可运行，AI 控制链路实测成功",
+    screenshot: "screenshots/openpets-pet-crop.png",
+    screenshotCaption: "OpenPets 默认像素宠物，CLI 下发 say 后出现气泡。",
+    commands: [
+      "pnpm install",
+      "pnpm build",
+      "pnpm dev:desktop",
+      "node packages/cli/dist/index.js status",
+      "node packages/cli/dist/index.js say '宠物沙箱 overnight 验证：AI 可以通过 CLI/MCP 控制我。' --reaction success",
+    ],
+    evidence: [
+      "logs/openpets-status-rerun.json",
+      "logs/openpets-say-rerun.log",
+      "logs/openpets-dev-desktop-rerun.log",
+    ],
+    observations: [
+      "桌面宠物窗口和设置窗口都能在 macOS 启动；本次截图中只保留宠物裁剪区，避免带入桌面隐私内容。",
+      "状态查询返回 appRunning=true，版本 2.5.0，默认内置宠物可见。",
+      "CLI 的 say 命令能立即让宠物显示气泡，说明 AI 到桌面宠物的可控链路已经跑通。",
+      "README 和代码显示它已经围绕 agent 场景设计：Claude/Codex/opencode 等集成、lease 机制、插件 runtime、宠物 catalog 和安装宠物包。",
+    ],
+    customization: [
+      "支持已安装 animated pet packs，并能把指定 agent/project 路由到独立宠物窗口。",
+      "内置 spritesheet 契约：frameWidth、frameHeight、columns、rows、状态行映射；renderer 里对 installed/codex/catalog spritesheet 做了安全 URL 白名单。",
+      "宠物形态层面适合做猫、狗、真实宠物拟态的像素精灵包；需要补一个“真实宠物资料 -> pet pack”生成和导入流程。",
+    ],
+    interfaces: [
+      "CLI/MCP：openpets_status、openpets_react、openpets_say。",
+      "local IPC：status、lease.acquire、lease.heartbeat、lease.release、pet.react、pet.say。",
+      "插件 SDK：pet.speak、pet.react、pet.moveBy、pet.wander、pet.moveToHome、registerCommand、http.fetch。",
+      "Agent lease：可以让一个任务/项目锁定某个宠物窗口，避免多个 agent 混用同一只宠物。",
+    ],
+    fit: "最适合作为“AI 能直接控制的可视化桌宠外壳”。它缺的是真实宠物状态、任务清单、存粮和商品推荐业务层，但底层控制接口、插件隔离和宠物包机制非常接近我们要的沙箱。建议把它作为第一候选 renderer/API 壳。",
+    risks: [
+      "宠物照护玩法弱，需要自己加健康、成长、喂食、玩具、库存等 domain model。",
+      "宠物包素材许可要单独处理；catalog 外部资源也要做审核。",
+    ],
+  },
+  {
+    name: "codex-pet-companion",
+    repo: "https://github.com/pixel-raccoon/codex-pet-companion",
+    commit: "a335532",
+    stack: "Python + PySide6 + spritesheet pet pack",
+    status: "pass",
+    statusText: "可运行，宠物照护逻辑最贴近业务",
+    screenshot: "screenshots/codex-pet-companion-crop.png",
+    screenshotCaption: "运行后的完整宠物面板：Fullness/Mood/Energy/Focus、Feed/Play/Rest、Daily activity。",
+    commands: [
+      "python3 -m venv .venv",
+      ".venv/bin/pip install -r requirements.txt",
+      ".venv/bin/python -m codex_pet_companion.main",
+    ],
+    evidence: [
+      "logs/codex-pet-companion-pip-install.log",
+      "logs/codex-pet-companion-run.log",
+    ],
+    observations: [
+      "macOS 下可以直接跑起 PySide6 桌宠，不只是 demo 页面。",
+      "UI 里已经有 Fullness、Mood、Energy、Focus、Friendship、days-together、Feed、Play、Rest 和 Today's activity。",
+      "core/virtual_pet.py 有冷却、每日计数、喂食/玩耍/休息收益、疲劳与过饱限制、成就和羁绊值。",
+      "core/daily_activities.py 已经按日期、宠物和状态稳定生成 daily/idle activity 文本，和用户提出的每日任务清单方向高度一致。",
+    ],
+    customization: [
+      "自定义宠物包为 pet.json + spritesheet.webp，README 说明 spritesheet 是 1536x1872、8x9、每帧 192x208、透明背景。",
+      "内置 Lumisprout、Vikamon，也允许导入/导出 custom pets。",
+      "可以把真实宠物的种类、毛色、体型、性格映射到 pet.json 元数据和 spritesheet 动作行。",
+    ],
+    interfaces: [
+      "当前更像本地应用，没有通用 HTTP/MCP API。",
+      "可直接复用 Python core：state、pets、pet_pack、daily_activities、virtual_pet。",
+      "需要新增一层 service API：record_event、apply_care_action、get_daily_tasks、get_pet_state、import_pet_pack。",
+    ],
+    fit: "最适合作为宠物照护状态机参考。它不是 AI agent 桌宠基础设施，但 feed/play/rest、每日活动、宠物包和状态衰减已经把我们业务里的“虚拟宠物端交互”和“每日该做什么”做了大半。",
+    risks: [
+      "和 OpenPets 的技术栈不同，需要选择是移植核心逻辑，还是把 PySide 作为独立桌面端。",
+      "当前是 Codex companion 定位，需替换成真实宠物业务词汇和数据结构。",
+    ],
+  },
+  {
+    name: "DyberPet",
+    repo: "https://github.com/ChaozhongLiu/DyberPet",
+    commit: "4815f4d",
+    stack: "Python + PySide6 + Fluent Widgets",
+    status: "pass",
+    statusText: "可运行，资源/背包/自动投喂体系值得借鉴",
+    screenshot: "screenshots/dyberpet-crop.png",
+    screenshotCaption: "PySide6 桌面宠物窗口，右下角出现宠物与更新提示。",
+    commands: [
+      "python3 -m venv .venv",
+      ".venv/bin/pip install pyside6==6.5.2 PySide6-Fluent-Widgets==1.5.4 pynput==1.7.6 tendo apscheduler",
+      ".venv/bin/python run_DyberPet.py",
+    ],
+    evidence: [
+      "logs/dyberpet-pip-install.log",
+      "logs/dyberpet-pip-install-apscheduler.log",
+      "logs/dyberpet-run.log",
+    ],
+    observations: [
+      "第一次按宽松依赖安装会被 PySide/PyObjC 解析拖慢；按 README 锁定版本后可启动。",
+      "运行时出现 macOS 字体 alias warning，但不影响窗口显示。",
+      "代码和资源目录里有 role/pet/item/backpack/favorability/auto feed/minipet/dialogue 等结构。",
+      "README 提到 LLM 模块未开源，所以 AI 聊天不是可复用部分。",
+    ],
+    customization: [
+      "宠物资源在 res/pet、res/role/PETNAME，配置文件包括 pet_conf.json、act_conf.json。",
+      "可扩展 item、favor、dialogue、mini-pet；比简单桌宠更接近“宠物生活系统”。",
+      "可以把猫狗形态做成 role/pet 资源包，同时给每个品种绑定不同 favor 和 item 规则。",
+    ],
+    interfaces: [
+      "没有现成 HTTP API，主要是 Python 内部类和资源配置。",
+      "可抽象出 item inventory、auto feed、favorability、dialogue、mini-pet import 这些 domain 模块。",
+    ],
+    fit: "业务契合度很高，尤其是背包、自动投喂、好感度、道具和宠物配置。适合作为玩法和资源格式参考，不建议直接当跨平台主端，因为依赖和 UI 框架较重。",
+    risks: [
+      "LLM 模块不在开源部分，AI 控制链路要自己补。",
+      "PySide 桌面打包和权限在多平台上会增加维护成本。",
+    ],
+  },
+  {
+    name: "AI-Desktop-Pet",
+    repo: "https://github.com/ruguo0119/AI-Desktop-Pet",
+    commit: "782ab1d",
+    stack: "React + Pixi/Live2D + FastAPI WebSocket",
+    status: "partial",
+    statusText: "前端可运行，后端需环境变量，接口可测",
+    screenshot: "screenshots/ai-desktop-pet-frontend.png",
+    screenshotCaption: "Vite 前端加载 Hiyori Live2D 模型，WebSocket 因本机 8000 端口冲突未连上。",
+    commands: [
+      "cd frontend && npm install",
+      "npm run dev -- --host 127.0.0.1 --port 5174",
+      "cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt",
+      "LLM_API_KEY=dummy PROFILE_LLM_KEY=dummy SILICON_API_KEY=dummy .venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8001",
+    ],
+    evidence: [
+      "logs/ai-desktop-pet-frontend-dev.log",
+      "logs/ai-desktop-pet-playwright-console.log",
+      "logs/ai-desktop-pet-backend-uvicorn-dummy.log",
+    ],
+    observations: [
+      "前端可以打开并加载 Live2D Hiyori，说明视觉层可用。",
+      "前端硬编码连接 ws://127.0.0.1:8000/ws，本机 8000 被其它服务占用，因此截图时 console 有 WebSocket 403。",
+      "后端不提供 dummy env 会因缺少 LLM/PROFILE/SILICON 配置启动失败；补 dummy env 并换 8001 后可启动，WebSocket upgrade 返回 101。",
+      "README 的通信协议和当前 backend/main.py 略有偏差：README 写 ai_reply/ai_emotion，代码实际发送 state_update/audio_chunk。",
+    ],
+    customization: [
+      "前端 public/models 下已有 Haru、Hiyori、PinkFox；Live2DModel.jsx 当前硬编码 Hiyori.model3.json。",
+      "把猫狗做成 Live2D model3 后，可以通过配置化模型路径切换形态。",
+    ],
+    interfaces: [
+      "WebSocket：前端发送 text_input、audio_input、interrupt；后端发送 state_update、audio_chunk。",
+      "README 计划的协议还包括 set_dnd_mode、screenshot、ai_thinking、ai_reply、ai_speaking、ai_emotion、game_loop。",
+      "后续可把虚拟宠物动作、情绪、喂食/玩具事件都做成 WebSocket message type。",
+    ],
+    fit: "视觉表现和 AI 对话接口方向很接近，但它更像 Live2D AI 伴侣，不是宠物照护系统。适合作为 Live2D 前端样板，尤其是未来需要更细腻的猫狗表情和动作时。",
+    risks: [
+      "协议文档和代码不一致，要先收敛 contract。",
+      "后端强依赖 LLM/TTS 配置，必须做可离线启动和 mock 模式。",
+    ],
+  },
+  {
+    name: "clawd-on-desk",
+    repo: "https://github.com/rullerzhou-afk/clawd-on-desk",
+    commit: "607b202",
+    stack: "Electron + HTTP hook server + theme system",
+    status: "pass",
+    statusText: "可运行，本地 HTTP 状态接口实测成功",
+    screenshot: "screenshots/clawd-happy-crop.png",
+    screenshotCaption: "POST /state 后桌面宠物进入 happy 状态。",
+    commands: [
+      "npm install",
+      "npm test",
+      "npm start",
+      "curl http://127.0.0.1:23333/state",
+      "curl -X POST http://127.0.0.1:23333/state -H 'Content-Type: application/json' -d '{\"state\":\"happy\"}'",
+    ],
+    evidence: [
+      "logs/clawd-state-health.json",
+      "logs/clawd-post-state.headers",
+      "logs/clawd-post-state.body",
+    ],
+    observations: [
+      "Electron app 可启动，并会自动下载/启动 cc-connect-clawd sidecar。",
+      "GET /state 返回 ok=true；POST /state 可把宠物状态切到 happy。",
+      "测试套件在本机有少量环境假设失败，例如 Windows LOCALAPPDATA 和 fallback package version，不影响启动验证。",
+      "启动时会自动注册/同步 Gemini、Cursor、Codex、OpenClaw、Hermes 等 hooks，这一点作为集成能力很强，但调研环境里需要注意副作用。",
+    ],
+    customization: [
+      "内置 Clawd、Calico（三花猫）、Cloudling 三套主题。",
+      "支持 custom themes 和导入 Codex Pet zip 包；create-theme.js 可生成 theme.json 和资源目录。",
+      "主题最低可由 1 个 SVG idle + 多个 GIF/APNG/WebP/PNG 状态文件组成。",
+    ],
+    interfaces: [
+      "HTTP：GET/POST /state，端口默认 23333。",
+      "Permission bubble：用于 Codex/Claude/opencode 等工具权限请求。",
+      "Theme CLI：node scripts/create-theme.js、node scripts/validate-theme.js。",
+    ],
+    fit: "适合做 AI 状态可视化和宠物主题系统参考；如果我们的虚拟宠物要表达“AI 正在规划今日任务/正在推荐商品/需要主人确认”，Clawd 的状态机和权限浮窗很有价值。",
+    risks: [
+      "不是宠物养成系统，状态主要围绕 coding agent。",
+      "自动写入 agent hooks 的行为需要在我们的产品里改成显式授权。",
+    ],
+  },
+  {
+    name: "kkclaw",
+    repo: "https://github.com/kk43994/kkclaw",
+    commit: "0e1879b",
+    stack: "Electron + Node gateway + voice/service diagnostics",
+    status: "partial",
+    statusText: "可启动并通过测试，但停留在设置向导",
+    screenshot: "screenshots/kkclaw-window-crop.png",
+    screenshotCaption: "Electron 启动后显示新用户设置向导与桌面 orb。",
+    commands: [
+      "npm install",
+      "npm test",
+      "npm start",
+    ],
+    evidence: [
+      "logs/kkclaw-npm-install.log",
+      "logs/kkclaw-npm-test.log",
+      "logs/kkclaw-start.log",
+    ],
+    observations: [
+      "npm test 通过。",
+      "npm start 能启动 Electron，截图显示设置向导和底部悬浮 orb。",
+      "日志提示 Python/edge-tts 未安装、Gateway stopped；这不影响基础窗口，但语音和网关能力未完全就绪。",
+      "启动过程创建了 macOS 桌面快捷方式，属于本地副作用。",
+    ],
+    customization: [
+      "配置文件 pet-config.json 可设置 petName、userName、gateway、voice、provider/model。",
+      "更像 agent shell 和语音助手，不是宠物形态资源包框架。",
+    ],
+    interfaces: [
+      "IPC：gateway-send、gateway-status、voice toggle/check/install、screenshot、model-switch、diagnostic health/metrics/anomalies、service status 等。",
+      "兼容 OpenClaw/Hermes 的 gateway 设计可借鉴。",
+    ],
+    fit: "适合作为本地 agent 网关、语音、诊断面板参考；对宠物猫狗形态和照护逻辑帮助有限。",
+    risks: [
+      "设置/依赖链路偏复杂，和我们的业务 MVP 关系不如 OpenPets/codex-pet-companion 直接。",
+    ],
+  },
+  {
+    name: "PetGPT",
+    repo: "https://github.com/JulesLiu390/PetGPT",
+    commit: "ef03262",
+    stack: "Tauri + React + AI assistant/MCP manager",
+    status: "pass",
+    statusText: "Tauri 桌面模式可运行",
+    screenshot: "screenshots/petgpt-tauri-running.png",
+    screenshotCaption: "Tauri 桌面模式下出现角色窗口和聊天/管理窗口。",
+    commands: [
+      "npm install",
+      "npm run tauri:dev",
+    ],
+    evidence: [
+      "screenshots/petgpt-tauri-visible.png",
+    ],
+    observations: [
+      "普通 Vite web 模式缺少 Tauri invoke，会报 transformCallback/invoke undefined；必须用 tauri:dev。",
+      "Tauri 模式可启动角色窗口、聊天窗口、MCP manager、social agent 相关界面。",
+      "自带 Glitch、Maodie、LittlePony 等 skin，视觉偏二次元助手而不是猫狗宠物。",
+    ],
+    customization: [
+      "已有 skin 概念，可扩展角色资源。",
+      "要做真实宠物拟态，需要把 skin 资源规范化为 pet pack，并增加 species/breed/style 配置。",
+    ],
+    interfaces: [
+      "Tauri command/window：character/chat/MCP manager/social-agent。",
+      "MCP 支持 stdio/HTTP/SSE，适合接外部工具。",
+      "模型和多 assistant 管理能力可复用为我们 AI 控制后台。",
+    ],
+    fit: "AI/MCP 能力强，视觉宠物和业务照护弱。它适合作为“宠物背后的智能助手管理台”参考，而不是主宠物沙箱。",
+    risks: [
+      "Web 模式不可直接测，桌面构建链路更重。",
+      "素材和交互形态要重做才像真实宠物绑定产品。",
+    ],
+  },
+  {
+    name: "BongoCat",
+    repo: "https://github.com/ayangweb/BongoCat",
+    commit: "44f44bc",
+    stack: "Tauri + Vue + easy-live2d + Pixi",
+    status: "partial",
+    statusText: "构建启动成功，透明宠物窗口截图不稳定",
+    screenshot: "screenshots/bongocat-running.png",
+    screenshotCaption: "Tauri 运行时截图主要捕获到开发窗口/空白，未稳定捕获猫模型。",
+    commands: [
+      "pnpm install",
+      "pnpm tauri dev",
+    ],
+    evidence: [
+      "screenshots/bongocat-web-preview.png",
+    ],
+    observations: [
+      "安装、构建和 Tauri dev 可以跑通。",
+      "本机截图没有稳定捕获到透明置顶宠物窗口；普通浏览器预览也因 Tauri asset/API 依赖显示空白。",
+      "代码里 Live2D 模型、键盘/手柄监听、自定义窗口置顶/隐藏命令都存在。",
+    ],
+    customization: [
+      "src-tauri/assets/models 下有 standard/keyboard/gamepad 三套 cat.model3.json。",
+      "偏好页上传组件会寻找 .model3.json，将文件夹复制到 appData/custom-models，并判断 keyboard/gamepad 模式。",
+      "非常适合研究“用户导入自己的 Live2D 猫狗模型”的产品流程。",
+    ],
+    interfaces: [
+      "Tauri commands：plugin:custom-window|show_window、hide_window、set_always_on_top。",
+      "Gamepad events：start_gamepad_listing、stop_gamepad_listing、gamepad-changed。",
+      "Live2D loader：easy-live2d 的 model3.json 载入与 motion/expression 处理。",
+    ],
+    fit: "对自定义宠物形态非常有帮助，尤其是 Live2D 猫狗模型导入。它不负责 AI/任务/库存，需要接我们的后端。",
+    risks: [
+      "透明窗口和系统输入权限导致自动化截图不稳定。",
+      "模型导入要补素材校验、许可证、模型大小限制和降级方案。",
+    ],
+  },
+  {
+    name: "tama96",
+    repo: "https://github.com/siegerts/tama96",
+    commit: "b4fd018",
+    stack: "Rust + Tauri/React + ratatui TUI + Node MCP sidecar",
+    status: "pass",
+    statusText: "核心测试和 TUI 可运行",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "cargo test -p tama-core",
+      "cargo run -p tama-tui",
+    ],
+    evidence: [],
+    observations: [
+      "tama-core 的单元、集成、MCP、property tests 均跑过；TUI 可喂食、吃饭并更新 hunger/weight。",
+      "它是 Tamagotchi P1 复刻，业务照护规则严谨，但视觉不是自由桌面宠物沙箱。",
+      "MCP server 依赖桌面 app 的本地 TCP socket，权限文件在 ~/.tama96/permissions.json。",
+    ],
+    customization: [
+      "形态主要是 evolution matrix，而不是自由上传猫狗资源。",
+      "可借鉴成长/照护错误/纪律/生病/清洁等规则，而不适合直接做真实宠物拟态外观。",
+    ],
+    interfaces: [
+      "MCP tools：feed、play_game、discipline、give_medicine、clean_poop、toggle_lights、get_status。",
+      "MCP resources：pet://status、pet://evolution-chart、pet://permissions。",
+    ],
+    fit: "适合当“宠物状态机和 AI 权限控制”的参考。我们可以把真实宠物任务映射为 MCP tools，让 AI 有边界地照护虚拟宠物。",
+    risks: [
+      "视觉层和自定义形态不足，不能单独满足用户想看的界面。",
+    ],
+  },
+  {
+    name: "VPet",
+    repo: "https://github.com/LorisYounger/VPet",
+    commit: "75557f1a",
+    stack: ".NET/WPF + Steamworks + plugin/item system",
+    status: "fail",
+    statusText: "macOS 源码构建未通过",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "dotnet build VPet-Simulator.Windows/VPet-Simulator.Windows.csproj -p:EnableWindowsTargeting=true",
+    ],
+    evidence: [],
+    observations: [
+      ".NET 10 SDK 可用，Core 和 Windows.Interface 部分构建成功。",
+      "Windows 桌面 app 在 macOS 构建失败，缺 Steamworks/Friend/Lobby/SteamId 等类型。",
+      "这是 Windows/WPF/Steam 生态项目，不适合直接作为 mac/web 主端。",
+    ],
+    customization: [
+      "VPet 的强项是 item、food、toy、save、graph、plugin 等结构。",
+      "可以借鉴玩具/食物/消费品系统和 Windows 桌宠成熟玩法。",
+    ],
+    interfaces: [
+      "源码层面有 GameSave、IFood、PetLoader、Graph core、UseAction Food/Toy。",
+      "需要自己封装跨平台 API。",
+    ],
+    fit: "产品玩法参考价值高，工程复用价值受平台限制。尤其适合参考“食物/玩具/商品”怎么进入宠物状态。",
+    risks: [
+      "Windows/WPF/Steamworks 依赖重。",
+      "素材和代码许可要单独确认。",
+    ],
+  },
+  {
+    name: "Shijima-Qt",
+    repo: "https://github.com/pixelomer/Shijima-Qt",
+    commit: "57723f1",
+    stack: "Qt6/C++ + mascot HTTP API",
+    status: "fail",
+    statusText: "构建失败，但 API 设计很有参考价值",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "make CONFIG=release -j4",
+    ],
+    evidence: [
+      "logs/shijima-make.log",
+    ],
+    observations: [
+      "项目已归档/停止维护。",
+      "本机没有 qmake6/qmake，make 后还遇到 libshimejifinder submodule/CMakeLists 和 Qt headers 缺失。",
+      "它是 Shimeji 桌宠/mascot runner，重点是桌面上多个 mascot 行为。",
+    ],
+    customization: [
+      "加载 Shimeji mascot 数据，可生成多个桌面 mascot。",
+      "适合把猫狗宠物作为 mascot pack，但维护风险大。",
+    ],
+    interfaces: [
+      "HTTP base：http://127.0.0.1:32456/shijima/api/v1。",
+      "GET/POST/DELETE /mascots，GET/PUT /mascots/:id。",
+      "GET /loadedMascots，GET /loadedMascots/:id/preview.png。",
+    ],
+    fit: "API 设计非常清楚，适合借鉴为我们的 VirtualPet runtime API：spawn、move、set behavior、dismiss、preview。但不建议直接依赖归档项目。",
+    risks: [
+      "构建环境老化，Qt/C++ 维护成本高。",
+    ],
+  },
+  {
+    name: "Agentic-Desktop-Pet",
+    repo: "https://github.com/jihe520/Agentic-Desktop-Pet",
+    commit: "1b1340b",
+    stack: "FastAPI backend + Godot frontend",
+    status: "partial",
+    statusText: "后端可运行，Godot 前端未运行",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "cd backend && uv run python --version",
+      "DEEPSEEK_API_KEY=dummy uv run python -m uvicorn main:app --host 127.0.0.1 --port 8002",
+      "curl http://127.0.0.1:8002/health",
+      "curl -X POST http://127.0.0.1:8002/chat -H 'Content-Type: application/json' -d '{\"message\":\"\"}'",
+    ],
+    evidence: [
+      "logs/agentic-health.json",
+      "logs/agentic-chat-empty.sse",
+      "logs/agentic-backend-uvicorn.log",
+    ],
+    observations: [
+      "uv 自动创建 Python 3.13.9 环境并安装 54 个包。",
+      "FastAPI 后端可启动，/health 返回 Online。",
+      "/chat 返回 SSE，空消息返回结构化 error。",
+      "Godot 未安装，因此主题/桌宠前端没有实测。",
+    ],
+    customization: [
+      "README 提到 mod 系统和 themes/*.pck，适合在 Godot 里切换桌宠主题。",
+      "宠物形态扩展取决于 Godot 工程和资源包。",
+    ],
+    interfaces: [
+      "HTTP GET /health。",
+      "HTTP POST /chat，SSE 流式响应。",
+      "Agent tools：todo、file、weather、subagent、skill；memory/emotion 模块。",
+    ],
+    fit: "适合参考 agent backend、SSE 聊天、工具调用、记忆/情绪模块。桌宠前端依赖 Godot，和我们的快速 MVP 不完全匹配。",
+    risks: [
+      "需要 Godot 环境和资源导出流程。",
+      "默认使用 DeepSeek key，需产品化配置和本地 mock。",
+    ],
+  },
+  {
+    name: "live2d-copilot",
+    repo: "https://github.com/ai-zen/live2d-copilot",
+    commit: "8a355b1",
+    stack: "pnpm monorepo + Vue renderer + Electron/Steam concept",
+    status: "fail",
+    statusText: "renderer 启动但页面空白",
+    screenshot: "screenshots/live2d-copilot-render.png",
+    screenshotCaption: "render dev 页面为空白，console 报导出不匹配。",
+    commands: [
+      "pnpm install",
+      "pnpm --filter live2d-copilot-render dev --host 127.0.0.1 --port 5175",
+    ],
+    evidence: [
+      "logs/live2d-copilot-playwright-console.log",
+      "logs/live2d-copilot-render-dev.log",
+    ],
+    observations: [
+      "pnpm install 可完成，但 render dev 打开为空白。",
+      "console 报 @ai-zen_live2d-vue.js does not provide an export named LAppDefineModule。",
+      "README 表示项目未 release，且与 Steam/Workshop 有绑定。",
+    ],
+    customization: [
+      "Live2DModelProfileV1/profile.json 设计完整：model3、preview/title/description、skins、chat.prompt、tts、modelTransform、subtitlesTransform、chatInputTransform。",
+      "适合借鉴 Live2D 模型包元数据和 Workshop 分发，而不是直接复用运行时代码。",
+    ],
+    interfaces: [
+      "模型 profile contract。",
+      "聊天工具 function call 概念。",
+      "Steam Workshop subscribe/download 设计。",
+    ],
+    fit: "模型包规范和分发思路有价值，但当前运行稳定性不足。可作为中长期 Live2D 资源市场参考。",
+    risks: [
+      "未发布、依赖不匹配、Steam 绑定。",
+    ],
+  },
+  {
+    name: "desktop-pet",
+    repo: "https://github.com/ALearningCurve/desktop-pet",
+    commit: "b686166",
+    stack: "Python + Tk/pystray/Pillow",
+    status: "fail",
+    statusText: "依赖不兼容，未运行出宠物",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "python3 -m venv .venv",
+      ".venv/bin/pip install Pillow>=10 screeninfo pystray",
+      ".venv/bin/python run.py",
+    ],
+    evidence: [
+      "logs/desktop-pet-minimal-pip.log",
+      "logs/desktop-pet-run.log",
+    ],
+    observations: [
+      "requirements.txt 编码/版本较旧，完整安装会被 PyObjC 依赖解析拖慢。",
+      "最小依赖安装后运行失败：macOS 15 (1507) or later required, have 15 (1506)。",
+      "截图只是桌面状态，不作为成功证据。",
+    ],
+    customization: [
+      "config.xml 默认 pet=horse，也有 cat/horse 资源。",
+      "增加宠物需要补 sprites 目录并在 load_animations.py 定义动作。",
+    ],
+    interfaces: [
+      "没有外部 API，主要是本地配置和 Python 类。",
+    ],
+    fit: "轻量桌宠结构可借鉴，但依赖健康度不够，不能作为主方案。",
+    risks: [
+      "维护停滞，macOS 依赖不兼容。",
+    ],
+  },
+  {
+    name: "ZcChat",
+    repo: "https://github.com/Zao-chen/ZcChat",
+    commit: "fce5503",
+    stack: "C++/Qt galgame-style AI pet",
+    status: "fail",
+    statusText: "本机缺 cmake，未构建",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "cmake -S . -B build",
+    ],
+    evidence: [
+      "logs/zcchat-cmake.log",
+    ],
+    observations: [
+      "仓库 README 表示项目已重做到 ZcChat2。",
+      "本机 cmake 命令不存在，未能继续构建。",
+      "项目定位是 galgame 风格 AI 伴侣，具备长期记忆、表情、语音、Letta/OpenAI-compatible API 和计算机控制 prompt。",
+    ],
+    customization: [
+      "角色资源放在 Documents/ZcChat/characters/{名称}/，包括正常.png 等表情图。",
+      "适合研究 2D 角色资源结构，但不是猫狗宠物沙箱。",
+    ],
+    interfaces: [
+      "OpenAI-compatible/Letta 方向接口，未实测。",
+    ],
+    fit: "AI 角色能力参考价值一般；对真实宠物拟态和商品推荐业务帮助小。",
+    risks: [
+      "项目已迁移，构建链路不完整。",
+    ],
+  },
+  {
+    name: "Chatty_desktop_pet",
+    repo: "https://github.com/ExtraNick/Chatty_desktop_pet",
+    commit: "2b84e72",
+    stack: "Godot 4.3",
+    status: "skip",
+    statusText: "缺 Godot，未运行",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [
+      "godot --version",
+    ],
+    evidence: [],
+    observations: [
+      "本机没有 godot 命令，也没有 /Applications/Godot.app。",
+      "README 描述的是 Godot 4.3 桌宠：沿任务栏行走、贴边、抓取、抛掷、重力、右键抚摸。",
+      "main.gd 工程较小，视觉资源和玩法偏单一。",
+    ],
+    customization: [
+      "当前主要是一只 demonite 宠物，扩展形态要走 Godot 资源流程。",
+    ],
+    interfaces: [
+      "没有外部 API。",
+    ],
+    fit: "物理交互灵感有价值，但 Godot 工具链对我们快速复用前端可视化帮助有限。",
+    risks: [
+      "需要安装 Godot 并导出桌面应用。",
+    ],
+  },
+  {
+    name: "Alive",
+    repo: "https://github.com/TopSea/Alive",
+    commit: "63779d1",
+    stack: "README/assets only; current code closed",
+    status: "skip",
+    statusText: "非完整开源源码，未运行",
+    screenshot: "",
+    screenshotCaption: "",
+    commands: [],
+    evidence: [],
+    observations: [
+      "README 明确当前代码不再开源，旧开源代码也不维护。",
+      "仓库主要是 README、assets、models、updater 等资料，没有可直接运行的完整源码。",
+      "release 侧看起来有 MMD/AI/model switching，但不适合当开源 base。",
+    ],
+    customization: [
+      "模型资源可参考，但不能直接作为工程底座。",
+    ],
+    interfaces: [
+      "无可复用开源接口。",
+    ],
+    fit: "不建议纳入方案，仅作为竞品/视觉方向观察。",
+    risks: [
+      "源码不可用，商业闭源风险。",
+    ],
+  },
+];
+
+const architectureTools = [
+  {
+    name: "get_pet_profile",
+    purpose: "读取真实宠物档案：物种、品种、年龄、体重、BCS、绝育、过敏、疾病、活动量、外观特征、照片引用。",
+  },
+  {
+    name: "generate_virtual_pet_pack",
+    purpose: "根据真实宠物数据生成或选择虚拟形态：spritesheet/Live2D/model profile，并返回可导入的 pack。",
+  },
+  {
+    name: "get_virtual_pet_state",
+    purpose: "读取虚拟宠物状态：饱腹、心情、精力、亲密度、清洁度、今日任务、动画状态。",
+  },
+  {
+    name: "apply_pet_interaction",
+    purpose: "执行交互：feed、play_with_toy、clean、groom、walk、train、rest、medication、record_symptom。",
+  },
+  {
+    name: "plan_daily_tasks",
+    purpose: "结合宠物健康、天气、库存、最近行为和兽医计划生成今日清单。",
+  },
+  {
+    name: "record_inventory",
+    purpose: "记录粮、零食、猫砂/清洁用品、药品、玩具磨损和到期日期。",
+  },
+  {
+    name: "recommend_products",
+    purpose: "在库存不足或任务需要时推荐商品；输入健康约束、预算、品牌偏好和过敏禁忌。",
+  },
+  {
+    name: "virtual_pet_say/react/move",
+    purpose: "驱动可视化前端表达：说话、表情、移动、到玩具旁、展示提醒气泡。",
+  },
+];
+
+const roadmap = [
+  {
+    phase: "第 1 周：确认底座和 API contract",
+    items: [
+      "用 OpenPets 或类似 Electron/Tauri 壳承载可视化宠物窗口，先接 say/react/move。",
+      "抽出 domain service：PetProfile、VirtualPetState、DailyTask、Inventory、ProductRecommendation。",
+      "定义所有 AI 可调用工具的 JSON schema 和权限边界。",
+    ],
+  },
+  {
+    phase: "第 2 周：自定义宠物形态 MVP",
+    items: [
+      "先做 sprite pet pack，不一上来做复杂 Live2D；支持猫/狗两类、毛色、体型、耳朵/尾巴/花纹基础参数。",
+      "把真实宠物照片/资料映射成 style spec，再生成或选择对应 spritesheet。",
+      "导入到 OpenPets/codex-pet-companion 风格 pack，并能在 UI 中切换。",
+    ],
+  },
+  {
+    phase: "第 3 周：交互和状态机",
+    items: [
+      "移植 codex-pet-companion 的 feed/play/rest、cooldown、daily count、energy/mood/fullness/friendship。",
+      "加入真实宠物特有的清洁、散步、梳毛、训练、用药、观察症状。",
+      "所有交互都写入 event log，作为任务规划和推荐依据。",
+    ],
+  },
+  {
+    phase: "第 4 周：每日任务清单",
+    items: [
+      "根据宠物档案、状态、日期、库存、天气和用户日程生成任务。",
+      "任务完成会影响虚拟宠物状态，并同步到真实宠物照护记录。",
+      "任务缺货时触发购买候选，而不是无条件卖货。",
+    ],
+  },
+  {
+    phase: "第 5 周：库存和商品推荐",
+    items: [
+      "维护 food/litter/cleaning/medicine/toy 库存和阈值。",
+      "推荐逻辑必须尊重年龄、体重、疾病、过敏、绝育、主粮品牌和预算。",
+      "商品推荐输出理由、禁忌检查、替代项和是否需要人工确认。",
+    ],
+  },
+  {
+    phase: "第 6 周：AI/MCP、安全和打包",
+    items: [
+      "把 tools 暴露给 AI：读取档案、规划任务、记录事件、控制宠物、生成推荐。",
+      "高风险行为如医疗建议、购买下单、用药提醒必须有人工确认。",
+      "做 macOS/Windows 打包、开机启动、权限弹窗、日志和隐私设置。",
+    ],
+  },
+];
+
+const ranking = [
+  ["第一候选可视化/AI 控制壳", "OpenPets", "已实测 CLI/MCP 到桌宠气泡；有 pet pack、lease、插件 SDK。"],
+  ["第一候选宠物照护状态机", "codex-pet-companion", "已实测运行；feed/play/rest、每日活动、宠物包、状态衰减最贴近业务。"],
+  ["背包/道具/自动投喂参考", "DyberPet", "已实测运行；item、backpack、favorability、auto feed 值得复用。"],
+  ["Live2D 自定义模型参考", "BongoCat + AI-Desktop-Pet", "BongoCat 导入流程清晰，AI-Desktop-Pet 视觉前端可跑。"],
+  ["AI 状态和权限浮窗参考", "clawd-on-desk", "HTTP /state 和主题系统可跑，适合 AI 提醒和状态表达。"],
+  ["不要直接当主底座", "VPet/Shijima/ZcChat/desktop-pet/Alive", "平台、归档、依赖或源码完整性风险较高。"],
+];
+
+const excluded = [
+  {
+    name: "Mate-Engine",
+    repo: "https://github.com/shinyflvre/Mate-Engine",
+    reason: "Unity/VRM 路线，仓库和运行依赖非常重，clone 体积约 GB 级并需要 Unity Editor/VRM 环境。作为 3D 方向值得后续单独评估，但不适合作为今晚快速跑通的开源前端沙箱候选。",
+  },
+];
+
+function esc(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function list(items) {
+  if (!items || items.length === 0) return "<p class=\"muted\">无记录。</p>";
+  return `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+}
+
+function codeList(items) {
+  if (!items || items.length === 0) return "<p class=\"muted\">未执行命令。</p>";
+  return `<ol class="code-list">${items.map((item) => `<li><code>${esc(item)}</code></li>`).join("")}</ol>`;
+}
+
+function evidenceList(items) {
+  if (!items || items.length === 0) return "<p class=\"muted\">无单独日志文件；证据来自终端运行和源码检查。</p>";
+  return `<ul>${items.map((item) => `<li><a href="${esc(item)}">${esc(item)}</a></li>`).join("")}</ul>`;
+}
+
+function projectCard(project) {
+  const img = project.screenshot
+    ? `<figure><img src="${esc(project.screenshot)}" alt="${esc(project.name)} 运行截图"><figcaption>${esc(project.screenshotCaption)}</figcaption></figure>`
+    : "<div class=\"no-image\">本项目没有成功运行截图，详见运行状态和日志。</div>";
+  return `
+    <article class="project-card" id="${esc(project.name.toLowerCase().replaceAll(" ", "-"))}">
+      <div class="project-head">
+        <div>
+          <h3>${esc(project.name)}</h3>
+          <p class="stack">${esc(project.stack)}</p>
+        </div>
+        <span class="badge ${esc(project.status)}">${esc(project.statusText)}</span>
+      </div>
+      ${img}
+      <dl class="meta">
+        <div><dt>仓库</dt><dd><a href="${esc(project.repo)}">${esc(project.repo)}</a></dd></div>
+        <div><dt>测试提交</dt><dd><code>${esc(project.commit)}</code></dd></div>
+      </dl>
+      <div class="columns">
+        <section>
+          <h4>实际执行</h4>
+          ${codeList(project.commands)}
+        </section>
+        <section>
+          <h4>截图/日志证据</h4>
+          ${evidenceList(project.evidence)}
+        </section>
+      </div>
+      <section>
+        <h4>运行观察</h4>
+        ${list(project.observations)}
+      </section>
+      <section>
+        <h4>自定义宠物形态</h4>
+        ${list(project.customization)}
+      </section>
+      <section>
+        <h4>暴露接口/可抽象接口</h4>
+        ${list(project.interfaces)}
+      </section>
+      <section>
+        <h4>业务适配判断</h4>
+        <p>${esc(project.fit)}</p>
+      </section>
+      <section>
+        <h4>风险</h4>
+        ${list(project.risks)}
+      </section>
+    </article>
+  `;
+}
+
+function statusLabel(status) {
+  return {
+    pass: "跑通",
+    partial: "部分跑通",
+    fail: "未跑通",
+    skip: "未纳入运行",
+  }[status] ?? status;
+}
+
+const passedCount = projects.filter((p) => p.status === "pass").length;
+const partialCount = projects.filter((p) => p.status === "partial").length;
+const failedCount = projects.filter((p) => p.status === "fail").length;
+const skippedCount = projects.filter((p) => p.status === "skip").length;
+
+const html = `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>虚拟宠物沙箱开源项目 overnight 调研报告</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #657381;
+      --line: #d9e2ec;
+      --paper: #fbfcfe;
+      --panel: #ffffff;
+      --accent: #1e7a74;
+      --accent-2: #9f4f20;
+      --good: #19734d;
+      --warn: #a05a00;
+      --bad: #b3261e;
+      --skip: #5b6470;
+      --code: #eef3f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.62;
+    }
+    a { color: #0969a8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      padding: 44px clamp(18px, 4vw, 64px) 30px;
+      background:
+        linear-gradient(120deg, rgba(30, 122, 116, 0.14), rgba(159, 79, 32, 0.10)),
+        #f7fafc;
+      border-bottom: 1px solid var(--line);
+    }
+    header h1 {
+      margin: 0 0 12px;
+      max-width: 980px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    header p {
+      max-width: 1080px;
+      margin: 8px 0;
+      color: #384858;
+      font-size: 17px;
+    }
+    main {
+      width: min(1440px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 30px 0 72px;
+    }
+    h2 {
+      margin: 38px 0 14px;
+      font-size: 26px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+    h4 {
+      margin: 20px 0 8px;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #405261;
+    }
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: var(--code);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+    .metric span { color: var(--muted); }
+    .callout {
+      border: 1px solid #c8d9e8;
+      background: #f2f7fb;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 18px 0;
+    }
+    .callout strong { color: #163a58; }
+    .rank-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .rank {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .rank b {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+    figure {
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: 240px;
+      object-fit: contain;
+      background: #eef3f7;
+    }
+    figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      display: table;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+    th {
+      background: #edf4f7;
+      color: #334b5d;
+      font-weight: 700;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      border: 1px solid currentColor;
+    }
+    .badge.pass { color: var(--good); background: #eef8f2; }
+    .badge.partial { color: var(--warn); background: #fff7e8; }
+    .badge.fail { color: var(--bad); background: #fff1ef; }
+    .badge.skip { color: var(--skip); background: #f2f4f7; }
+    .project-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 18px 0;
+    }
+    .project-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .stack {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+      padding: 0;
+    }
+    .meta div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+    .meta dt {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    .meta dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .code-list {
+      padding-left: 22px;
+      margin: 8px 0;
+    }
+    .code-list li { margin-bottom: 6px; }
+    .no-image {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      color: var(--muted);
+      background: #f7fafc;
+      text-align: center;
+    }
+    .muted { color: var(--muted); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .flow div {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 112px;
+    }
+    .flow b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-2);
+    }
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .tool {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+    }
+    .tool code {
+      display: inline-block;
+      margin-bottom: 5px;
+      color: #12354d;
+      background: #e9f2f8;
+    }
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .phase {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px;
+    }
+    footer {
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      margin-top: 42px;
+      font-size: 14px;
+    }
+    @media (max-width: 980px) {
+      .summary-grid, .gallery, .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .rank-grid, .columns, .meta, .tool-grid, .roadmap { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+    }
+    @media (max-width: 640px) {
+      main { width: min(100% - 24px, 1440px); }
+      header { padding: 32px 18px 24px; }
+      .summary-grid, .gallery, .flow { grid-template-columns: 1fr; }
+      .project-head { flex-direction: column; }
+      figure img { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>虚拟宠物沙箱开源项目 overnight 调研报告</h1>
+    <p>目标：找到能自定义猫、狗等宠物形态，具备可视化界面，并能通过 AI/接口控制宠物交互的开源项目；实际克隆、安装、运行、截图，并评估它们如何支撑“真实宠物绑定虚拟宠物”的业务。</p>
+    <p>生成时间：${esc(nowText)}。工作目录：<code>${esc(reportDir)}</code></p>
+  </header>
+
+  <main>
+    <section>
+      <h2>结论先行</h2>
+      <div class="callout">
+        <p><strong>没有一个项目完整覆盖我们的全部业务。</strong> 最稳妥的路线是组合：用 <strong>OpenPets</strong> 作为 AI 可控的桌面可视化壳，用 <strong>codex-pet-companion</strong> 和 <strong>DyberPet</strong> 的照护/道具/每日活动逻辑做业务状态机，再从 <strong>BongoCat</strong> 和 <strong>AI-Desktop-Pet</strong> 借鉴 Live2D 或模型导入能力。</p>
+        <p>如果只选一个项目先 fork，我建议选 <strong>OpenPets</strong>，因为它已经有 CLI/MCP/IPC/插件 SDK 和 pet pack 机制；真实宠物档案、库存、商品推荐和日常任务都作为我们自己的 domain service 接进去。</p>
+      </div>
+      <div class="summary-grid">
+        <div class="metric"><strong>${projects.length}</strong><span>克隆/检查项目</span></div>
+        <div class="metric"><strong>${passedCount}</strong><span>实际运行通过</span></div>
+        <div class="metric"><strong>${partialCount}</strong><span>部分运行或接口可测</span></div>
+        <div class="metric"><strong>${failedCount + skippedCount}</strong><span>构建失败或不适合作为开源底座</span></div>
+      </div>
+      <div class="rank-grid">
+        ${ranking.map(([label, name, reason]) => `<div class="rank"><b>${esc(label)}</b><strong>${esc(name)}</strong><p>${esc(reason)}</p></div>`).join("")}
+      </div>
+    </section>
+
+    <section>
+      <h2>实际运行截图</h2>
+      <p class="muted">下列截图均来自本机实际运行或浏览器验证。报告优先引用裁剪图，避免带入桌面上无关的私人窗口。</p>
+      <div class="gallery">
+        ${projects.filter((p) => p.screenshot).map((p) => `
+          <figure>
+            <img src="${esc(p.screenshot)}" alt="${esc(p.name)} 截图">
+            <figcaption><strong>${esc(p.name)}</strong>：${esc(p.screenshotCaption)}</figcaption>
+          </figure>
+        `).join("")}
+      </div>
+    </section>
+
+    <section>
+      <h2>项目总表</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>项目</th>
+            <th>状态</th>
+            <th>技术栈</th>
+            <th>自定义宠物形态</th>
+            <th>接口/可控性</th>
+            <th>业务建议</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${projects.map((p) => `
+            <tr>
+              <td><a href="#${esc(p.name.toLowerCase().replaceAll(" ", "-"))}">${esc(p.name)}</a><br><code>${esc(p.commit)}</code></td>
+              <td><span class="badge ${esc(p.status)}">${esc(statusLabel(p.status))}</span><br>${esc(p.statusText)}</td>
+              <td>${esc(p.stack)}</td>
+              <td>${esc(p.customization[0] ?? "")}</td>
+              <td>${esc(p.interfaces[0] ?? "")}</td>
+              <td>${esc(p.fit)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>推荐架构</h2>
+      <p>用户的业务不是单纯桌宠，而是“真实宠物数据驱动的虚拟宠物 + 日常照护任务 + 库存和商品推荐”。因此我建议把开源项目拆成三层复用，而不是把某个项目整体改成业务系统。</p>
+      <div class="flow">
+        <div><b>真实宠物档案</b>物种、品种、年龄、体重、体况评分、疾病、过敏、绝育、运动量、照片和外观特征。</div>
+        <div><b>虚拟形态生成</b>根据档案生成 style spec，输出 sprite pet pack 或 Live2D model profile。</div>
+        <div><b>虚拟宠物状态机</b>饱腹、心情、精力、亲密度、清洁度、任务完成度、冷却和成长记录。</div>
+        <div><b>AI 工具层</b>AI 读取档案、规划任务、控制宠物表达、记录行为、检查库存、生成推荐。</div>
+        <div><b>可视化运行时</b>桌面宠物窗口、气泡、移动、玩具交互、任务提醒、购买确认。</div>
+      </div>
+      <h3>建议暴露给 AI 的工具</h3>
+      <div class="tool-grid">
+        ${architectureTools.map((tool) => `<div class="tool"><code>${esc(tool.name)}</code><p>${esc(tool.purpose)}</p></div>`).join("")}
+      </div>
+      <h3>核心数据模型</h3>
+      <table>
+        <thead><tr><th>模型</th><th>关键字段</th><th>来自哪些项目的启发</th></tr></thead>
+        <tbody>
+          <tr><td>RealPetProfile</td><td>species、breed、age、sex、neutered、weight、BCS、health conditions、allergies、activity level、appearance traits、photo refs</td><td>业务自研；外观可映射 OpenPets/codex-pet pack/BongoCat Live2D</td></tr>
+          <tr><td>VirtualPetState</td><td>fullness、mood、energy、friendship、cleanliness、focus、last fed/played/rested、cooldowns、animation state</td><td>codex-pet-companion、tama96、DyberPet</td></tr>
+          <tr><td>DailyTask</td><td>type、reason、priority、due window、requires inventory、completion event、risk level、human confirmation</td><td>codex-pet-companion daily_activities + 我们的真实照护计划</td></tr>
+          <tr><td>InventoryItem</td><td>category、brand、quantity、unit、threshold、expiry date、pet constraints、purchase source</td><td>DyberPet/VPet 的物品与食物体系</td></tr>
+          <tr><td>ProductRecommendation</td><td>trigger task、matched constraints、why now、alternatives、blocked reasons、affiliate/source metadata</td><td>业务自研；需要安全和合规边界</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>接口清单</h2>
+      <table>
+        <thead><tr><th>项目</th><th>接口</th><th>能为我们做什么</th><th>需要补什么</th></tr></thead>
+        <tbody>
+          <tr><td>OpenPets</td><td>CLI/MCP/IPC/plugin SDK：status、say、react、moveBy、wander、lease</td><td>AI 直接控制宠物窗口、气泡和状态</td><td>真实宠物 domain API、任务/库存/推荐</td></tr>
+          <tr><td>codex-pet-companion</td><td>Python core：virtual_pet、daily_activities、pet_pack、state</td><td>照护状态机、每日活动、pet pack</td><td>HTTP/MCP 封装、真实宠物字段</td></tr>
+          <tr><td>DyberPet</td><td>资源配置 + item/backpack/favor/auto feed</td><td>道具、背包、好感度、自动投喂玩法</td><td>接口化和 AI 控制层</td></tr>
+          <tr><td>AI-Desktop-Pet</td><td>WebSocket /ws：text_input、state_update、audio_chunk</td><td>Live2D 前端和实时 AI 对话</td><td>协议收敛、模型切换配置、业务消息类型</td></tr>
+          <tr><td>BongoCat</td><td>Tauri command + Live2D model upload + keyboard/gamepad events</td><td>用户导入 Live2D 模型、桌面置顶窗口</td><td>AI/API 控制和宠物照护业务</td></tr>
+          <tr><td>clawd-on-desk</td><td>HTTP /state + permission bubble + theme validator</td><td>AI 状态可视化、确认气泡、主题生成</td><td>宠物养成逻辑和商品/库存业务</td></tr>
+          <tr><td>tama96</td><td>MCP tools/resources：feed、play_game、discipline、medicine、clean、lights、status</td><td>AI 操作权限和经典照护规则</td><td>可视化沙箱和猫狗自定义形态</td></tr>
+          <tr><td>Shijima-Qt</td><td>HTTP /mascots 和 /loadedMascots</td><td>spawn/move/set behavior/dismiss API 设计</td><td>项目已归档，不建议依赖</td></tr>
+          <tr><td>Agentic-Desktop-Pet</td><td>FastAPI /health、/chat SSE、agent tools</td><td>聊天、记忆、情绪、工具调用后端</td><td>Godot 前端和宠物业务未跑通</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>开发路线</h2>
+      <div class="roadmap">
+        ${roadmap.map((phase) => `<div class="phase"><h3>${esc(phase.phase)}</h3>${list(phase.items)}</div>`).join("")}
+      </div>
+    </section>
+
+    <section>
+      <h2>逐项目详情</h2>
+      ${projects.map(projectCard).join("")}
+    </section>
+
+    <section>
+      <h2>未纳入深入运行的候选</h2>
+      ${excluded.map((item) => `<div class="project-card"><h3>${esc(item.name)}</h3><p><a href="${esc(item.repo)}">${esc(item.repo)}</a></p><p>${esc(item.reason)}</p></div>`).join("")}
+    </section>
+
+    <section>
+      <h2>风险和边界</h2>
+      <ul>
+        <li><strong>医疗安全：</strong>宠物健康、用药、疾病判断必须避免自动诊断。AI 可以提醒观察和建议就医，但不能把商品推荐包装成医疗处方。</li>
+        <li><strong>推荐合规：</strong>商品推荐必须解释触发原因和约束，例如库存不足、年龄段、过敏、体重、疾病禁忌；高风险商品需要人工确认。</li>
+        <li><strong>素材版权：</strong>开源项目代码许可不等于宠物素材可商用。猫狗模型、Live2D、spritesheet 都要建立素材许可证字段。</li>
+        <li><strong>隐私：</strong>真实宠物照片、健康记录、购买记录属于敏感用户数据，默认本地优先，云端同步要明确授权。</li>
+        <li><strong>跨平台：</strong>桌宠窗口常需要辅助功能、输入监听、置顶窗口、透明窗口权限；打包前要分别验证 macOS/Windows。</li>
+        <li><strong>工程健康：</strong>这批项目里不少能跑但依赖老化或平台绑定。MVP 应选可维护、接口清晰的组合，不要强行移植整套老项目。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>证据目录</h2>
+      <p>本报告的原始搜索结果、日志和截图均放在当前目录：</p>
+      <ul>
+        <li><a href="data/candidate-repos.jsonl">data/candidate-repos.jsonl</a>：候选仓库汇总。</li>
+        <li><a href="data/repo-entrypoints.txt">data/repo-entrypoints.txt</a>：入口文件/运行方式初筛。</li>
+        <li><a href="screenshots/">screenshots/</a>：运行截图。</li>
+        <li><a href="logs/">logs/</a>：安装、启动、接口请求和失败日志。</li>
+        <li><a href="run-results.json">run-results.json</a>：本 HTML 使用的结构化运行结果。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>来源链接</h2>
+      <ul>
+        ${sources.map(([label, url]) => `<li><a href="${esc(url)}">${esc(label)}</a>：${esc(url)}</li>`).join("")}
+      </ul>
+    </section>
+
+    <footer>
+      <p>报告由本地 overnight 调研流程生成。测试结束后已停止本轮启动的 Vite、uvicorn、Electron/Tauri/PySide 桌宠进程。</p>
+    </footer>
+  </main>
+</body>
+</html>`;
+
+writeFileSync(resolve(reportDir, "run-results.json"), JSON.stringify({
+  generatedAt: new Date().toISOString(),
+  generatedAtAsiaShanghai: nowText,
+  summary: { total: projects.length, passedCount, partialCount, failedCount, skippedCount },
+  projects,
+  ranking,
+  architectureTools,
+  roadmap,
+  excluded,
+  sources,
+}, null, 2));
+
+writeFileSync(resolve(reportDir, "index.html"), html);
+
+console.log(resolve(reportDir, "index.html"));

@@ -1,0 +1,180 @@
+
+> openclaw-kkclaw@3.7.1 test
+> jest --verbose
+
+(node:67048) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+  console.log
+    📝 使用默认配置
+
+      at PetConfig.log [as load] (pet-config.js:79:21)
+
+(node:67044) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+  console.log
+    🛡️ 全局错误处理器已启动
+
+      at GlobalErrorHandler.log [as setupHandlers] (global-error-handler.js:55:17)
+
+(node:67046) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67047) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    📝 日志轮转系统启动
+
+      at log (utils/color-log.js:123:11)
+
+  console.log
+    🔄 开始日志轮转...
+
+      at LogRotationManager.log [as rotate] (log-rotation.js:55:17)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    ✅ 日志轮转完成: 删除0个文件, 压缩0个文件
+
+      at LogRotationManager.log [as rotate] (log-rotation.js:61:21)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    🧹 缓存管理器初始化完成
+
+      at log (utils/color-log.js:123:11)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    🧹 缓存管理器初始化完成
+
+      at log (utils/color-log.js:123:11)
+
+(node:67043) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+  console.log
+    🧹 缓存管理器初始化完成
+
+      at log (utils/color-log.js:123:11)
+
+  console.log
+    🧹 缓存管理器初始化完成
+
+      at log (utils/color-log.js:123:11)
+
+  console.log
+    🧹 缓存管理器初始化完成
+
+      at log (utils/color-log.js:123:11)
+
+  console.log
+    🧹 缓存管理器初始化完成
+
+      at log (utils/color-log.js:123:11)
+
+  console.log
+    ⏹️ 自动清理已停止
+
+      at CacheManager.log [as stop] (cache-manager.js:68:15)
+
+(node:67049) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+  console.log
+    🗑️ 删除过期日志: old.log
+
+      at LogRotationManager.log [as cleanupOldLogs] (log-rotation.js:89:29)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+  console.log
+    🔄 开始日志轮转...
+
+      at LogRotationManager.log [as rotate] (log-rotation.js:55:17)
+
+  console.log
+    ✅ 日志轮转完成: 删除0个文件, 压缩0个文件
+
+      at LogRotationManager.log [as rotate] (log-rotation.js:61:21)
+
+  console.log
+    📝 日志轮转系统停止
+
+      at LogRotationManager.log [as stop] (log-rotation.js:50:17)
+
+(node:67045) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67042) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+Test Suites: 8 passed, 8 total
+Tests:       46 passed, 46 total
+Snapshots:   0 total
+Time:        1.677 s
+Ran all test suites.

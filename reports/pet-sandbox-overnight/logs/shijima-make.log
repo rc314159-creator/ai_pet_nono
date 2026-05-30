@@ -1,0 +1,30 @@
+/Library/Developer/CommandLineTools/usr/bin/make -C Platform
+make: *** No rule to make target `libshimejifinder/CMakeLists.txt', needed by `libshimejifinder/build/Makefile'.  Stop.
+make: *** Waiting for unfinished jobs....
+/Library/Developer/CommandLineTools/usr/bin/make -C macOS || { rm -f Platform.a && false; }
+cc -MMD -c -Wall -std=c++17 -O3 -flto -DNDEBUG  -F/opt/local/libexec/qt6/lib -I/opt/local/libexec/qt6/lib/QtCore.framework/Versions/Current/Headers -I/opt/local/libexec/qt6/lib/QtWidgets.framework/Versions/Current/Headers  -x objective-c++ -fobjc-arc  Platform.mm -o Platform.o
+cc -MMD -c -Wall -std=c++17 -O3 -flto -DNDEBUG  -F/opt/local/libexec/qt6/lib -I/opt/local/libexec/qt6/lib/QtCore.framework/Versions/Current/Headers -I/opt/local/libexec/qt6/lib/QtWidgets.framework/Versions/Current/Headers  -x objective-c++ -fobjc-arc  ActiveWindowObserver.cc -o ActiveWindowObserver.o
+cc -MMD -c -Wall -std=c++17 -O3 -flto -DNDEBUG  -F/opt/local/libexec/qt6/lib -I/opt/local/libexec/qt6/lib/QtCore.framework/Versions/Current/Headers -I/opt/local/libexec/qt6/lib/QtWidgets.framework/Versions/Current/Headers  -x objective-c++ -fobjc-arc  PrivateActiveWindowObserver.mm -o PrivateActiveWindowObserver.o
+In file included from Platform.mm:19:
+In file included from ./../Platform.hpp:21:
+./../ActiveWindow.hpp:22:10: fatal error: 'QString' file not found
+   22 | #include <QString>
+      |          ^~~~~~~~~
+In file included from ActiveWindowObserver.cc:20:
+./../ActiveWindowObserver.hpp:21:10: fatal error: 'QObject' file not found
+   21 | #include <QObject>
+      |          ^~~~~~~~~
+1 error generated.
+make[2]: *** [ActiveWindowObserver.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+In file included from PrivateActiveWindowObserver.mm:22:
+In file included from ./PrivateActiveWindowObserver.hpp:21:
+./../ActiveWindow.hpp:22:10: fatal error: 'QString' file not found
+   22 | #include <QString>
+      |          ^~~~~~~~~
+1 error generated.
+1 error generated.
+make[2]: *** [Platform.o] Error 1
+make[2]: *** [PrivateActiveWindowObserver.o] Error 1
+make[1]: *** [all] Error 1
+make: *** [Platform/Platform.a] Error 2

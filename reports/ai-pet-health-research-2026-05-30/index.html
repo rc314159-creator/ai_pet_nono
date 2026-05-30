@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI+宠物健康项目调研汇报</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f0e7;
+      --surface: #fffdf8;
+      --ink: #202d2a;
+      --muted: #66736d;
+      --line: #d7d1c4;
+      --green: #2d6a4f;
+      --teal: #146c78;
+      --rust: #b35c35;
+      --gold: #c88a2c;
+      --blue: #315b7d;
+      --red: #a23f32;
+      --shadow: 0 18px 48px rgba(32, 45, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(45, 106, 79, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(49, 91, 125, 0.06) 1px, transparent 1px),
+        var(--paper);
+      background-size: 34px 34px;
+      font-family: "Avenir Next", "Trebuchet MS", "Microsoft YaHei", sans-serif;
+    }
+
+    a { color: inherit; }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1520px, calc(100% - 44px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      color: #fffaf2;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      font-weight: 900;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--rust);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 38px;
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 26px;
+      line-height: 1.15;
+    }
+
+    h3 {
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .text-link,
+    .pill-button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: rgba(255, 253, 248, 0.88);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 18px;
+      align-items: stretch;
+      min-height: 440px;
+      margin-bottom: 18px;
+    }
+
+    .hero-copy,
+    .map-panel,
+    .section,
+    .brief-card,
+    .project-card,
+    .roadmap-item,
+    .source-list {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 248, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy {
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+      display: grid;
+      align-content: space-between;
+      gap: 26px;
+    }
+
+    .hero-copy::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(45, 106, 79, 0.1), transparent 42%),
+        repeating-linear-gradient(135deg, transparent 0 18px, rgba(20, 108, 120, 0.06) 18px 19px);
+      pointer-events: none;
+    }
+
+    .hero-copy > * { position: relative; }
+
+    .hero-title {
+      max-width: 760px;
+    }
+
+    .hero-title p {
+      max-width: 720px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.65;
+    }
+
+    .verdict {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .verdict div {
+      border-left: 4px solid var(--green);
+      padding: 12px 12px 12px 14px;
+      background: rgba(244, 240, 231, 0.72);
+    }
+
+    .verdict strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .verdict span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .map-panel {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+      background: #202d2a;
+      color: #fffaf2;
+      overflow: hidden;
+    }
+
+    .map-panel .eyebrow {
+      color: #f0b65c;
+    }
+
+    .signal-map {
+      position: relative;
+      min-height: 280px;
+      border: 1px solid rgba(255, 250, 242, 0.22);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(20, 108, 120, 0.3), rgba(45, 106, 79, 0.14));
+      background-size: 34px 34px, 34px 34px, auto;
+    }
+
+    .axis-label {
+      position: absolute;
+      color: rgba(255, 250, 242, 0.72);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .axis-label.x { right: 12px; bottom: 10px; }
+    .axis-label.y { left: 12px; top: 10px; }
+
+    .node {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      top: var(--y);
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(255, 250, 242, 0.55);
+      border-radius: 50%;
+      background: var(--color);
+      box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.06);
+    }
+
+    .node span {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 8px);
+      transform: translateX(-50%);
+      width: 110px;
+      color: #fffaf2;
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .map-legend {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .legend-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      border: 1px solid rgba(255, 250, 242, 0.18);
+      border-radius: 8px;
+      padding: 8px;
+      color: rgba(255, 250, 242, 0.84);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .brief-card {
+      padding: 16px;
+      min-height: 126px;
+    }
+
+    .brief-card b {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      font-family: Georgia, "Times New Roman", serif;
+      margin-bottom: 10px;
+    }
+
+    .brief-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .section {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-row input {
+      width: min(460px, 100%);
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf2;
+      color: var(--ink);
+      padding: 0 12px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-row button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf2;
+      color: var(--ink);
+      padding: 0 10px;
+      font-size: 13px;
+    }
+
+    .filter-row button.active {
+      color: #fffaf2;
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .project-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      min-height: 290px;
+      box-shadow: none;
+      background: #fffdf8;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .tag-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 0 8px;
+      background: #f0eadf;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.high { background: #e3f0e7; color: var(--green); }
+    .tag.medium { background: #e8eef3; color: var(--blue); }
+    .tag.watch { background: #f7ecd8; color: #8a5b15; }
+    .tag.risk { background: #f8e3dc; color: var(--red); }
+
+    .project-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .metric-list {
+      display: grid;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .card-link {
+      color: var(--teal);
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .roadmap-item {
+      padding: 16px;
+      box-shadow: none;
+    }
+
+    .roadmap-item .step {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fffaf2;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .roadmap-item p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .source-list {
+      padding: 18px;
+      box-shadow: none;
+    }
+
+    .source-columns {
+      columns: 3 260px;
+      column-gap: 28px;
+    }
+
+    .source-columns a {
+      display: block;
+      break-inside: avoid;
+      color: var(--teal);
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 0 0 10px;
+      text-decoration: none;
+    }
+
+    .empty {
+      display: none;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .stats,
+      .project-grid,
+      .roadmap {
+        grid-template-columns: 1fr 1fr;
+      }
+      .map-legend {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 24px, 1520px);
+        padding-top: 14px;
+      }
+      .topbar,
+      .section-head,
+      .search-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .top-actions {
+        justify-content: flex-start;
+      }
+      .hero,
+      .stats,
+      .project-grid,
+      .roadmap,
+      .verdict {
+        grid-template-columns: 1fr;
+      }
+      h1 { font-size: 30px; }
+      .hero-copy,
+      .section,
+      .map-panel {
+        padding: 18px;
+      }
+      .metric {
+        grid-template-columns: 72px 1fr;
+      }
+      .signal-map {
+        min-height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">AI</div>
+        <div>
+          <p class="eyebrow">AI Pet Research Brief</p>
+          <h1>AI+宠物健康项目调研汇报</h1>
+        </div>
+      </div>
+      <nav class="top-actions">
+        <a class="text-link" href="../../ai-pet/docs/research/ai-pet-health-projects-2026-05-30.md">知识库原文</a>
+        <a class="text-link" href="../../ai-pet/docs/research/existing-pet-health-products-2026-05-30.md">产品调研</a>
+        <a class="text-link" href="#existing-products">现有产品</a>
+        <a class="text-link" href="#projects">项目清单</a>
+        <a class="text-link" href="#roadmap">MVP 建议</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="hero-title">
+            <p class="eyebrow">结论</p>
+            <h2>不要做“又一个 AI 问诊框”。正确方向是宠物健康证据操作系统。</h2>
+            <p>市场已经挤满一次性 AI 分诊和拍照健康检查，但真正的空白在长期数据：档案、活动、睡眠、体重、排泄、照片、任务和就诊摘要应该进入同一条时间线，再由 AI 做分级、解释和提醒。</p>
+          </div>
+          <div class="verdict">
+            <div>
+              <strong>先做统一健康事件模型</strong>
+              <span>手动、CSV、mock、设备 adapter 共用一套 HealthEvent / MetricReading。</span>
+            </div>
+            <div>
+              <strong>输出分级，不输出诊断</strong>
+              <span>AI 可以说明为什么要观察或就医，不能替代兽医、处方或 VCPR。</span>
+            </div>
+            <div>
+              <strong>桌宠负责感知和行动</strong>
+              <span>虚拟宠物把真实数据变成表情、任务和提醒，严肃健康建议由规则和证据控制。</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="map-panel" aria-label="AI pet health market signal map">
+          <div>
+            <p class="eyebrow">机会地图</p>
+            <h2>高信号、高适配项目集中在连续监测和兽医摘要。</h2>
+          </div>
+          <div class="signal-map">
+            <span class="axis-label y">健康信号强度</span>
+            <span class="axis-label x">MVP 适配度</span>
+            <div class="node" style="--x:78%;--y:25%;--size:38px;--color:#59b783"><span>Catlog / Petivity</span></div>
+            <div class="node" style="--x:70%;--y:34%;--size:34px;--color:#5bb8c1"><span>Tractive / FitBark</span></div>
+            <div class="node" style="--x:58%;--y:23%;--size:32px;--color:#e6a64f"><span>PetPace / Maven</span></div>
+            <div class="node" style="--x:47%;--y:42%;--size:30px;--color:#d56a48"><span>Vet-AI / Petriage</span></div>
+            <div class="node" style="--x:35%;--y:58%;--size:25px;--color:#7ba1c5"><span>AI health apps</span></div>
+            <div class="node" style="--x:22%;--y:20%;--size:27px;--color:#b7a6df"><span>Clinic diagnostics</span></div>
+            <div class="node" style="--x:64%;--y:68%;--size:28px;--color:#f0c66b"><span>Vet summaries</span></div>
+          </div>
+          <div class="map-legend">
+            <div class="legend-chip"><span class="dot" style="background:#59b783"></span>猫行为/排泄</div>
+            <div class="legend-chip"><span class="dot" style="background:#5bb8c1"></span>消费级 wearable</div>
+            <div class="legend-chip"><span class="dot" style="background:#d56a48"></span>AI 分诊</div>
+            <div class="legend-chip"><span class="dot" style="background:#b7a6df"></span>诊所 AI</div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="stats" aria-label="Research stats">
+        <div class="brief-card">
+          <b id="countAll">0</b>
+          <span>公开可验证项目/项目簇，按证据等级记录。</span>
+        </div>
+        <div class="brief-card">
+          <b>5</b>
+          <span>市场主线：AI 分诊、连续监测、诊断 AI、工作流、预测健康。</span>
+        </div>
+        <div class="brief-card">
+          <b id="countHigh">0</b>
+          <span>高优先级参考项目，直接影响 MVP 数据模型和产品边界。</span>
+        </div>
+        <div class="brief-card">
+          <b>0</b>
+          <span>MVP 阶段不应强依赖的单一厂商 API 数量。</span>
+        </div>
+        <div class="brief-card">
+          <b>1</b>
+          <span>核心差异化：长期健康时间线驱动真实宠物数字分身。</span>
+        </div>
+      </section>
+
+      <section id="existing-products" class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">现有产品</p>
+            <h2>已经可购买、可下载或可由诊所采购的产品</h2>
+            <p>这里按产品形态看，不再只按公司/项目看。重点字段是现有形态、健康数据、AI 角色、对 MVP 的参考价值。</p>
+          </div>
+          <span class="pill-button" id="productCount">0 个产品</span>
+        </div>
+        <div class="project-grid" id="productGrid"></div>
+      </section>
+
+      <section id="projects" class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">项目图谱</p>
+            <h2>按类别筛选项目</h2>
+            <p>证据等级 A 最可信；C/D 项目用于观察产品话术和长尾竞争，不作为临床能力证明。</p>
+          </div>
+          <span class="pill-button" id="visibleCount">0 个项目</span>
+        </div>
+        <div class="filters">
+          <div class="search-row">
+            <input id="search" type="search" placeholder="搜索项目、AI 形态、数据输入或启发">
+          </div>
+          <div class="filter-row" id="categoryFilters" aria-label="Category filters"></div>
+          <div class="filter-row" id="priorityFilters" aria-label="Priority filters"></div>
+        </div>
+        <div class="project-grid" id="projectGrid"></div>
+        <div class="empty" id="empty">没有匹配项目。换一个筛选条件。</div>
+      </section>
+
+      <section id="roadmap" class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">MVP 建议</p>
+            <h2>下一步实现顺序</h2>
+          </div>
+        </div>
+        <div class="roadmap">
+          <div class="roadmap-item">
+            <div class="step">1</div>
+            <h3>统一健康事件</h3>
+            <p>把活动、睡眠、体重、饮食、饮水、排泄、抓挠、呕吐、照片和备注都落成同一条时间线。</p>
+          </div>
+          <div class="roadmap-item">
+            <div class="step">2</div>
+            <h3>分级和证据解释</h3>
+            <p>每次提醒输出 green/yellow/red、危险信号、观察窗口、建议行动和证据来源。</p>
+          </div>
+          <div class="roadmap-item">
+            <div class="step">3</div>
+            <h3>桌宠状态映射</h3>
+            <p>把健康趋势映射到能量、情绪、清洁、疼痛/舒适度和任务提醒，让数字分身有真实依据。</p>
+          </div>
+          <div class="roadmap-item">
+            <div class="step">4</div>
+            <h3>兽医摘要导出</h3>
+            <p>生成时间线、异常趋势、用户已做行动和就诊问题清单，减少线下沟通成本。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">安全边界</p>
+            <h2>产品必须把医疗风险控制前置</h2>
+          </div>
+        </div>
+        <div class="roadmap">
+          <div class="roadmap-item">
+            <h3>允许</h3>
+            <p>观察解释、照护提醒、分诊建议、复查提醒、就医准备、食品和药品风险提示。</p>
+          </div>
+          <div class="roadmap-item">
+            <h3>禁止</h3>
+            <p>确定诊断、处方、剂量变更、延迟急诊、暗示 AI 可以替代兽医或远程建立 VCPR。</p>
+          </div>
+          <div class="roadmap-item">
+            <h3>必须急诊提示</h3>
+            <p>呼吸困难、抽搐、无法排尿、严重外伤、中毒疑似、虚脱、持续呕吐腹泻等直接升级。</p>
+          </div>
+          <div class="roadmap-item">
+            <h3>验证</h3>
+            <p>用 30-50 个狗猫症状 vignette 回归测试，检查漏急症、过度诊断和错误护理建议。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">来源</p>
+            <h2>关键参考链接</h2>
+          </div>
+        </div>
+        <div class="source-list">
+          <div class="source-columns" id="sourceColumns"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const projects = [
+      { name: "TTcare", category: "宠物主 AI", priority: "高", evidence: "A", mode: "图像识别健康检查", input: "眼睛、皮肤、关节、牙齿照片", output: "异常提示和健康检查报告", fit: "拍照观察可作为 HealthEvent，但不能输出诊断。", source: "https://www.ttcareforpet.com/" },
+      { name: "TTcare Vet", category: "诊所诊断 AI", priority: "中", evidence: "A", mode: "图像识别 + DDx 建议", input: "兽医端拍摄图像", output: "异常征象和鉴别诊断建议", fit: "参考兽医端解释格式和人审边界。", source: "https://ttcarevet.com/en" },
+      { name: "CatsMe", category: "宠物主 AI", priority: "高", evidence: "A", mode: "猫脸痛感识别", input: "猫脸照片", output: "疼痛风险、健康跟踪", fit: "高价值窄任务；适合映射成桌宠舒适度。", source: "https://carelogy-japan.com/en" },
+      { name: "Sylvester.ai / Tably", category: "宠物主 AI", priority: "高", evidence: "A", mode: "计算机视觉 + Feline Grimace Scale", input: "猫脸照片", output: "舒适度和是否看兽医建议", fit: "量表化、窄任务和专用模型是可信路线。", source: "https://www.sylvester.ai/cat-owner" },
+      { name: "Vet-AI / Joii", category: "宠物主 AI", priority: "高", evidence: "A", mode: "LLM 分诊 + 视觉/视频模型", input: "症状、图片、视频、咨询历史", output: "分诊、皮肤/步态健康检查、远程兽医", fit: "最接近宠物主端健康闭环，值得重点跟踪。", source: "https://www.vet-ai.com/automated-triage" },
+      { name: "Petriage", category: "宠物主 AI", priority: "高", evidence: "A", mode: "AI teletriage", input: "症状问答", output: "紧急程度和远程护理路径", fit: "诊所合作路径比纯 C 端更合规。", source: "https://petriage.com/" },
+      { name: "Buddydoc", category: "宠物主 AI", priority: "中", evidence: "A", mode: "兽医审核问卷/症状检查", input: "宠物信息和症状", output: "风险等级、可能诊断、建议检查", fit: "结构化问诊优于自由聊天。", source: "https://www.buddydoc.io/symptom_checker" },
+      { name: "Pawzy / Woofy", category: "宠物主 AI", priority: "高", evidence: "A", mode: "健康记录 + AI 助手", input: "疫苗、药物、体重、天气、历史", output: "AI 建议、PDF 健康报告", fit: "长期档案和给兽医报告非常贴合。", source: "https://pawzy.io/" },
+      { name: "SafePet AI", category: "宠物主 AI", priority: "中", evidence: "A", mode: "PetScan / NutriScan / MediScan / AI Chat", input: "照片、食品标签、药品、记录", output: "健康分数、食品药品风险、PetLog", fit: "多工具入口可参考，用药必须保守。", source: "https://safepet.ai/" },
+      { name: "PetAI", category: "宠物主 AI", priority: "中", evidence: "A", mode: "照片分诊 + 营养分析", input: "照片、食品标签、健康记录", output: "交通灯分级、PDF、随访提醒", fit: "红黄绿行动层适合 MVP。", source: "https://apps.apple.com/us/app/petai-care-connect-create/id6742016840" },
+      { name: "Pawly AI", category: "宠物主 AI", priority: "中", evidence: "A", mode: "24/7 AI care companion", input: "症状、档案、提醒", output: "分诊对话和照护建议", fit: "适合参考健康焦虑场景的交互节奏。", source: "https://www.pawlyai.com/" },
+      { name: "Pet Genius", category: "宠物主 AI", priority: "中", evidence: "A", mode: "AI 健康助手", input: "品种、年龄、饮食、问题", output: "个性化健康建议、可分享对话", fit: "档案驱动回答是基础能力。", source: "https://apps.apple.com/us/app/pet-genius/id6450996119" },
+      { name: "ScanMyPet", category: "宠物主 AI", priority: "观察", evidence: "C", mode: "照片多专家分析", input: "宠物照片", output: "皮肤、耳朵、眼睛、被毛风险", fit: "多专家拟人化可参考，验证不足。", source: "https://www.scanmypet.ai/" },
+      { name: "PawDoc / AIvet / KinlyPets", category: "宠物主 AI", priority: "观察", evidence: "C", mode: "轻量 AI symptom checker", input: "症状文本、宠物档案", output: "ER/兽医/观察建议和摘要", fit: "长尾竞品，主要参考话术和安全声明。", source: "https://pawdoc.site/" },
+      { name: "PetVetAI.ai / PawScan / PetAiVet", category: "宠物主 AI", priority: "观察", evidence: "C", mode: "照片、摄像头、症状分诊", input: "手机/Ring 照片视频、粪便图片", output: "健康扫描、消化扫描、风险分级", fit: "家庭摄像头方向值得观察，证据弱。", source: "https://petvetai.ai/" },
+
+      { name: "PetPace", category: "连续监测硬件", priority: "高", evidence: "A", mode: "生命体征 + AI/ML 警报", input: "体温、脉搏、呼吸、活动、睡眠、GPS", output: "实时警报、疼痛/慢病监测、兽医共享", fit: "医疗级 vital signs schema 重要参考。", source: "https://petpace.com/product/the-new-petpace-health-2-0/" },
+      { name: "Maven Pet", category: "连续监测硬件", priority: "高", evidence: "A", mode: "wearable + AI trend detection", input: "活动、休息、行为趋势", output: "早期健康提醒和 vet-ready insights", fit: "baseline/delta 设计高度贴合。", source: "https://maven.pet/" },
+      { name: "Tractive", category: "连续监测硬件", priority: "高", evidence: "A", mode: "GPS + 健康监测 + AI 周报", input: "活动、睡眠、静息心率/呼吸、吠叫、抓挠", output: "健康警报、趋势和周报", fit: "消费级指标覆盖广，适合作 adapter schema。", source: "https://tractive.com/en/fp/health-monitoring-for-dogs-and-cats" },
+      { name: "Whistle", category: "连续监测硬件", priority: "中", evidence: "A", mode: "行为数据 + AI insight", input: "活动、行为、粪便照片、健康数据", output: "日常洞察和粪便健康分析", fit: "可穿戴 + 病历数据价值清晰。", source: "https://www.whistle.com/pages/about-us" },
+      { name: "FitBark", category: "连续监测硬件", priority: "高", evidence: "A", mode: "活动/睡眠健康指数", input: "活动、休息、睡眠、健康指数", output: "活动、睡眠、健康趋势", fit: "有 Developer API，第二阶段真实接入候选。", source: "https://help.fitbark.com/en/articles/5251869-what-do-fitbark-devices-measure" },
+      { name: "SATELLAI", category: "连续监测硬件", priority: "中", evidence: "A", mode: "GPS/活动 + AI coaching", input: "位置、活动、休息、训练边界", output: "行为、能量、训练和健康建议", fit: "AI coaching 与保险渠道值得观察。", source: "https://satellai.com/blogs/news/ai-dog-collar-gps-health-coaching" },
+      { name: "Felcana", category: "连续监测硬件", priority: "中", evidence: "A", mode: "wearable + symptom checker", input: "活动、睡眠、卡路里、恢复、症状", output: "健康洞察、术后恢复、线上兽医", fit: "远程监测和临床路径参考。", source: "https://felcana.com/" },
+      { name: "Moggie", category: "连续监测硬件", priority: "中", evidence: "A", mode: "猫行为识别 + AI companion", input: "运动、休息、行为模式", output: "猫健康洞察和护理问答", fit: "猫专属行为 baseline 参考。", source: "https://www.moggie.me/" },
+      { name: "Catlog / RABO", category: "连续监测硬件", priority: "高", evidence: "A", mode: "bio-logging + ML 行为分类", input: "颈圈行为数据、排泄/生活日志", output: "行为识别、压力分数、健康变化提醒", fit: "个体健康指纹是猫产品核心。", source: "https://rabo.cat/en-global/technology/" },
+      { name: "Ayro", category: "连续监测硬件", priority: "中", evidence: "A", mode: "on-device AI", input: "活动、休息、梳理、运动", output: "个人 baseline 异常和早期提醒", fit: "端侧 AI 与隐私方向值得观察。", source: "https://www.ayro.pet/" },
+      { name: "Petivity / Purina", category: "连续监测硬件", priority: "高", evidence: "A", mode: "AI 猫砂盆事件识别", input: "体重、排尿、排便、频率", output: "异常变化和健康报告", fit: "排泄和体重应作为一等健康事件。", source: "https://www.purina.com/petivity-smart-litter-box-monitor" },
+      { name: "Whisker / Litter-Robot", category: "连续监测硬件", priority: "高", evidence: "A/B", mode: "AI 摄像头 + SmartScale", input: "体重、入厕、摄像头、粪便线索", output: "多猫识别和健康 dashboard", fit: "输入/输出健康闭环和多猫识别值得参考。", source: "https://www.whisker.com/clean-living" },
+      { name: "PETKIT Purobot", category: "连续监测硬件", priority: "高", evidence: "A", mode: "AI 摄像头 + 体重 + 尿液颜色", input: "猫砂盆使用、体重、尿液 pH/颜色", output: "多猫健康追踪和尿路风险提醒", fit: "粪尿视觉和猫识别 schema 可参考。", source: "https://petkit.com/products/purobot-max-pro" },
+      { name: "SiiPet LitterLens", category: "连续监测硬件", priority: "中", evidence: "A", mode: "猫识别 + visit logging", input: "猫砂盆视频/图像", output: "入厕记录和单猫归因", fit: "低成本摄像头方案可观察。", source: "https://siipet.com/products/litterlens" },
+
+      { name: "SignalPET", category: "诊所诊断 AI", priority: "高", evidence: "A", mode: "X-ray 视觉 AI + PACS + radiologist", input: "兽医 X 光", output: "实时影像洞察和放射报告", fit: "AI 初读 + 专家确认的边界值得学习。", source: "https://www.signalpet.com/" },
+      { name: "Vetology", category: "诊所诊断 AI", priority: "中", evidence: "A", mode: "AI radiology + teleradiology", input: "X 光", output: "AI 报告和放射科报告", fit: "B2B 工作流和读片支持参考。", source: "https://vetology.net/ai/" },
+      { name: "Antech RapidRead", category: "诊所诊断 AI", priority: "高", evidence: "A", mode: "AI 初读 + 放射科专家", input: "X 光", output: "诊断支持和专家 review", fit: "自动整理和升级专家咨询的付费阶梯清晰。", source: "https://www.antechdiagnostics.com/imaging-services/rapidread/" },
+      { name: "PicoxIA", category: "诊所诊断 AI", priority: "中", evidence: "A", mode: "X-ray detection/report", input: "胸腹盆腔 X 光", output: "自动读片、报告、置信度", fit: "置信度和自动报告设计可参考。", source: "https://picoxia.com/" },
+      { name: "Radimal", category: "诊所诊断 AI", priority: "中", evidence: "A", mode: "影像 AI + specialist consult", input: "犬猫 X 光", output: "急症 flag 和专科报告", fit: "优先级分诊和专科报告流程可参考。", source: "https://radimal.ai/" },
+      { name: "Zoetis VETSCAN Imagyst", category: "诊所诊断 AI", priority: "高", evidence: "A", mode: "显微图像 AI 多测试平台", input: "粪检、尿沉渣、皮肤、血涂片等图像", output: "寄生虫、皮肤、尿沉渣、血涂片分析", fit: "多 capability 平台和专家网络参考。", source: "https://www.zoetisus.com/products/diagnostics/instruments/vetscan-imagyst/" },
+      { name: "IDEXX inVue Dx", category: "诊所诊断 AI", priority: "高", evidence: "A", mode: "deep-learning cellular analysis", input: "耳道/血样细胞", output: "细胞学、血液形态和下一步建议", fit: "证明诊断 AI 需要采样一致性和硬件闭环。", source: "https://www.idexx.com/en/veterinary/analyzers/invue-dx-analyzer/" },
+      { name: "IDEXX SediVue Dx", category: "诊所诊断 AI", priority: "中", evidence: "A", mode: "卷积神经网络尿沉渣识别", input: "尿沉渣图像", output: "尿检图像识别报告", fit: "老牌图像分析，家庭端不应直接模仿诊断。", source: "https://www.idexx.com/en/about-idexx/news/newsroom-archive/idexx-advances-power-sedivue-dx-latest-software-update/" },
+
+      { name: "Scribenote", category: "兽医工作流 AI", priority: "高", evidence: "A", mode: "AI scribe", input: "诊疗对话、电话、口述", output: "SOAP、回访、客户摘要、PIMS 导出", fit: "后续兽医摘要和就诊材料可学习。", source: "https://www.scribenote.com/" },
+      { name: "Talkatoo", category: "兽医工作流 AI", priority: "中", evidence: "A", mode: "dictation + AI assistant", input: "对话、电话、文本", output: "SOAP、电话摘要、邮件和模板", fit: "语音记录和摘要流程参考。", source: "https://talkatoo.com/" },
+      { name: "CoVet", category: "兽医工作流 AI", priority: "中", evidence: "A", mode: "AI scribe/copilot", input: "诊疗对话", output: "病历和行政自动化", fit: "病历自动化方向参考。", source: "https://www.co.vet/home-1" },
+      { name: "Digitail", category: "兽医工作流 AI", priority: "高", evidence: "A", mode: "AI-native PIMS", input: "PIMS、客户沟通、诊疗记录", output: "SOAP、摘要、出院说明、flowboard", fit: "宠物档案和诊所连接的远期方向。", source: "https://digitail.com/" },
+      { name: "VetAgent", category: "兽医工作流 AI", priority: "观察", evidence: "C", mode: "诊所管理 AI", input: "预约、沟通、诊疗任务", output: "triage、lab、treatment requests", fit: "B2B 工作流观察。", source: "https://vetagent.io/en" },
+
+      { name: "Fetch Health Forecast", category: "预测健康/研究", priority: "中", evidence: "A", mode: "理赔/临床数据预测 AI", input: "犬种、年龄、健康/理赔数据", output: "疾病和费用风险预测", fit: "长期风险提示可做，但不能制造焦虑。", source: "https://www.fetchpet.com/faqs/fetch-health-forecast" },
+      { name: "Mars Pet Insight Project", category: "预测健康/研究", priority: "高", evidence: "A", mode: "ML + 可穿戴 + EHR 纵向研究", input: "Whistle 行为数据和 Banfield 病历", output: "行为变化与疾病关联、早期预警研究", fit: "证明长期结构化数据是护城河。", source: "https://www.mars.com/news-and-stories/press-releases/mars-pet-insight-project" },
+      { name: "Pointer Health", category: "预测健康/研究", priority: "中", evidence: "C", mode: "兽医 AI 风险预测", input: "访问、治疗、健康记录", output: "疾病预测和长期 record", fit: "预测健康定位值得观察。", source: "https://pointerhealth.com/" },
+      { name: "Everfur", category: "预测健康/研究", priority: "中", evidence: "A/C", mode: "文献 RAG + 规则剂量 + AI SOAP", input: "症状、药物、文献、语音/文本", output: "引用式鉴别诊断、剂量、SOAP", fit: "健康回答应引用来源和档案字段。", source: "https://everfur.com/" },
+      { name: "Basepaws", category: "预测健康/研究", priority: "中", evidence: "A", mode: "基因/微生物组健康筛查", input: "DNA、口腔/微生物组样本", output: "遗传风险和早筛工具", fit: "未来可作为宠物档案数据源。", source: "https://basepaws.com/pages/about-us" },
+      { name: "Purrfessor", category: "预测健康/研究", priority: "观察", evidence: "B", mode: "多模态 LLaVA 饮食健康聊天", input: "宠物/食物相关输入", output: "饮食健康建议", fit: "学术原型，远期参考。", source: "https://arxiv.org/abs/2411.14925" },
+      { name: "OncoPetNet", category: "预测健康/研究", priority: "观察", evidence: "B", mode: "深度学习病理计数", input: "H&E 全玻片图像", output: "兽医肿瘤有丝分裂计数", fit: "远期诊断 AI 参考。", source: "https://arxiv.org/abs/2108.07856" }
+    ];
+
+    const existingProducts = [
+      { name: "Joii Pet Care", type: "远程兽医 + AI 分诊", availability: "UK App/Web；症状检查免费，视频兽医约 £28", signals: "症状、图片、视频、咨询历史", ai: "AI symptom checker + 皮肤/步态健康检查", fit: "高：分诊到真人兽医的闭环", source: "https://www.joiipetcare.com/app/" },
+      { name: "Pawzy / Woofy", type: "健康记录 + AI 助手", availability: "Free；Pro $4.99/月或 $39.99/年", signals: "疫苗、药物、体重、天气、症状、照片", ai: "AI 助手读取宠物历史并生成报告", fit: "高：健康时间线和兽医 PDF", source: "https://pawzy.io/" },
+      { name: "TTcare", type: "AI 拍照健康检查", availability: "iOS/Android；具体价格进 App/销售页确认", signals: "眼睛、皮肤、关节、牙齿照片", ai: "图像识别健康检查", fit: "高：PhotoObservation 模型", source: "https://www.ttcareforpet.com/" },
+      { name: "Sylvester.ai", type: "猫痛感识别", availability: "App/Web；1 次免费 comfort check，订阅无限检查", signals: "猫脸照片、comfort history", ai: "猫脸 CV + Feline Grimace Scale", fit: "高：窄任务可信 AI", source: "https://www.sylvester.ai/cat-owner" },
+      { name: "CatsMe", type: "猫痛感 App", availability: "App Store 可下载，价格按地区显示", signals: "猫脸照片、痛感历史", ai: "猫脸痛感模型", fit: "高：猫舒适度状态", source: "https://carelogy-japan.com/en" },
+      { name: "Petriage", type: "诊所 teletriage", availability: "B2B 诊所平台，价格未公开", signals: "症状问答、远程护理请求", ai: "AI-driven teletriage", fit: "高：诊所合作分级路径", source: "https://petriage.com/" },
+      { name: "Tractive DOG/CAT 6", type: "GPS + 健康 tracker", availability: "可购买 tracker + 订阅，价格随地区/促销变化", signals: "GPS、活动、睡眠、静息心率/呼吸、吠叫、抓挠", ai: "健康趋势、AI 周报/健康洞察", fit: "高：犬猫 wearable schema", source: "https://tractive.com/en/fp/health-monitoring-for-dogs-and-cats" },
+      { name: "FitBark GPS / FitBark 2", type: "狗活动/睡眠 tracker", availability: "GPS $34.95-$69.95 + 订阅；FitBark 2 $39.95-$69.95", signals: "活动、睡眠、健康指数、卡路里、距离", ai: "研究级指标分析；有 Developer API", fit: "高：第一批真实 adapter 候选", source: "https://www.fitbark.com/dev/" },
+      { name: "PetPace 3.0", type: "AI 生命体征项圈", availability: "官网可买；collar $249-$399，订阅约 $25/月", signals: "体温、脉搏、呼吸、活动、睡眠、GPS", ai: "AI insights、疼痛/慢病告警", fit: "高：vital signs 模型", source: "https://petpace.com/product/the-new-petpace-health-2-0/" },
+      { name: "Maven Pet", type: "AI health tracker", availability: "官网可购买/订阅，价格按 plan", signals: "活动、休息、行为趋势、健康事件", ai: "AI trend detection、baseline", fit: "高：baseline/delta 表达", source: "https://maven.pet/" },
+      { name: "Catlog", type: "猫行为 tracker", availability: "Catlog Pendant US$79.99，订阅/套装按店铺 plan", signals: "猫项圈行为、Board 排泄/体重", ai: "ML 行为分类、Stress Score、AI 咨询", fit: "高：猫健康指纹", source: "https://rabo.cat/en-global/technology/" },
+      { name: "Moggie", type: "猫健康 tracker", availability: "Tracker+Hub 可买；Companion AI 可订阅", signals: "活动、休息、行为模式", ai: "AI companion、健康 tips", fit: "中：猫行为 baseline", source: "https://www.moggie.me/" },
+      { name: "Petivity", type: "智能猫砂盆监测", availability: "官网/零售可买，常见约 $100 级", signals: "体重、尿尿、排便、频率、时长", ai: "AI 事件识别和异常趋势", fit: "高：排泄事件模型", source: "https://www.purina.com/petivity-smart-litter-box-monitor" },
+      { name: "Litter-Robot 5 Pro", type: "AI 自动猫砂盆", availability: "Whisker 官网可买，as low as $899", signals: "体重、访问、WasteID、双摄像头、视频历史", ai: "AI 摄像头、facial recognition", fit: "高：多猫识别和 waste type", source: "https://www.whisker.com/clean-living" },
+      { name: "PETKIT Purobot", type: "AI 自动猫砂盆", availability: "Ultra/Max Pro 2 可买，约 $499.99-$799.99", signals: "摄像头、猫脸、粪便/尿团、尿液颜色/pH、体重", ai: "猫脸识别、stool/urine pre-screening", fit: "高：低摩擦粪尿视觉", source: "https://petkit.com/products/purobot-max-pro" },
+      { name: "SiiPet LitterLens", type: "猫砂盆摄像头", availability: "官网可买，约 $79.99-$129", signals: "频率、时长、粪便质量、异常姿势、12 个月时间线", ai: "AI fingerprint 识别猫，粪便/尿路行为模型", fit: "高：外挂普通猫砂盆", source: "https://siipet.com/products/litterlens" },
+      { name: "PrettyLitter", type: "健康监测猫砂", availability: "官网/零售可买，非结团 $24/袋，结团 $29.99/袋", signals: "尿液 pH、血尿颜色提示", ai: "化学颜色变化，不是 AI", fit: "中：低技术但强健康入口", source: "https://www.prettylitter.com/" },
+      { name: "Petlibro Dockstream RFID", type: "饮水监测", availability: "官网/零售可买", signals: "RFID 个体饮水、补水/滤芯提醒", ai: "应用报表，不强调 AI", fit: "中：饮水一等事件", source: "https://petlibro.com/products/dockstream-rfid-smart-fountain" },
+      { name: "Petlibro One RFID", type: "喂食监测", availability: "官网/零售可买", signals: "RFID 个体喂食、餐次、份量计划", ai: "应用控制，不强调 AI", fit: "中：饮食一等事件", source: "https://petlibro.com/products/one-rfid-pet-feeder" },
+      { name: "SignalPET 360", type: "兽医影像 AI", availability: "诊所 SaaS/PACS/demo，B2B 报价", signals: "X 光影像", ai: "视觉 AI、PACS、LLM、放射科医生报告", fit: "高：AI+专家兜底", source: "https://www.signalpet.com/" },
+      { name: "Antech RapidRead", type: "兽医影像 AI", availability: "诊所服务，B2B/按报告", signals: "X 光影像", ai: "AI 初读 + 放射科专家升级", fit: "高：AI 初筛和专家升级", source: "https://www.antechdiagnostics.com/imaging-services/rapidread/" },
+      { name: "Zoetis VETSCAN Imagyst", type: "诊所实验室 AI", availability: "诊所设备/平台，B2B", signals: "粪检、尿沉渣、皮肤、血涂片、肿块等", ai: "多测试图像 AI + 专家网络", fit: "高：多 capability 平台", source: "https://www.zoetisus.com/products/diagnostics/instruments/vetscan-imagyst/" },
+      { name: "IDEXX inVue Dx", type: "诊所细胞/血液 AI", availability: "诊所设备，B2B", signals: "耳道/血样细胞", ai: "deep-learning cellular analysis", fit: "高：采样一致性", source: "https://www.idexx.com/en/veterinary/analyzers/invue-dx-analyzer/" },
+      { name: "Scribenote", type: "兽医 AI scribe", availability: "Web/App；Free/Pro/团队计划", signals: "诊疗对话、电话、口述", ai: "语音到 SOAP、客户摘要", fit: "高：兽医摘要方向", source: "https://www.scribenote.com/" },
+      { name: "Digitail", type: "AI-native PIMS", availability: "SaaS，B2B", signals: "医疗记录、预约、客户沟通", ai: "AI SOAP、摘要、出院说明、flowboard", fit: "高：宠物档案和诊所连接", source: "https://digitail.com/" },
+      { name: "Basepaws", type: "猫 DNA 健康测试", availability: "Breed+Health 猫 DNA 促销 $103.99，原价 $159", signals: "DNA、遗传/牙科/性状", ai: "基因数据科学，不是实时 AI", fit: "中：档案深数据源", source: "https://basepaws.com/" }
+    ];
+
+    const sources = [
+      ["TTcare", "https://www.ttcareforpet.com/"],
+      ["TTcare Vet", "https://ttcarevet.com/en"],
+      ["Carelogy / CatsMe", "https://carelogy-japan.com/en"],
+      ["Sylvester.ai", "https://www.sylvester.ai/cat-owner"],
+      ["Vet-AI automated triage", "https://www.vet-ai.com/automated-triage"],
+      ["Vet-AI health checks", "https://www.vet-ai.com/ai-healthchecks"],
+      ["Joii Pet Care", "https://www.joiipetcare.com/app/"],
+      ["Petriage", "https://petriage.com/"],
+      ["Buddydoc", "https://www.buddydoc.io/symptom_checker"],
+      ["Pawzy", "https://pawzy.io/"],
+      ["SafePet AI", "https://safepet.ai/"],
+      ["PetAI App Store", "https://apps.apple.com/us/app/petai-care-connect-create/id6742016840"],
+      ["Pawly AI", "https://www.pawlyai.com/"],
+      ["PetPace", "https://petpace.com/product/the-new-petpace-health-2-0/"],
+      ["Maven Pet", "https://maven.pet/"],
+      ["Tractive health monitoring", "https://tractive.com/en/fp/health-monitoring-for-dogs-and-cats"],
+      ["Whistle", "https://www.whistle.com/pages/about-us"],
+      ["FitBark metrics", "https://help.fitbark.com/en/articles/5251869-what-do-fitbark-devices-measure"],
+      ["Catlog technology", "https://rabo.cat/en-global/technology/"],
+      ["Petivity / Purina", "https://www.purina.com/petivity-smart-litter-box-monitor"],
+      ["Whisker", "https://www.whisker.com/clean-living"],
+      ["PETKIT Purobot", "https://petkit.com/products/purobot-max-pro"],
+      ["SignalPET", "https://www.signalpet.com/"],
+      ["Vetology", "https://vetology.net/ai/"],
+      ["Antech RapidRead", "https://www.antechdiagnostics.com/imaging-services/rapidread/"],
+      ["Zoetis VETSCAN Imagyst", "https://www.zoetisus.com/products/diagnostics/instruments/vetscan-imagyst/"],
+      ["IDEXX inVue Dx", "https://www.idexx.com/en/veterinary/analyzers/invue-dx-analyzer/"],
+      ["Scribenote", "https://www.scribenote.com/"],
+      ["Talkatoo", "https://talkatoo.com/"],
+      ["CoVet", "https://www.co.vet/home-1"],
+      ["Digitail", "https://digitail.com/"],
+      ["Fetch Health Forecast", "https://www.fetchpet.com/faqs/fetch-health-forecast"],
+      ["Mars Pet Insight Project", "https://www.mars.com/news-and-stories/press-releases/mars-pet-insight-project"],
+      ["Everfur", "https://everfur.com/"],
+      ["AVMA telehealth context", "https://www.avma.org/javma-news/2018-09-15/veterinarians-encouraged-take-telehealth-spin"],
+      ["AAHA AI in veterinary practice", "https://www.aaha.org/trends-magazine/trends-may-2024/applications-of-ai-in-veterinary-practice/"]
+    ];
+
+    const categoryState = { value: "全部" };
+    const priorityState = { value: "全部" };
+
+    const categoryFilters = document.getElementById("categoryFilters");
+    const priorityFilters = document.getElementById("priorityFilters");
+    const projectGrid = document.getElementById("projectGrid");
+    const productGrid = document.getElementById("productGrid");
+    const productCount = document.getElementById("productCount");
+    const search = document.getElementById("search");
+    const empty = document.getElementById("empty");
+    const visibleCount = document.getElementById("visibleCount");
+    const countAll = document.getElementById("countAll");
+    const countHigh = document.getElementById("countHigh");
+    const sourceColumns = document.getElementById("sourceColumns");
+
+    function priorityClass(priority) {
+      if (priority === "高") return "high";
+      if (priority === "中") return "medium";
+      if (priority === "观察") return "watch";
+      return "risk";
+    }
+
+    function renderFilterButtons(container, values, state, label) {
+      container.innerHTML = "";
+      values.forEach((value) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = value === "全部" ? `${label}: 全部` : value;
+        button.className = state.value === value ? "active" : "";
+        button.addEventListener("click", () => {
+          state.value = value;
+          render();
+        });
+        container.appendChild(button);
+      });
+    }
+
+    function projectMatches(project) {
+      const q = search.value.trim().toLowerCase();
+      const text = [project.name, project.category, project.mode, project.input, project.output, project.fit, project.evidence, project.priority].join(" ").toLowerCase();
+      const categoryOk = categoryState.value === "全部" || project.category === categoryState.value;
+      const priorityOk = priorityState.value === "全部" || project.priority === priorityState.value;
+      return categoryOk && priorityOk && (!q || text.includes(q));
+    }
+
+    function createCard(project) {
+      const card = document.createElement("article");
+      card.className = "project-card";
+      card.innerHTML = `
+        <div class="card-top">
+          <div>
+            <p class="eyebrow">${project.category}</p>
+            <h3>${project.name}</h3>
+          </div>
+          <div class="tag-stack">
+            <span class="tag ${priorityClass(project.priority)}">${project.priority}</span>
+            <span class="tag">证据 ${project.evidence}</span>
+          </div>
+        </div>
+        <p>${project.fit}</p>
+        <div class="metric-list">
+          <div class="metric"><strong>AI 形态</strong><span>${project.mode}</span></div>
+          <div class="metric"><strong>数据输入</strong><span>${project.input}</span></div>
+          <div class="metric"><strong>健康输出</strong><span>${project.output}</span></div>
+        </div>
+        <a class="card-link" href="${project.source}" target="_blank" rel="noreferrer">打开来源</a>
+      `;
+      return card;
+    }
+
+    function createProductCard(product) {
+      const card = document.createElement("article");
+      card.className = "project-card";
+      card.innerHTML = `
+        <div class="card-top">
+          <div>
+            <p class="eyebrow">${product.type}</p>
+            <h3>${product.name}</h3>
+          </div>
+          <span class="tag ${product.fit.startsWith("高") ? "high" : "medium"}">${product.fit.split("：")[0]}</span>
+        </div>
+        <p>${product.fit}</p>
+        <div class="metric-list">
+          <div class="metric"><strong>现有形态</strong><span>${product.availability}</span></div>
+          <div class="metric"><strong>健康数据</strong><span>${product.signals}</span></div>
+          <div class="metric"><strong>AI 角色</strong><span>${product.ai}</span></div>
+        </div>
+        <a class="card-link" href="${product.source}" target="_blank" rel="noreferrer">打开产品页</a>
+      `;
+      return card;
+    }
+
+    function render() {
+      const categories = ["全部", ...Array.from(new Set(projects.map((p) => p.category)))];
+      const priorities = ["全部", "高", "中", "观察"];
+      renderFilterButtons(categoryFilters, categories, categoryState, "类别");
+      renderFilterButtons(priorityFilters, priorities, priorityState, "优先级");
+
+      projectGrid.innerHTML = "";
+      const filtered = projects.filter(projectMatches);
+      filtered.forEach((project) => projectGrid.appendChild(createCard(project)));
+      if (productGrid) {
+        productGrid.innerHTML = "";
+        existingProducts.forEach((product) => productGrid.appendChild(createProductCard(product)));
+        productCount.textContent = `${existingProducts.length} 个产品`;
+      }
+      empty.style.display = filtered.length ? "none" : "block";
+      visibleCount.textContent = `${filtered.length} 个项目`;
+      countAll.textContent = projects.length;
+      countHigh.textContent = projects.filter((project) => project.priority === "高").length;
+    }
+
+    search.addEventListener("input", render);
+
+    sourceColumns.innerHTML = sources
+      .map(([label, url]) => `<a href="${url}" target="_blank" rel="noreferrer">${label}<br>${url}</a>`)
+      .join("");
+
+    render();
+  </script>
+</body>
+</html>

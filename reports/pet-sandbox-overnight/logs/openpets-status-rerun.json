@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "appRunning": true,
+  "protocolVersion": 1,
+  "appVersion": "2.5.0",
+  "defaultPet": {
+    "id": "builtin",
+    "displayName": "Built-in Pet",
+    "builtIn": true,
+    "broken": false
+  },
+  "paused": false,
+  "defaultPetVisible": true,
+  "openDefaultPetOnLaunch": true,
+  "speechBubblesEnabled": true
+}

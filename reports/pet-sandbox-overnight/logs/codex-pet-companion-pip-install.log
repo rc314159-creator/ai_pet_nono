@@ -1,0 +1,29 @@
+Collecting PySide6>=6.6
+  Downloading pyside6-6.10.3-cp39-abi3-macosx_13_0_universal2.whl (563 kB)
+Collecting Pillow>=10
+  Using cached pillow-11.3.0-cp39-cp39-macosx_11_0_arm64.whl (4.7 MB)
+Collecting pyinstaller
+  Downloading pyinstaller-6.20.0-py3-none-macosx_10_13_universal2.whl (1.0 MB)
+Collecting shiboken6==6.10.3
+  Downloading shiboken6-6.10.3-cp39-abi3-macosx_13_0_universal2.whl (479 kB)
+Collecting PySide6_Addons==6.10.3
+  Downloading pyside6_addons-6.10.3-cp39-abi3-macosx_13_0_universal2.whl (322.8 MB)
+Collecting PySide6_Essentials==6.10.3
+  Downloading pyside6_essentials-6.10.3-cp39-abi3-macosx_13_0_universal2.whl (106.0 MB)
+Collecting importlib-metadata>=4.6
+  Using cached importlib_metadata-8.7.1-py3-none-any.whl (27 kB)
+Collecting macholib>=1.8
+  Using cached macholib-1.16.4-py2.py3-none-any.whl (38 kB)
+Collecting pyinstaller-hooks-contrib>=2026.4
+  Downloading pyinstaller_hooks_contrib-2026.5-py3-none-any.whl (457 kB)
+Collecting altgraph
+  Downloading altgraph-0.17.5-py2.py3-none-any.whl (21 kB)
+Requirement already satisfied: setuptools>=42.0.0 in ./.venv/lib/python3.9/site-packages (from pyinstaller->-r requirements.txt (line 3)) (58.0.4)
+Collecting packaging>=22.0
+  Using cached packaging-26.2-py3-none-any.whl (100 kB)
+Collecting zipp>=3.20
+  Using cached zipp-3.23.1-py3-none-any.whl (10 kB)
+Installing collected packages: zipp, shiboken6, PySide6-Essentials, packaging, importlib-metadata, altgraph, PySide6-Addons, pyinstaller-hooks-contrib, macholib, PySide6, pyinstaller, Pillow
+Successfully installed Pillow-11.3.0 PySide6-6.10.3 PySide6-Addons-6.10.3 PySide6-Essentials-6.10.3 altgraph-0.17.5 importlib-metadata-8.7.1 macholib-1.16.4 packaging-26.2 pyinstaller-6.20.0 pyinstaller-hooks-contrib-2026.5 shiboken6-6.10.3 zipp-3.23.1
+WARNING: You are using pip version 21.2.4; however, version 26.0.1 is available.
+You should consider upgrading via the '/Users/rencan/Library/Application Support/MeetingCopilot/sessions/2026-05-09T02-18-28Z/pet-sandbox-repos/codex-pet-companion/.venv/bin/python3 -m pip install --upgrade pip' command.

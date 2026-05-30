@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>宠物游戏、AI 虚拟宠物与现有产品调研汇报</title>
+  <style>
+    :root {
+      --paper: #f4efe3;
+      --ink: #202724;
+      --muted: #68736c;
+      --line: #d4cbb8;
+      --panel: #fffaf0;
+      --green: #385f4a;
+      --blue: #385d78;
+      --clay: #a76043;
+      --gold: #b88935;
+      --shadow: 0 18px 50px rgba(45, 42, 33, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(56, 95, 74, 0.07) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(56, 95, 74, 0.06) 1px, transparent 1px),
+        var(--paper);
+      background-size: 34px 34px;
+      color: var(--ink);
+      font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.58;
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1180px, calc(100vw - 36px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 620px;
+      padding: 34px 0 56px;
+      display: grid;
+      align-items: end;
+    }
+
+    .hero img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      filter: saturate(0.95) contrast(1.02);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: linear-gradient(90deg, rgba(20, 28, 24, 0.76), rgba(20, 28, 24, 0.24) 55%, rgba(20, 28, 24, 0.04));
+      pointer-events: none;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      width: min(700px, 92%);
+      padding: 34px;
+      color: #fffaf0;
+    }
+
+    .kicker {
+      margin: 0 0 12px;
+      color: #f3c17b;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      letter-spacing: 0;
+      font-family: Georgia, "Songti SC", serif;
+    }
+
+    h1 {
+      font-size: clamp(42px, 7vw, 78px);
+      line-height: 0.98;
+      max-width: 720px;
+    }
+
+    .hero-copy p:last-child {
+      max-width: 590px;
+      margin: 18px 0 0;
+      color: rgba(255, 250, 240, 0.86);
+      font-size: 18px;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0 34px;
+    }
+
+    .nav a {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 250, 240, 0.82);
+      padding: 9px 14px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    section {
+      margin: 28px 0;
+      border-top: 1px solid var(--line);
+      padding-top: 28px;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.42fr) 1fr;
+      gap: 28px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      font-size: 34px;
+      color: var(--green);
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .metric, .card, .callout, .priority li {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 240, 0.9);
+      box-shadow: 0 8px 24px rgba(45, 42, 33, 0.08);
+    }
+
+    .metric {
+      min-height: 136px;
+      padding: 18px;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--clay);
+      font-size: 34px;
+      line-height: 1;
+      font-family: Georgia, serif;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      padding: 18px;
+      background: var(--panel);
+    }
+
+    .card h3 {
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: var(--blue);
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .matrix {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 24px rgba(45, 42, 33, 0.08);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--green);
+      background: #f6ead4;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #e8f0e7;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .priority {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: item;
+    }
+
+    .priority li {
+      counter-increment: item;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+    }
+
+    .priority li::before {
+      content: counter(item);
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--green);
+      color: #fffaf0;
+      font-weight: 800;
+    }
+
+    .callout {
+      padding: 18px;
+      background: #f6ead4;
+      color: var(--ink);
+    }
+
+    .footer {
+      margin: 44px 0 34px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .hero { min-height: 540px; }
+      .hero-copy { padding: 24px; }
+      .section-head, .cards, .metric-grid {
+        grid-template-columns: 1fr;
+      }
+      table { min-width: 860px; }
+      .matrix { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <img src="assets/research-landscape.png" alt="宠物游戏、AI 伴侣和真实宠物数字分身调研地图" />
+      <div class="hero-copy">
+        <p class="kicker">AI Pet Research · 2026-05-30</p>
+        <h1>宠物游戏、AI 虚拟宠物与现有产品调研汇报</h1>
+        <p>结论很直接：AI Pet 不应做成普通虚拟宠物或聊天皮肤。最有价值的方向是把真实宠物档案、设备/mock 数据、每日照护任务、桌宠表达和商品推荐连成可信闭环。</p>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <a href="#summary">核心结论</a>
+      <a href="#products">现有产品</a>
+      <a href="#patterns">玩法模式</a>
+      <a href="#matrix">项目矩阵</a>
+      <a href="#roadmap">MVP 建议</a>
+      <a href="#docs">知识库输出</a>
+    </nav>
+
+    <section id="summary">
+      <div class="section-head">
+        <h2>核心结论</h2>
+        <p>本专题新增 25 个游戏与 AI 虚拟宠物项目档案，并补充 20 个现有商业产品档案；同时接入已有健康、社区、机器人/桌宠调研。经典宠物游戏提供留存结构，现有产品证明商业路径，AI/研究项目提供智能和真实宠物理解路径。</p>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><strong>25</strong><span>新增游戏与 AI 虚拟宠物项目档案</span></div>
+        <div class="metric"><strong>20</strong><span>新增现有商业产品档案</span></div>
+        <div class="metric"><strong>6</strong><span>MVP 必须先证明的产品闭环</span></div>
+        <div class="metric"><strong>1</strong><span>核心差异化：真实宠物数据驱动虚拟宠物</span></div>
+      </div>
+    </section>
+
+    <section id="products">
+      <div class="section-head">
+        <h2>现有产品</h2>
+        <p>现有产品已经覆盖虚拟宠物游戏、AI 宠物 App、社区服务、智能摄像头、机器人宠物和健康硬件。它们证明需求存在，但还没有把真实宠物数据、桌宠表达、照护任务和商业推荐完整合在一起。</p>
+      </div>
+      <div class="matrix">
+        <table>
+          <thead>
+            <tr>
+              <th>产品层</th>
+              <th>代表产品</th>
+              <th>已经成立的能力</th>
+              <th>AI Pet 应采用的方式</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag">虚拟宠物</span></td>
+              <td>Tamagotchi Uni/Paradise、Pou、Neko Atsume 2、Talking Tom、Webkinz、Neopets</td>
+              <td>照护循环、身份绑定、装扮、小游戏、异步回访和长期账号资产。</td>
+              <td>保留低摩擦日常循环，把状态来源换成真实宠物档案和数据。</td>
+            </tr>
+            <tr>
+              <td><span class="tag">社交经济</span></td>
+              <td>Adopt Me!、Pet Simulator 99</td>
+              <td>收集、稀有度、交易、房屋、活动和高频内容更新。</td>
+              <td>只借鉴图鉴、挑战和分享，不做抽卡/交易主循环。</td>
+            </tr>
+            <tr>
+              <td><span class="tag">AI App</span></td>
+              <td>TamaPets、Pet Genius、Pawzy/Woofy、SafePet AI、PetAI</td>
+              <td>AI 聊天、照片扫描、营养/药品扫描、健康时间线和 PDF 报告。</td>
+              <td>AI 回答必须绑定单只宠物事实、最近数据、库存和安全边界。</td>
+            </tr>
+            <tr>
+              <td><span class="tag">社区服务</span></td>
+              <td>PetMeet、PawSpace、Pawkadot、BringFido</td>
+              <td>宠物身份、社区问答、活动、丢宠协作、宠物友好地点和服务推荐。</td>
+              <td>第一版做挑战/分享卡，服务推荐只由任务和约束触发。</td>
+            </tr>
+            <tr>
+              <td><span class="tag">摄像头硬件</span></td>
+              <td>Furbo Nanny、PETLIBRO Scout、Petcube、Pumpkii</td>
+              <td>摄像头事件、双向语音、投食、激光、多宠识别、AI 摘要。</td>
+              <td>先抽象 `CameraEvent` 和 `RemoteCareEvent`，不依赖封闭硬件 API。</td>
+            </tr>
+            <tr>
+              <td><span class="tag">机器人宠物</span></td>
+              <td>Sony aibo、Casio Moflin、Loona、EMO</td>
+              <td>情绪成长、动作/表情、AI 日记、桌面或家庭存在感。</td>
+              <td>用 OpenPets 做软件桌宠表达，硬件机器人不进第一版。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="patterns">
+      <div class="section-head">
+        <h2>玩法模式</h2>
+        <p>不是所有“宠物游戏能力”都适合 AI Pet。MVP 要选择能强化真实照护价值的机制，推迟容易把产品带偏的经济和社交系统。</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <h3>经典留存循环</h3>
+          <p>Tamagotchi、Pou、Talking Tom 证明喂食、清洁、玩耍、成长、装扮和小游戏足够支撑日常打开，但这些机制必须接入真实宠物数据才有新价值。</p>
+        </article>
+        <article class="card">
+          <h3>AI 的有效位置</h3>
+          <p>AI 不应只负责聊天。它要解释状态来源、生成今日任务、记住宠物偏好、把提醒转成桌宠表达，并在健康/库存边界内给出建议。</p>
+        </article>
+        <article class="card">
+          <h3>暂缓的诱惑</h3>
+          <p>Roblox 宠物经济、AR 繁殖、Web3 资产和复杂 3D 都有传播性，但会分散 MVP。第一版先完成真实照护闭环。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="matrix">
+      <div class="section-head">
+        <h2>项目矩阵</h2>
+        <p>高优先级不是“最火”，而是最能证明 AI Pet 应该怎么做。</p>
+      </div>
+      <div class="matrix">
+        <table>
+          <thead>
+            <tr>
+              <th>代表项目</th>
+              <th>类别</th>
+              <th>关键学习</th>
+              <th>MVP 处理</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tamagotchi Uni、Pou、My Talking Tom</td>
+              <td><span class="tag">经典照护</span></td>
+              <td>短会话、需求条、成长反馈、装扮和低门槛互动。</td>
+              <td>直接吸收为状态条、互动按钮和任务完成反馈。</td>
+            </tr>
+            <tr>
+              <td>Nintendogs + Cats、Petz、Creatures、Black & White</td>
+              <td><span class="tag">行为模拟</span></td>
+              <td>宠物需要有个体历史、训练反馈和可塑造个性。</td>
+              <td>先做可解释长期记忆，不做复杂人工生命。</td>
+            </tr>
+            <tr>
+              <td>Neopets、Webkinz、Adopt Me!、Pet Simulator 99</td>
+              <td><span class="tag">社区经济</span></td>
+              <td>宠物身份、库存、活动和展示能长期运营。</td>
+              <td>只预留社区挑战和库存，不做交易/抽卡主循环。</td>
+            </tr>
+            <tr>
+              <td>Peridot、Wobbledogs、Bootloader Digital Pets</td>
+              <td><span class="tag">生成/空间</span></td>
+              <td>唯一宠物、繁殖和空间存在感很强，但成本和留存风险高。</td>
+              <td>二阶段考虑外观生成、AR 和繁殖。</td>
+            </tr>
+            <tr>
+              <td>AI-tamago、tama96、TamaPets、AI Pet Evolution</td>
+              <td><span class="tag">AI 虚拟宠物</span></td>
+              <td>LLM 表达、MCP 和经典照护已经有可用参考。</td>
+              <td>Domain Service 掌握事实，LLM 做解释和表达。</td>
+            </tr>
+            <tr>
+              <td>PetLLM、iPET、PartyCiPET</td>
+              <td><span class="tag">真实宠物 AI</span></td>
+              <td>真实宠物行为理解和人宠共同任务是差异化来源。</td>
+              <td>第一版用 mock/手动 observation 预留数据结构。</td>
+            </tr>
+            <tr>
+              <td>AIBO、Moflin、Loona、EMO、OpenPets</td>
+              <td><span class="tag">已有调研</span></td>
+              <td>陪伴感来自动作、表情、声音、感知和低打扰常驻。</td>
+              <td>详见现有机器人/桌宠调研；OpenPets 仍是桌宠主底座。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <div class="section-head">
+        <h2>MVP 建议</h2>
+        <p>下一步不是扩玩法，而是把最短闭环打穿：真实宠物数据进入系统，生成可解释任务，虚拟宠物状态变化，桌宠同步表达。</p>
+      </div>
+      <ol class="priority">
+        <li>真实宠物档案驱动虚拟形象：品种、年龄、体重、过敏、病史、饮食和外观。</li>
+        <li>Mock 设备数据要足够像真实项圈：活动、睡眠、心率、呼吸、体温、GPS、安全围栏、抓挠和吠叫。</li>
+        <li>状态机必须可解释：每个 mood、energy、cleanliness、health flag 都能追溯到档案或数据。</li>
+        <li>AI 问答只通过受控工具读取事实；不直接诊断、不自动处方、不自动购买。</li>
+        <li>OpenPets 桌宠负责低打扰表达：提醒、反应、气泡、状态动作和用户互动反馈。</li>
+        <li>库存和商品推荐只在任务/健康/库存触发时出现，并明确过敏、年龄、体重和疾病约束。</li>
+      </ol>
+    </section>
+
+    <section id="docs">
+      <div class="section-head">
+        <h2>知识库输出</h2>
+        <p>完整项目档案已经写入 docs，可继续作为产品设计和实现依据。</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <h3>游戏专题总览</h3>
+          <p><a href="../../ai-pet/docs/research/pet-game-ai-projects/INDEX.md">ai-pet/docs/research/pet-game-ai-projects/INDEX.md</a></p>
+        </article>
+        <article class="card">
+          <h3>项目档案目录</h3>
+          <p><a href="../../ai-pet/docs/research/pet-game-ai-projects/projects/">ai-pet/docs/research/pet-game-ai-projects/projects/</a></p>
+        </article>
+        <article class="card">
+          <h3>完整生态拼图</h3>
+          <p><a href="../../ai-pet/docs/research/pet-community-ai-ecosystem/INDEX.md">社区、健康、机器人和桌宠生态调研</a></p>
+        </article>
+        <article class="card">
+          <h3>现有商业产品</h3>
+          <p><a href="../../ai-pet/docs/research/existing-pet-products/INDEX.md">ai-pet/docs/research/existing-pet-products/INDEX.md</a></p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="callout">
+        <strong>产品裁决：</strong>第一版不要做“更会聊天的 Tamagotchi”，也不要做 Roblox 式宠物经济。先做真实宠物数据驱动的数字分身：档案、mock 设备、照护任务、AI 解释、OpenPets 表达和库存推荐。
+      </div>
+    </section>
+
+    <p class="footer">来源优先使用官方站点、GitHub、论文页、Steam/Roblox/App Store 和公开报道。报告时间：2026-05-30。</p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>宠物情感陪伴与 AI 项目调研汇报</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f6f3ec;
+        --panel: #fffdf7;
+        --ink: #17211f;
+        --muted: #65716d;
+        --line: #d9d2c4;
+        --moss: #577b63;
+        --teal: #2f7f86;
+        --coral: #cb674d;
+        --amber: #c89a3c;
+        --blue: #486f9f;
+        --shadow: 0 18px 45px rgba(45, 38, 25, 0.11);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(90deg, rgba(23, 33, 31, 0.035) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(23, 33, 31, 0.035) 1px, transparent 1px),
+          var(--paper);
+        background-size: 34px 34px;
+        color: var(--ink);
+        overflow-x: hidden;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration-color: rgba(23, 33, 31, 0.28);
+        text-underline-offset: 3px;
+      }
+
+      .page {
+        width: min(1180px, calc(100vw - 36px));
+        margin: 0 auto;
+        padding: 28px 0 54px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 12px 0 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .topbar strong {
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+        max-width: 100%;
+      }
+
+      .nav a,
+      .chip,
+      button,
+      input,
+      select {
+        border-radius: 8px;
+      }
+
+      .nav a {
+        border: 1px solid var(--line);
+        background: rgba(255, 253, 247, 0.76);
+        padding: 8px 11px;
+        color: var(--muted);
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) 360px;
+        gap: 24px;
+        align-items: stretch;
+        padding: 28px 0 18px;
+      }
+
+      .hero > *,
+      .topbar > *,
+      .section-head > *,
+      .insight,
+      .stat,
+      .cell,
+      .card {
+        min-width: 0;
+      }
+
+      h1 {
+        max-width: 820px;
+        margin: 0;
+        font-size: clamp(34px, 5vw, 76px);
+        line-height: 0.96;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .dek {
+        max-width: 760px;
+        margin: 22px 0 0;
+        color: #3a4742;
+        font-size: 18px;
+        line-height: 1.68;
+        overflow-wrap: anywhere;
+      }
+
+      .hero-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 300px;
+        padding: 18px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .stamp {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border: 1px solid rgba(87, 123, 99, 0.32);
+        background: rgba(87, 123, 99, 0.08);
+        color: var(--moss);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .stat {
+        min-height: 88px;
+        padding: 12px;
+        background: #f7efe2;
+        border: 1px solid #e2d4bd;
+      }
+
+      .stat b {
+        display: block;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .stat span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+
+      .section {
+        margin-top: 22px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 16px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 28px;
+        letter-spacing: 0;
+      }
+
+      .note {
+        max-width: 650px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+      }
+
+      .insights {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+      }
+
+      .product-board {
+        display: grid;
+        gap: 14px;
+      }
+
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .product-card {
+        min-height: 185px;
+        padding: 15px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+
+      .product-card h3 {
+        margin: 11px 0 0;
+        font-size: 16px;
+      }
+
+      .product-card p {
+        margin: 10px 0 0;
+        color: #3c4b46;
+        font-size: 13px;
+        line-height: 1.62;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 3px 8px;
+        border: 1px solid rgba(23, 33, 31, 0.12);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status.live {
+        background: rgba(87, 123, 99, 0.13);
+        color: #42634b;
+      }
+
+      .status.watch {
+        background: rgba(200, 154, 60, 0.16);
+        color: #7a6029;
+      }
+
+      .product-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .product-table th,
+      .product-table td {
+        border-bottom: 1px solid #e1d8c8;
+        padding: 12px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 13px;
+        line-height: 1.48;
+      }
+
+      .product-table th {
+        background: #efe6d6;
+        color: #495752;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .product-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .insight {
+        min-height: 178px;
+        padding: 16px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+
+      .insight h3,
+      .card h3 {
+        margin: 0;
+        font-size: 17px;
+      }
+
+      .insight p,
+      .card p {
+        margin: 12px 0 0;
+        color: #3c4b46;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .tagline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 4px 9px;
+        background: #ebe4d7;
+        color: #4f5c57;
+        border: 1px solid #d9d0be;
+        font-size: 12px;
+        font-weight: 650;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .map-wrap,
+      .pipeline,
+      .matrix,
+      .cards-wrap {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .map-wrap {
+        padding: 16px;
+        overflow: hidden;
+      }
+
+      .map {
+        position: relative;
+        min-height: 475px;
+        border: 1px solid #d8cebb;
+        background:
+          linear-gradient(90deg, transparent calc(50% - 1px), rgba(23, 33, 31, 0.2) 50%, transparent calc(50% + 1px)),
+          linear-gradient(0deg, transparent calc(50% - 1px), rgba(23, 33, 31, 0.2) 50%, transparent calc(50% + 1px)),
+          #fbf8ef;
+      }
+
+      .axis {
+        position: absolute;
+        z-index: 1;
+        color: #6b736f;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .axis.top {
+        top: 10px;
+        left: 14px;
+      }
+
+      .axis.bottom {
+        right: 14px;
+        bottom: 10px;
+      }
+
+      .axis.left {
+        left: 12px;
+        bottom: 14px;
+      }
+
+      .axis.right {
+        top: 12px;
+        right: 14px;
+      }
+
+      .point {
+        position: absolute;
+        left: var(--x);
+        bottom: var(--y);
+        width: clamp(104px, 13vw, 154px);
+        transform: translate(-50%, 50%);
+        padding: 8px 9px;
+        border: 1px solid rgba(23, 33, 31, 0.18);
+        background: rgba(255, 253, 247, 0.93);
+        box-shadow: 0 7px 18px rgba(23, 33, 31, 0.08);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .point b {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 12px;
+      }
+
+      .point small {
+        color: var(--muted);
+      }
+
+      .dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-right: 5px;
+        border-radius: 999px;
+        background: var(--moss);
+      }
+
+      .dot.hardware {
+        background: var(--coral);
+      }
+
+      .dot.camera {
+        background: var(--teal);
+      }
+
+      .dot.health {
+        background: var(--blue);
+      }
+
+      .dot.robot {
+        background: var(--amber);
+      }
+
+      .dot.open {
+        background: var(--moss);
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .pipeline,
+      .matrix,
+      .cards-wrap {
+        padding: 16px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 9px;
+        align-items: stretch;
+      }
+
+      .flow-step {
+        position: relative;
+        min-height: 126px;
+        padding: 12px;
+        background: #f7efe2;
+        border: 1px solid #e2d4bd;
+      }
+
+      .flow-step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -10px;
+        width: 11px;
+        height: 2px;
+        background: #b7aa95;
+      }
+
+      .flow-step:last-child::after {
+        display: none;
+      }
+
+      .flow-step b {
+        display: block;
+        font-size: 14px;
+      }
+
+      .flow-step span {
+        display: block;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .matrix-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .cell {
+        min-height: 144px;
+        padding: 13px;
+        border: 1px solid #ddd2bf;
+        background: #fbf7ee;
+      }
+
+      .cell strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .cell ul {
+        margin: 10px 0 0;
+        padding-left: 17px;
+        color: #42514c;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 210px 160px;
+        gap: 10px;
+        margin: 0 0 14px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid #d4c7b1;
+        background: #fffdf7;
+        color: var(--ink);
+        padding: 0 12px;
+        font: inherit;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        min-height: 235px;
+        padding: 14px;
+        border: 1px solid #ddd2bf;
+        background: #fffaf0;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 11px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 23px;
+        padding: 3px 7px;
+        border: 1px solid rgba(23, 33, 31, 0.12);
+        color: #4f5b57;
+        background: #eee8dc;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .pill.grade-a {
+        background: rgba(87, 123, 99, 0.14);
+        color: #42634b;
+      }
+
+      .pill.grade-b {
+        background: rgba(47, 127, 134, 0.12);
+        color: #2f6b71;
+      }
+
+      .pill.grade-c {
+        background: rgba(200, 154, 60, 0.16);
+        color: #7a6029;
+      }
+
+      .card .why {
+        flex: 1;
+      }
+
+      .card a {
+        margin-top: 12px;
+        color: #245f66;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .rank-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .rank-table th,
+      .rank-table td {
+        border-bottom: 1px solid #e1d8c8;
+        padding: 12px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+        line-height: 1.48;
+      }
+
+      .rank-table th {
+        color: #495752;
+        background: #efe6d6;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .rank-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .source-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .source-list a {
+        display: block;
+        padding: 12px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: #245f66;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .footer {
+        margin-top: 28px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .insights,
+        .product-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-card {
+          min-height: 220px;
+        }
+
+        .cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .flow,
+        .matrix-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .flow-step::after {
+          display: none;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .page {
+          width: min(100vw - 24px, 1180px);
+          padding-top: 16px;
+        }
+
+        .topbar,
+        .section-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav {
+          width: 100%;
+          justify-content: flex-start;
+        }
+
+        .nav a {
+          flex: 0 0 100%;
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        .dek {
+          font-size: 16px;
+        }
+
+        h1 {
+          font-size: clamp(28px, 8.4vw, 34px);
+          line-height: 1.05;
+          word-break: break-all;
+        }
+
+        .dek,
+        .note,
+        .stat span,
+        .chip {
+          word-break: break-word;
+        }
+
+        .tagline .chip {
+          flex: 1 1 auto;
+          justify-content: center;
+        }
+
+        .stats,
+        .filters,
+        .cards,
+        .source-list {
+          grid-template-columns: 1fr;
+        }
+
+        .map {
+          min-width: 700px;
+        }
+
+        .map-wrap {
+          overflow-x: auto;
+        }
+
+        .rank-table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+
+        .product-table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="topbar">
+        <strong>AI Pet Research</strong>
+        <nav class="nav" aria-label="页面导航">
+          <a href="#summary">结论</a>
+          <a href="#existing">现有产品</a>
+          <a href="#map">市场地图</a>
+          <a href="#roadmap">MVP 路线</a>
+          <a href="#projects">项目卡片</a>
+          <a href="#sources">来源</a>
+        </nav>
+      </div>
+
+      <section class="hero">
+        <div>
+          <h1>宠物情感陪伴与 AI 项目<br />调研汇报</h1>
+          <p class="dek">
+            本报告覆盖真实宠物陪伴机器人、智能摄像头、健康/行为传感器、宠物叫声与痛感 AI、训练护理 App、人类情感机器人宠物和开源桌宠底座。调研目标不是证明每个项目都能集成，而是找出 AI Pet MVP 的正确产品切口。
+          </p>
+          <div class="tagline">
+            <span class="chip">日期：2026-05-30</span>
+            <span class="chip">公开资料核验</span>
+            <span class="chip">分项目写入 docs</span>
+            <span class="chip">现有产品专项</span>
+            <span class="chip">MVP 决策导向</span>
+          </div>
+        </div>
+        <aside class="hero-card" aria-label="调研统计">
+          <span class="stamp">Evidence-backed scan</span>
+          <div class="stats">
+            <div class="stat"><b>80+</b><span>纳入对比的项目、产品和产品线</span></div>
+            <div class="stat"><b>7</b><span>市场分层：硬件、摄像头、健康、情绪、训练、机器人、开源</span></div>
+            <div class="stat"><b>3</b><span>优先落点：数据、解释、桌宠表达</span></div>
+            <div class="stat"><b>0</b><span>第一版不依赖自研硬件或绝对翻译</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="summary" class="section">
+        <div class="section-head">
+          <h2>核心结论</h2>
+          <p class="note">“宠物情感陪伴”有两条不同赛道：陪真实宠物，以及用机器人宠物陪人。AI Pet 应以前者为主线，吸收后者的情绪表达方法。</p>
+        </div>
+        <div class="insights">
+          <article class="insight">
+            <h3>硬件很热，但不是 MVP 起点</h3>
+            <p>Aura、WIMZ、PawMe、KitteCube、Pumpkii、ORo 都在做移动陪伴、摄像头、奖励和行为识别，但多数项目仍在早期。第一版押注硬件会把风险放到供应链、宠物安全和封闭 API 上。</p>
+          </article>
+          <article class="insight">
+            <h3>成熟数据来自健康和家庭设备</h3>
+            <p>FitBark、Tractive、Invoxia、PetPace、Petivity、Petcube、Furbo 这类设备更适合作为真实宠物数字分身的信号源：活动、睡眠、排泄、叫声、位置、生命体征。</p>
+          </article>
+          <article class="insight">
+            <h3>情绪要解释，不要宣判</h3>
+            <p>MeowTalk、PettiChat、CatsMe、Tably、Pemi 显示用户需要理解宠物，但“翻译”和“情绪识别”不能绝对化。产品应输出可能意图、证据线索和下一步照护建议。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="existing" class="section">
+        <div class="section-head">
+          <h2>已经存在的产品</h2>
+          <p class="note">这里单独看已经可购买、可下载、可订阅、诊所可采购或明确 waitlist 的产品。重点是商业成熟度和能否给 AI Pet 提供真实输入。</p>
+        </div>
+        <div class="product-board">
+          <div class="product-grid">
+            <article class="product-card">
+              <span class="status live">已上市</span>
+              <h3>远程陪伴摄像头</h3>
+              <p>Furbo、Petcube、PETLIBRO Scout、eufy D605、PetChatz、Dogness 已经把看护、双向语音、投食、录像和事件提醒产品化。</p>
+            </article>
+            <article class="product-card">
+              <span class="status live">已上市</span>
+              <h3>健康与行为设备</h3>
+              <p>Tractive、FitBark、Invoxia、PetPace、Maven、Catlog、Moggie、Fi 的数据比一次性 AI 问答更适合驱动数字分身。</p>
+            </article>
+            <article class="product-card">
+              <span class="status live">已上市</span>
+              <h3>猫砂盆与饮食饮水</h3>
+              <p>Petivity、Litter-Robot 5 Pro、PETKIT Purobot、SiiPet、CATLINK、Petlibro RFID、SureFeed 提供低摩擦健康事件。</p>
+            </article>
+            <article class="product-card">
+              <span class="status live">可下载</span>
+              <h3>AI App 与服务</h3>
+              <p>MeowTalk、CatsMe、Tably、TTcare、Pawzy、SafePet AI、LunaDogAI、Joii、Petriage、Buddydoc 已经验证“理解和下一步建议”的需求。</p>
+            </article>
+            <article class="product-card">
+              <span class="status live">已上市</span>
+              <h3>人类情感机器人宠物</h3>
+              <p>Moflin、aibo、Loona、EMO、LOVOT、Joy for All、PARO 主要陪人，但对人格成长、触摸反馈和非语言表达很有参考价值。</p>
+            </article>
+            <article class="product-card">
+              <span class="status watch">谨慎观察</span>
+              <h3>移动宠物陪伴机器人</h3>
+              <p>Enabot、VARRAM、ORo 等产品存在，但“完全自主 AI 宠物保姆”仍未成熟，第一阶段只吸收能力模型，不依赖硬件。</p>
+            </article>
+          </div>
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>产品组</th>
+                <th>已存在形态</th>
+                <th>可借鉴能力</th>
+                <th>MVP 判断</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Furbo / Petcube / PETLIBRO / eufy</td>
+                <td>硬件 + App + 订阅</td>
+                <td>摄像头事件、叫声、双向语音、投食、日记</td>
+                <td>优先抽象成 CameraEvent 和 DailyDiary</td>
+              </tr>
+              <tr>
+                <td>FitBark / Tractive / Invoxia / PetPace</td>
+                <td>tracker + App + 订阅/API</td>
+                <td>活动、睡眠、生命体征、健康趋势</td>
+                <td>优先定义 wearable schema，FitBark 可先接 API</td>
+              </tr>
+              <tr>
+                <td>Petivity / PETKIT / Litter-Robot / SiiPet</td>
+                <td>猫砂盆/外挂摄像头 + App</td>
+                <td>体重、入厕、排便、排尿、粪尿视觉</td>
+                <td>猫模型必须把排泄和体重设为一等事件</td>
+              </tr>
+              <tr>
+                <td>MeowTalk / CatsMe / Tably / TTcare</td>
+                <td>移动 App / API</td>
+                <td>叫声解释、痛感识别、照片健康观察</td>
+                <td>只做“可能意图/风险”，显示证据和不确定性</td>
+              </tr>
+              <tr>
+                <td>Pawzy / Joii / Petriage / Buddydoc</td>
+                <td>App/Web/诊所平台</td>
+                <td>档案、提醒、分诊、PDF、真人兽医升级</td>
+                <td>学习报告和分级路径，不做诊断式营销</td>
+              </tr>
+              <tr>
+                <td>Moflin / aibo / Loona / EMO / LOVOT</td>
+                <td>机器人宠物 + App/云服务</td>
+                <td>人格成长、触摸反馈、动作、长期依恋</td>
+                <td>借鉴表达系统，不偏离真实宠物数字分身主线</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="map" class="section">
+        <div class="section-head">
+          <h2>市场地图</h2>
+          <p class="note">纵轴表示对真实宠物情绪/照护闭环的贴近程度，横轴表示商业成熟度和可集成性。右上角是近期最值得关注的区域。</p>
+        </div>
+        <div class="map-wrap">
+          <div class="map" aria-label="宠物情感陪伴市场二维地图">
+            <span class="axis top">更像真实宠物照护闭环</span>
+            <span class="axis left">早期/概念</span>
+            <span class="axis right">成熟/可接入</span>
+            <span class="axis bottom">更像人类情感机器人</span>
+            <div class="point" style="--x: 36%; --y: 76%"><b><span class="dot hardware"></span>Aura / WIMZ</b><small>主动移动陪伴，早期高潜力</small></div>
+            <div class="point" style="--x: 42%; --y: 65%"><b><span class="dot hardware"></span>PawMe / KitteCube</b><small>远程玩耍、投食、视频</small></div>
+            <div class="point" style="--x: 74%; --y: 67%"><b><span class="dot camera"></span>Furbo / Petcube</b><small>成熟摄像头和事件提醒</small></div>
+            <div class="point" style="--x: 82%; --y: 78%"><b><span class="dot health"></span>FitBark / Tractive</b><small>长期行为和健康趋势</small></div>
+            <div class="point" style="--x: 70%; --y: 84%"><b><span class="dot health"></span>Petivity / Catlog</b><small>猫排泄和行为 baseline</small></div>
+            <div class="point" style="--x: 62%; --y: 58%"><b><span class="dot health"></span>MeowTalk / Tably</b><small>情绪/痛感窄任务</small></div>
+            <div class="point" style="--x: 78%; --y: 31%"><b><span class="dot robot"></span>Moflin / aibo</b><small>人格成长和触摸反馈</small></div>
+            <div class="point" style="--x: 58%; --y: 25%"><b><span class="dot robot"></span>Loona / EMO</b><small>桌面/家庭机器人宠物</small></div>
+            <div class="point" style="--x: 76%; --y: 48%"><b><span class="dot open"></span>OpenPets</b><small>MCP 桌宠底座，可控性最高</small></div>
+            <div class="point" style="--x: 54%; --y: 43%"><b><span class="dot open"></span>AI-tamago / AIRI</b><small>开源 AI companion 逻辑</small></div>
+          </div>
+          <div class="legend">
+            <span><i class="dot hardware"></i>真实宠物陪伴硬件</span>
+            <span><i class="dot camera"></i>摄像头/家庭设备</span>
+            <span><i class="dot health"></i>健康/行为 AI</span>
+            <span><i class="dot robot"></i>机器人宠物</span>
+            <span><i class="dot open"></i>开源底座</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" class="section">
+        <div class="section-head">
+          <h2>MVP 路线</h2>
+          <p class="note">本项目应把“真实宠物数据”转成“有证据的情绪状态”，再让桌宠表达出来，并触发任务和报告。</p>
+        </div>
+        <div class="pipeline">
+          <div class="flow">
+            <div class="flow-step"><b>1. 多源输入</b><span>手动记录、CSV、mock、未来 VendorAdapter：活动、睡眠、食量、饮水、排泄、照片、叫声。</span></div>
+            <div class="flow-step"><b>2. 证据时间线</b><span>把指标和观察统一成 HealthMetric、BehaviorEvent、Observation，保留来源和置信度。</span></div>
+            <div class="flow-step"><b>3. 情绪解释</b><span>输出可能状态、证据线索、反例和下一步。避免“确定翻译”和医疗诊断。</span></div>
+            <div class="flow-step"><b>4. 桌宠表达</b><span>OpenPets 气泡、动作、状态变化和主动 check-in，让真实宠物状态可见。</span></div>
+            <div class="flow-step"><b>5. 照护闭环</b><span>生成任务、库存提醒、训练建议、宠物主安抚和兽医可读摘要。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>优先级矩阵</h2>
+          <p class="note">不是所有热点都值得马上做。第一阶段看可控性、可验证性和是否直接服务真实宠物数字分身。</p>
+        </div>
+        <div class="matrix">
+          <div class="matrix-grid">
+            <div class="cell">
+              <strong>现在做</strong>
+              <ul>
+                <li>OpenPets 视觉底座</li>
+                <li>手动/CSV/mock 数据</li>
+                <li>情绪证据解释</li>
+                <li>照护任务和兽医摘要</li>
+              </ul>
+            </div>
+            <div class="cell">
+              <strong>第二阶段验证</strong>
+              <ul>
+                <li>FitBark API</li>
+                <li>Petcube / Furbo / PETLIBRO 事件</li>
+                <li>Tractive / Invoxia / PetPace 数据</li>
+                <li>MeowTalk / CatsMe 外部信号</li>
+              </ul>
+            </div>
+            <div class="cell">
+              <strong>先不做</strong>
+              <ul>
+                <li>自研移动硬件</li>
+                <li>自动投食/激光控制</li>
+                <li>绝对化宠物翻译</li>
+                <li>医疗诊断和处方建议</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>代表项目裁决</h2>
+          <p class="note">这里列出直接影响架构和产品取舍的项目。完整分项目卡片已写入 docs。</p>
+        </div>
+        <table class="rank-table">
+          <thead>
+            <tr>
+              <th>项目组</th>
+              <th>判断</th>
+              <th>本项目动作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OpenPets / codex-pet-companion / DyberPet</td>
+              <td>可控性最高，能支撑桌宠表达、MCP 控制和照护状态机。</td>
+              <td>进入 MVP 主线：OpenPets 做外壳，后两者抽 domain model。</td>
+            </tr>
+            <tr>
+              <td>FitBark / Tractive / Petivity / Catlog</td>
+              <td>最适合作为真实宠物数字分身的数据来源。</td>
+              <td>先按它们的指标设计 schema，第二阶段验证 API 或导入路径。</td>
+            </tr>
+            <tr>
+              <td>Furbo / Petcube / PETLIBRO Scout</td>
+              <td>成熟家庭陪宠入口，事件类型很适合日记和提醒。</td>
+              <td>把摄像头、叫声、动作、投食、双向语音建成事件模型。</td>
+            </tr>
+            <tr>
+              <td>MeowTalk / PettiChat / CatsMe / Tably</td>
+              <td>能满足“理解宠物”的强需求，但科学边界很敏感。</td>
+              <td>只做“可能意图/痛感风险”，必须显示证据和不确定性。</td>
+            </tr>
+            <tr>
+              <td>Aura / WIMZ / PawMe / KitteCube / ORo</td>
+              <td>方向正确但硬件风险高，适合观察不适合依赖。</td>
+              <td>把能力拆成虚拟任务和事件，不做第一版硬件实现。</td>
+            </tr>
+            <tr>
+              <td>Moflin / aibo / Loona / EMO</td>
+              <td>情绪表达强，但目标是陪人，不是照护真实宠物。</td>
+              <td>借鉴人格成长、非语言动作、触感隐喻和长期记忆。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="projects" class="section">
+        <div class="section-head">
+          <h2>项目卡片</h2>
+          <p class="note">可按类别、证据等级和关键词过滤。本区域选取最能代表趋势和落地决策的项目。</p>
+        </div>
+        <div class="cards-wrap">
+          <div class="filters">
+            <input id="search" type="search" placeholder="搜索项目、能力或风险" aria-label="搜索项目" />
+            <select id="category" aria-label="类别过滤">
+              <option value="all">全部类别</option>
+              <option value="真实宠物硬件">真实宠物硬件</option>
+              <option value="摄像头/家庭设备">摄像头/家庭设备</option>
+              <option value="健康/行为 AI">健康/行为 AI</option>
+              <option value="训练/护理 App">训练/护理 App</option>
+              <option value="机器人宠物">机器人宠物</option>
+              <option value="开源底座">开源底座</option>
+            </select>
+            <select id="grade" aria-label="证据等级过滤">
+              <option value="all">全部证据</option>
+              <option value="A">证据 A</option>
+              <option value="B">证据 B</option>
+              <option value="C">证据 C</option>
+            </select>
+          </div>
+          <div id="cards" class="cards" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="sources" class="section">
+        <div class="section-head">
+          <h2>知识库与来源</h2>
+          <p class="note">调研全文、分项目卡片和来源地图已经写入项目 docs。下面是最关键的公开来源入口。</p>
+        </div>
+        <div class="source-list">
+          <a href="../../ai-pet/docs/research/pet-emotional-ai/INDEX.md">docs 总览：pet-emotional-ai/INDEX.md</a>
+          <a href="../../ai-pet/docs/research/pet-emotional-ai/project-cards.md">docs 分项目卡片：project-cards.md</a>
+          <a href="../../ai-pet/docs/research/pet-emotional-ai/existing-products.md">docs 现有产品专项：existing-products.md</a>
+          <a href="../../ai-pet/docs/research/pet-emotional-ai/source-map.md">docs 来源地图：source-map.md</a>
+          <a href="https://www.furbo.com/us/products/furbo-360-cat-camera">Furbo 现有产品页</a>
+          <a href="https://openpets.dev/docs">OpenPets 官方文档</a>
+          <a href="https://www.fitbark.com/dev/">FitBark Developer API</a>
+          <a href="https://www.litter-robot.com/litter-robot-5-pro.html">Litter-Robot 5 Pro</a>
+          <a href="https://www.casio.com/us/moflin/">Casio Moflin</a>
+        </div>
+      </section>
+
+      <p class="footer">
+        调研限制：部分 2026 年 AI 机器人宠物处于预售、众筹或早期发布阶段，能力声明以公开资料为准，不等同于实测结果。医学、痛感、用药和行为诊断相关能力必须在产品中保留兽医边界。
+      </p>
+    </main>
+
+    <script>
+      const projects = [
+        { name: "Tuya Aura / OMO", category: "真实宠物硬件", grade: "A", ai: "多模态感知、宠物行为识别、自动移动、投喂", why: "最接近主动宠物保姆形态，但仍是早期硬件，适合作为能力参照。", source: "https://www.tuya.com/news-details/Kf9m2gpnsxudc" },
+        { name: "WIMZ", category: "真实宠物硬件", grade: "C", ai: "Edge AI、LLM、行为/叫声分析、多宠识别", why: "把移动陪伴、奖励逻辑和隐私设计放在一起，适合拆成事件模型。", source: "https://www.wimzai.com/" },
+        { name: "PawMe", category: "真实宠物硬件", grade: "C", ai: "AI 互动、FPV 摄像头、激光、自动喂食/饮水", why: "证明宠物独处陪玩需求，但供货和安全风险高。", source: "https://pawme.ai/" },
+        { name: "KitteCube", category: "真实宠物硬件", grade: "A", ai: "摄像头、双向音频、激光、投食", why: "适合参考远程陪玩、叫名和奖励的产品链路。", source: "https://www.kittecube.com/en-us" },
+        { name: "Pumpkii", category: "真实宠物硬件", grade: "A", ai: "2K 摄像头、移动、投食、激光玩具", why: "更像移动摄像头玩具，事件类型可复用。", source: "https://www.pumpkii.com/" },
+        { name: "ORo", category: "真实宠物硬件", grade: "A", ai: "AI 训练辅助、喂食、娱乐、安全监测", why: "提醒 AI Pet 把训练和分离焦虑纳入照护任务。", source: "https://orobuddy.com/" },
+        { name: "Furbo", category: "摄像头/家庭设备", grade: "A", ai: "AI doggie alerts、云录像、Doggie Diary", why: "成熟的摄像头事件和宠物日记样本。", source: "https://furbo.com/products/furbo-dog-nanny" },
+        { name: "Petcube", category: "摄像头/家庭设备", grade: "A", ai: "AI 识别宠物、人、吠叫、喵叫和动作", why: "适合定义 CameraEvent、BarkEvent、MeowEvent。", source: "https://petcube.com/care/" },
+        { name: "PETLIBRO Scout", category: "摄像头/家庭设备", grade: "A", ai: "AI pet detection、提醒、双向音频、投食", why: "家庭看护和远程投食场景完整。", source: "https://petlibro.com/products/scout" },
+        { name: "Invoxia Minitailz", category: "健康/行为 AI", grade: "A", ai: "AI insights、生命体征和行为趋势", why: "生命体征和行为 baseline 是数字分身核心输入。", source: "https://www.invoxia.com/en-US/petcare/minitailz-dog-tracker" },
+        { name: "PetPace", category: "健康/行为 AI", grade: "A", ai: "AI smart collar、生命体征、疼痛和慢病监测", why: "高价值但高门槛，适合作为后置医疗级 adapter。", source: "https://petpace.com/" },
+        { name: "FitBark", category: "健康/行为 AI", grade: "A", ai: "活动、睡眠、健康指数和 Developer API", why: "第二阶段真实设备 API 的优先候选。", source: "https://www.fitbark.com/dev/" },
+        { name: "Tractive", category: "健康/行为 AI", grade: "A", ai: "GPS、活动、睡眠、心率、呼吸、吠叫、抓挠", why: "适合定义消费级健康指标 schema。", source: "https://tractive.com/en/fp/health-monitoring-for-dogs-and-cats" },
+        { name: "Petivity", category: "健康/行为 AI", grade: "A", ai: "AI 学习猫砂盆模式、体重和排泄异常", why: "排泄和体重应成为猫数字分身的一等事件。", source: "https://www.petivity.com/products/smart-litterbox-monitor" },
+        { name: "Catlog", category: "健康/行为 AI", grade: "A", ai: "猫行为机器学习、个体行为指纹", why: "猫状态判断应基于个体 baseline，而不是统一阈值。", source: "https://rabo.cat/en-global/technology/" },
+        { name: "MeowTalk", category: "健康/行为 AI", grade: "A", ai: "AI 猫叫声解释", why: "满足理解宠物需求，但只能表达为可能意图。", source: "https://www.meowtalk.app/" },
+        { name: "CatsMe", category: "健康/行为 AI", grade: "A", ai: "猫脸痛感识别", why: "痛感风险可映射到桌宠表情和提醒。", source: "https://catsme.app/" },
+        { name: "Sylvester.ai / Tably", category: "健康/行为 AI", grade: "A", ai: "猫脸 AI + Feline Grimace Scale", why: "窄任务、量表化、可解释，是可信 AI 的好样本。", source: "https://www.sylvester.ai/tably" },
+        { name: "PettiChat", category: "健康/行为 AI", grade: "C", ai: "宠物叫声解释、适应性学习、互动回应", why: "交互形态值得看，能力声明需谨慎。", source: "https://pettichat.io/" },
+        { name: "LunaDogAI", category: "训练/护理 App", grade: "A", ai: "视频分析、个性化训练、聊天教练", why: "训练任务能改善人宠关系，应接入照护日程。", source: "https://www.lunadogai.com/" },
+        { name: "Pawzy / Woofy", category: "训练/护理 App", grade: "A", ai: "健康档案、提醒、PDF、AI 助手", why: "与本项目长期档案和给兽医报告方向高度一致。", source: "https://pawzy.io/" },
+        { name: "SafePet AI", category: "训练/护理 App", grade: "A", ai: "PetScan、NutriScan、MediScan、AI Chat", why: "多工具打包可参考，但用药和医疗边界要收紧。", source: "https://safepet.ai/" },
+        { name: "Vet-AI / Joii", category: "训练/护理 App", grade: "A", ai: "自动分诊、皮肤图像、步态视频、远程兽医", why: "AI 初筛 + 兽医兜底是健康安全路径。", source: "https://www.vet-ai.com/automated-triage" },
+        { name: "Buddydoc", category: "训练/护理 App", grade: "A", ai: "结构化症状检查和风险等级", why: "Advisor Chat 应先问关键问题，再给分级。", source: "https://www.buddydoc.io/symptom_checker" },
+        { name: "Moflin", category: "机器人宠物", grade: "A", ai: "emotional AI、触摸/声音识别、人格成长", why: "非语言表达和长期性格变化是桌宠设计重点参考。", source: "https://www.casio.com/us/moflin/" },
+        { name: "Sony aibo", category: "机器人宠物", grade: "A", ai: "AI Cloud Plan、记忆、人格发展", why: "长期记忆和个性成长机制值得借鉴。", source: "https://us.aibo.com/feature/ai.html" },
+        { name: "Loona", category: "机器人宠物", grade: "A", ai: "视觉识别、语音/手势、GPT Voice Chat", why: "表情屏和动作能制造生命感，但与真实宠物照护不同。", source: "https://www.keyirobot.com/" },
+        { name: "EMO", category: "机器人宠物", grade: "A", ai: "多传感器、桌面 AI robot pet、表情动作", why: "桌面存在感和小动作适合借鉴。", source: "https://living.ai/emo/" },
+        { name: "ECOVACS LilMilo", category: "机器人宠物", grade: "A", ai: "AI emotional interaction、多感官、离线运行", why: "说明家电企业也在切入机器人宠物化。", source: "https://www.ecovacs.com/us/famibot-ai-companion-robot/lilmilo-white" },
+        { name: "Tombot Jennie", category: "机器人宠物", grade: "A", ai: "机器人情感支持动物，AI 表述弱", why: "触感和可信动作比聊天更重要。", source: "https://tombot.com/" },
+        { name: "OpenPets", category: "开源底座", grade: "A", ai: "MCP、CLI、hooks、AI agent 状态", why: "MVP 首选桌宠外壳和 AI 控制链路。", source: "https://openpets.dev/docs" },
+        { name: "AI-tamago", category: "开源底座", grade: "A", ai: "本地 LLM 生成和驱动虚拟宠物想法/感受", why: "参考 LLM 驱动虚拟宠物状态和叙事。", source: "https://github.com/ykhli/AI-tamago" },
+        { name: "AIRI", category: "开源底座", grade: "A", ai: "多 LLM、实时语音、多平台 AI companion", why: "可参考多模态语音和角色运行时。", source: "https://github.com/moeru-ai/airi" },
+        { name: "CodexPet Nest", category: "开源底座", grade: "A", ai: "Codex pet nest、小组件、状态", why: "宠物旁边的控制台和窝可参考。", source: "https://codexpet.app/" },
+        { name: "DyberPet", category: "开源底座", grade: "A", ai: "照护、道具、好感度，LLM 模块未开源", why: "抽取道具和养成状态机，不作为主 UI。", source: "https://github.com/ChaozhongLiu/DyberPet" }
+      ];
+
+      const cards = document.querySelector("#cards");
+      const search = document.querySelector("#search");
+      const category = document.querySelector("#category");
+      const grade = document.querySelector("#grade");
+
+      function render() {
+        const q = search.value.trim().toLowerCase();
+        const cat = category.value;
+        const g = grade.value;
+        const filtered = projects.filter((project) => {
+          const text = `${project.name} ${project.category} ${project.ai} ${project.why}`.toLowerCase();
+          return (cat === "all" || project.category === cat) && (g === "all" || project.grade === g) && (!q || text.includes(q));
+        });
+
+        cards.innerHTML = filtered
+          .map((project) => `
+            <article class="card">
+              <div class="meta">
+                <span class="pill">${project.category}</span>
+                <span class="pill grade-${project.grade.toLowerCase()}">证据 ${project.grade}</span>
+              </div>
+              <h3>${project.name}</h3>
+              <p><strong>AI 结合：</strong>${project.ai}</p>
+              <p class="why"><strong>判断：</strong>${project.why}</p>
+              <a href="${project.source}" target="_blank" rel="noreferrer">打开来源</a>
+            </article>
+          `)
+          .join("");
+      }
+
+      [search, category, grade].forEach((element) => element.addEventListener("input", render));
+      render();
+    </script>
+  </body>
+</html>

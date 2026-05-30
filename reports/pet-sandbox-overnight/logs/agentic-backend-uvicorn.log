@@ -1,0 +1,12 @@
+INFO:     Started server process [72125]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+Starting Agentic-Desktop-Pet
+INFO:     127.0.0.1:51056 - "GET /health HTTP/1.1" 200 OK
+SSE Event: {'type': 'error', 'message': '消息不能为空'}
+INFO:     127.0.0.1:51057 - "POST /chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [72125]

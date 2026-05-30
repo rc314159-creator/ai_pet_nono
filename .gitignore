@@ -1,0 +1,27 @@
+.DS_Store
+
+# Local automation state
+/.playwright-mcp/
+
+# Root-level temporary screenshots and ad-hoc captures.
+/*.png
+
+# Node/Electron project outputs
+**/node_modules/
+**/dist/
+**/.vite/
+**/.vite-temp/
+**/*.tsbuildinfo
+
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+
+# Runtime logs outside archived reports
+/logs/
+ai-pet/*.log
+ai-pet/server/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

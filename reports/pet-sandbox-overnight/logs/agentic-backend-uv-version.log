@@ -1,0 +1,8 @@
+Using CPython 3.13.9
+Creating virtual environment at: .venv
+Downloading ruff (11.7MiB)
+Downloading ty (8.8MiB)
+ Downloaded ty
+ Downloaded ruff
+Installed 54 packages in 120ms
+Python 3.13.9

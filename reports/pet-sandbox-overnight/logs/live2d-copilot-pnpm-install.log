@@ -1,0 +1,32 @@
+Scope: all 4 workspace projects
+ WARN  Ignoring broken lockfile at /Users/rencan/Library/Application Support/MeetingCopilot/sessions/2026-05-09T02-18-28Z/pet-sandbox-repos/live2d-copilot: Lockfile /Users/rencan/Library/Application Support/MeetingCopilot/sessions/2026-05-09T02-18-28Z/pet-sandbox-repos/live2d-copilot/pnpm-lock.yaml not compatible with current pnpm
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 27, reused 4, downloaded 15, added 0
+Progress: resolved 73, reused 16, downloaded 38, added 0
+Progress: resolved 183, reused 41, downloaded 70, added 0
+Progress: resolved 246, reused 56, downloaded 112, added 0
+Progress: resolved 320, reused 85, downloaded 167, added 0
+Progress: resolved 419, reused 137, downloaded 210, added 0
+Progress: resolved 522, reused 208, downloaded 251, added 0
+Progress: resolved 544, reused 227, downloaded 262, added 0
+Packages are cloned from the content-addressable store to the virtual store.
+  Content-addressable store is at: /Users/rencan/Library/pnpm/store/v10
+  Virtual store is at:             node_modules/.pnpm
+Progress: resolved 583, reused 242, downloaded 274, added 0
+ WARN  10 deprecated subdependencies found: @npmcli/move-file@2.0.1, boolean@3.2.0, gar@1.0.4, glob@7.2.3, glob@8.1.0, inflight@1.0.6, lodash.get@4.4.2, rimraf@2.6.3, rimraf@3.0.2, tar@6.2.1
+Packages: +554
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 609, reused 252, downloaded 302, added 75
+Progress: resolved 609, reused 252, downloaded 302, added 516
+Progress: resolved 609, reused 252, downloaded 302, added 554, done
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: @parcel/watcher, electron, electron-winstaller,     │
+│   esbuild.                                                                   │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 12.5s using pnpm v10.24.0
