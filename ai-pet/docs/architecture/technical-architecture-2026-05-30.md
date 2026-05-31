@@ -4,7 +4,7 @@ description: 当前 AI Pet Demo 的技术分层、运行时、工具协议、多
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 统一桌宠点击默认入口：点击桌宠先进入欢迎/开始陪伴页，显式提醒入口才跳到对应业务视图。
+update_reason: 补充 App 端 settings/profile/persona 单一真相源、Prompt 合成和验证顺序，防止只做 UI 编辑导致运行时不一致。
 doc_type: architecture-spec
 domain_taxa:
   - domain-service
@@ -16,6 +16,7 @@ related:
   - current-system-architecture-2026-05-30.md
   - ../product/product-spec-2026-05-30.md
   - ../modules/INDEX.md
+  - ../modules/pet-settings-and-persona-2026-05-31.md
   - ../modules/user-incentive-2026-05-31.md
   - ../plan/mvp-feature-design-2026-05-30.md
   - desktop-pet-app-window-linkage-protocol-2026-05-30.md
@@ -167,14 +168,30 @@ flowchart TD
 职责：
 
 - 统一管理真实宠物和纯电子宠物。
+- 统一管理 App 端可编辑 settings，包括宠物身份、主人称呼、Persona、Prompt 补充和语音偏好。
 - 维护状态机、任务、证据流、库存、推荐和记忆。
 - 给所有端和 agent tools 提供同一套 API。
 
 当前迁移方向：
 
 - 将 `src/domain/engine.ts` 中的规则抽离为共享服务。
+- 新增 settings/profile store 和 merged settings 纯函数；默认 `PetProfile` 和默认 Dog Persona 只作为初始值，不能继续被各端直接当作运行时真相。
 - API 层逐步承接业务计算，应用窗口只负责呈现和交互。
 - 所有 AI tools 只调用 Domain Service，不直接读写 UI 状态。
+
+### 3.1 Settings 与 Prompt 合成
+
+App 端编辑后的配置必须按以下顺序进入运行时：
+
+```text
+Default PetProfile + Default Dog Persona + User Overrides
+  -> Merged Settings
+  -> Runtime Snapshot / MCP / Prompt Adapter / TTS / Knowledge Base
+```
+
+Prompt 合成不能让用户完整覆盖底层系统 Prompt。不可编辑的底层边界包括工具调用规则、记忆规则、动作规则、工程词禁令和健康建议边界。用户可编辑内容只能作为 persona override、示例对话、禁忌表达和语音风格补充插入。
+
+实现顺序必须是：先 settings store 与 merged settings，再替换后端 runtime/MCP/知识库读取点，再替换前端 profile 来源，最后做“我的 -> 宠物资料/对话设置” UI。
 
 ### 4. Desktop Runtime
 
@@ -232,6 +249,9 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 
 - `get_pet_profile`
 - `update_pet_profile`
+- `get_pet_settings`
+- `update_pet_settings`
+- `update_pet_persona`
 - `create_virtual_pet`
 - `get_pet_state`
 - `apply_interaction_event`
@@ -264,6 +284,7 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 - `get_main_thread`：读取单宠物唯一主群聊。
 - `record_memory`：记录用户、宠物和事件记忆。
 - `reply_with_voice`：当前回合返回语音消息；当前实现优先用 Qwen TTS 合成，语音不是文字后处理。
+- `preview_persona_reply`：用当前 settings 生成测试回复，不写入主 thread，用于设置页验证。
 
 ### 商业与装扮
 
@@ -287,6 +308,8 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 - `InventoryItem`：库存、剩余天数、适用宠物、禁忌。
 - `ProductRecommendation`：触发原因、适配点、约束、替代项。
 - `ExpressionCommand`：桌宠说话、动作、状态、提醒。
+- `PetSettings`：App 端保存的宠物身份、主人称呼、Persona、Prompt 补充和语音偏好 override。
+- `MergedPetSettings`：由默认 profile/persona 与 `PetSettings` 合成的运行时配置，是 Agent、MCP、TTS、知识库和应用窗口共同读取的配置真相。
 
 ## 开发优先级
 
@@ -296,14 +319,16 @@ Agent 必须通过工具访问业务能力。当前建议工具集：
 2. 桌宠点击后弹出的应用窗口/功能面板。
 3. 成熟 Agent 接入业务 tools。
 4. 真实宠物数字分身和纯电子宠物共用的状态模型。
+5. App 端可编辑宠物资料、主人称呼、Persona 和 Prompt 补充，并能持久化同步到完整桌宠 App 链路。
 
 下一步优先开发：
 
-1. 把当前前端 domain 规则抽成可被 API 和 tools 复用的服务。
-2. 继续扩大 AI Pet MCP tools 的覆盖面；对话页 `/api/agent/chat` 主路径已经接入 OpenCode/opencode，OpenAI Agents SDK 路径仅保留为 fallback。
-3. 让桌宠成为可点击展开应用窗口的主入口，而不只是显示反馈。
-4. 明确商品推荐和换装模块的最小可运行闭环。
-5. 保持应用窗口 + 桌宠联动稳定，再扩展其他端口。
+1. 先实现 settings/profile store、merged settings 纯函数和 settings API。
+2. 替换后端 runtime、MCP、知识库、TTS 和主动事件里的静态 `petProfiles[0]` 读取点。
+3. 替换前端 App 的静态 profile 来源，再实现“我的 -> 宠物资料/对话设置” UI。
+4. 把当前前端 domain 规则抽成可被 API 和 tools 复用的服务。
+5. 继续扩大 AI Pet MCP tools 的覆盖面；对话页 `/api/agent/chat` 主路径已经接入 OpenCode/opencode，OpenAI Agents SDK 路径仅保留为 fallback。
+6. 保持应用窗口 + 桌宠联动稳定，再扩展其他端口。
 
 ## 被新架构接管的旧表述
 

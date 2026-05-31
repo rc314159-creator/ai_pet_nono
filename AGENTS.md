@@ -4,11 +4,25 @@
 
 必读顺序：
 
-1. `docs/INDEX.md`
+1. `docs/INDEX.md`（根级路由入口，只确认知识库边界、原始会议记录和参考素材位置）
 2. `ai-pet/docs/INDEX.md`
-3. `ai-pet/docs/product/product-spec-2026-05-30.md`
-4. `ai-pet/docs/architecture/technical-architecture-2026-05-30.md`
-5. `ai-pet/docs/modules/INDEX.md`
+3. `ai-pet/docs/architecture/product-logic-framework-2026-05-31.md`
+4. `ai-pet/docs/architecture/current-system-architecture-2026-05-30.md`
+5. `ai-pet/docs/product/product-spec-2026-05-30.md`
+6. `ai-pet/docs/architecture/technical-architecture-2026-05-30.md`
+7. `ai-pet/docs/modules/INDEX.md`
+
+知识库层级规则：
+
+- AI Pet 的产品、架构、模块、计划、修复记录和验证标准只以 `ai-pet/docs/` 为权威来源。
+- 根级 `docs/` 只保存会议原始材料、参考素材和轻量路由，不是第二套项目知识库。
+- 如果根级 `docs/` 与 `ai-pet/docs/` 对同一 AI Pet 事实冲突，以 `ai-pet/docs/` 中已批准 spec 为准，并修正根级入口。
+
+标准开发流程：
+
+1. 更新架构：针对本次修改点，先更新 `ai-pet/docs/` 中对应的架构、模块或产品 spec。不能只写问题记录；修复记录只记录历史问题和证据，架构文档必须写清修复后的当前系统真相。
+2. 制定开发计划：在 `ai-pet/docs/plan/` 写清楚具体实现步骤、端到端验证路径、预期证据、失败后的继续修复方式，并更新 `ai-pet/docs/INDEX.md`。
+3. 执行修复与验证：按计划实际改代码，然后做端到端验证。验证必须覆盖完整桌面 App 链路；如果失败，继续修改并重跑验证，不能只报告失败。
 
 当前已确认：
 
@@ -26,4 +40,4 @@
 - 电商和换装的落地由开发侧调研并执行。
 - 安全边界当前不作为产品讨论焦点。
 
-开发过程中如果产品结论、架构或模块边界变化，必须同步更新上述知识库文档。
+开发过程中如果产品结论、架构或模块边界变化，必须同步更新 `ai-pet/docs/` 中对应知识库文档。

@@ -1,6 +1,6 @@
 import { OpenAIProvider, Runner } from "@openai/agents";
 
-export type AgentGatewayProvider = "llmmelon" | "openai" | "local";
+export type AgentGatewayProvider = "llmmelon" | "aihubmix" | "yunwu" | "openai" | "local";
 
 export type AgentGatewayConfig = {
   provider: AgentGatewayProvider;
@@ -20,10 +20,40 @@ function getLlmmelonApiKey() {
   return process.env.LLMMELON_API_KEY || process.env.AI_PET_AGENT_API_KEY || "";
 }
 
+function getAiHubMixApiKey() {
+  return process.env.AIHUBMIX_API_KEY || process.env.AI_HUB_MIX_API_KEY || "";
+}
+
+function getYunwuApiKey() {
+  return process.env.YUNWU_API_KEY || "";
+}
+
 export function getAgentGatewayConfig(): AgentGatewayConfig {
   const explicitProvider = process.env.AI_PET_AGENT_PROVIDER?.trim().toLowerCase();
+  const aiHubMixApiKey = getAiHubMixApiKey();
+  const yunwuApiKey = getYunwuApiKey();
   const llmmelonApiKey = getLlmmelonApiKey();
   const openAiApiKey = getOpenAiApiKey();
+
+  if (explicitProvider === "aihubmix" && aiHubMixApiKey) {
+    return {
+      provider: "aihubmix",
+      configured: true,
+      apiKey: aiHubMixApiKey,
+      baseURL: process.env.AIHUBMIX_BASE_URL || process.env.AI_HUB_MIX_BASE_URL || "https://aihubmix.com/v1",
+      model: process.env.AI_PET_AGENT_MODEL || process.env.AIHUBMIX_MODEL || "claude-sonnet-4-6"
+    };
+  }
+
+  if (explicitProvider === "yunwu" && yunwuApiKey) {
+    return {
+      provider: "yunwu",
+      configured: true,
+      apiKey: yunwuApiKey,
+      baseURL: process.env.YUNWU_BASE_URL || "https://yunwu.ai/v1",
+      model: process.env.AI_PET_AGENT_MODEL || process.env.YUNWU_MODEL || "claude-sonnet-4-6"
+    };
+  }
 
   if (explicitProvider !== "openai" && llmmelonApiKey) {
     return {

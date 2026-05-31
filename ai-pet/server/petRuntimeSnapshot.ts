@@ -1,10 +1,12 @@
 import { computeVirtualState, currentPacket, latestDaily, planDailyTasks, recommendProducts } from "../src/domain/engine";
-import { dailySummaries, inventory, manualObservations, petProfiles, productCatalog, streamPackets } from "../src/domain/mockData";
+import { dailySummaries, inventory, manualObservations, productCatalog, streamPackets } from "../src/domain/mockData";
 import { mainThreadIdForPet } from "../src/domain/agent";
+import { getActivePetSettings } from "./settings";
 import type { AgentContextSnapshot } from "../src/domain/agent";
 
 export function buildPetRuntimeSnapshot(tick = Math.floor(Date.now() / 30_000)): AgentContextSnapshot {
-  const profile = petProfiles[0];
+  const settings = getActivePetSettings();
+  const profile = settings.merged.profile;
   const packet = currentPacket(streamPackets, tick);
   const latest = latestDaily(dailySummaries);
   const state = computeVirtualState(profile, dailySummaries, packet, {});
@@ -20,7 +22,8 @@ export function buildPetRuntimeSnapshot(tick = Math.floor(Date.now() / 30_000)):
     inventory,
     manualObservations,
     productRecommendations,
-    mainThreadId: mainThreadIdForPet(profile)
+    mainThreadId: mainThreadIdForPet(profile),
+    settings: settings.merged.runtime
   };
 }
 
@@ -40,6 +43,7 @@ export function compactPetSnapshot(snapshot: AgentContextSnapshot) {
       personality: snapshot.profile.personality,
       appearance: snapshot.profile.appearance
     },
+    settings: snapshot.settings,
     state: snapshot.state,
     latestDailySummary: snapshot.latestDailySummary,
     currentDevicePacket: snapshot.currentDevicePacket,

@@ -130,8 +130,7 @@ async function init() {
     requestAnimationFrame(tick);
   } catch (error) {
     console.error(error);
-    speech.textContent = "找不到动作帧素材。";
-    speech.classList.add("visible");
+    renderSpeechBubble("找不到动作帧素材。");
   }
 }
 
@@ -210,8 +209,7 @@ function setMotion(motionId, now = performance.now()) {
   stage.className = `mode-${motionId}`;
   const activeBubble = getActiveSharedBubbleText(now);
   if (activeBubble) {
-    speech.textContent = activeBubble;
-    replaySpeechBubble();
+    renderSpeechBubble(activeBubble);
   }
   warmCurrentAccessoryMotion();
   drawCurrentFrame();
@@ -325,7 +323,32 @@ function frameUrl(framePath) {
   return new URL(framePath, assetRootUrl).href;
 }
 
+function hasExternalBubbleRenderer() {
+  return typeof window.desktopPhotoPet?.showSpeechBubble === "function";
+}
+
+function renderSpeechBubble(text) {
+  if (!text) return;
+  if (hasExternalBubbleRenderer()) {
+    window.desktopPhotoPet.showSpeechBubble({ text });
+    return;
+  }
+  if (!speech) return;
+  speech.textContent = text;
+  replaySpeechBubble();
+}
+
+function clearRenderedSpeechBubble() {
+  if (typeof window.desktopPhotoPet?.hideSpeechBubble === "function") {
+    window.desktopPhotoPet.hideSpeechBubble();
+  }
+  if (!speech) return;
+  speech.classList.remove("visible");
+  speech.textContent = "";
+}
+
 function replaySpeechBubble() {
+  if (!speech) return;
   speech.classList.remove("visible");
   window.requestAnimationFrame(() => speech.classList.add("visible"));
 }
@@ -355,16 +378,14 @@ function showSpeechBubbleOnce(displayKey, text) {
   }
   sharedBubbleText = text;
   sharedBubbleHoldUntil = performance.now() + sharedBubbleHoldMs;
-  speech.textContent = text;
-  replaySpeechBubble();
+  renderSpeechBubble(text);
   sharedBubbleHideTimer = window.setTimeout(hideSharedThreadBubble, sharedBubbleHoldMs);
 }
 
 function hideSharedThreadBubble() {
   sharedBubbleText = "";
   sharedBubbleHoldUntil = 0;
-  speech.classList.remove("visible");
-  speech.textContent = "";
+  clearRenderedSpeechBubble();
   if (sharedBubbleHideTimer) {
     window.clearTimeout(sharedBubbleHideTimer);
     sharedBubbleHideTimer = undefined;

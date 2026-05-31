@@ -1,10 +1,10 @@
 ---
 title: AI Pet 对话页 Agent 群聊模块
-description: 记录对话页作为单宠物唯一长期主群聊的产品机制、OpenCode/opencode + MCP 主运行路径、LLM Melon 对话模型、PetProfile 可见身份、Qwen TTS、memory 和工具调用边界。
+description: 记录对话页作为单宠物唯一长期主群聊的产品机制、OpenCode/opencode + MCP 主运行路径、LLM Melon 对话模型、PetProfile 可见身份、Qwen TTS、memory、工具调用和安装版 E2E 边界。
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 补充用户消息发送幂等机制，修复乐观消息与服务端历史回流导致同一主人消息重复展示的问题。
+update_reason: 补充安装版 E2E 结论、MCP runner 打包要求和当前可用 llmmelon/deepseek-chat 模型配置。
 doc_type: module-spec
 domain_taxa:
   - agent-runtime
@@ -17,6 +17,7 @@ related:
   - ../architecture/product-logic-framework-2026-05-31.md
   - ../product/product-spec-2026-05-30.md
   - ../architecture/technical-architecture-2026-05-30.md
+  - pet-settings-and-persona-2026-05-31.md
   - ../plan/parallel-development-workstreams-2026-05-30.md
   - ../fix-records/2026-05-30-agent-chat-design-misalignment.md
   - ../fix-records/2026-05-30-agent-chat-runtime-and-persona-not-working.md
@@ -37,12 +38,19 @@ related:
 - 主 Agent runtime：OpenCode/opencode runtime + `ai_pet` MCP tools。
 - Agent 模型网关：优先使用 llmmelon OpenAI-compatible Chat Completions。
 - 语音工具：优先使用阿里云百炼 `qwen-voice-design` 创建宠物角色音色，再用 `qwen3-tts-vd-2026-01-26` 合成语音。
-- 群聊动物/宠物可见身份：从当前 `PetProfile.displayName` 和 `PetProfile.avatar.profileImageUrl` 读取；当前 Demo 显示为“旺财”。
+- 群聊动物/宠物可见身份：从当前 merged `PetProfile.displayName` 和 `PetProfile.avatar.profileImageUrl` 读取；当前默认显示为“旺财”，但 App 端设置保存后必须立即影响新群名、新消息作者、Agent prompt、TTS 和 MCP profile。
 - 主 thread：一个宠物只有一个主群聊，例如 `pet_mochi_main`。
 - 长期存储：Demo 阶段使用 `server/threadStore.ts` 写入 `.ai-pet-data/thread-store.json`；测试可通过 `AI_PET_THREAD_STORE_FILE` 指向独立文件。
 - 输出模式：用户要求文字就返回文字消息；用户要求语音就返回语音消息。语音是 Agent 工具/输出模式，不是文字消息的固定后处理。
 
 当前代码中已有的 OpenAI Agents SDK 接入只能作为 fallback/对照路径。OpenCode/opencode + MCP 是对话页主运行路径；Qwen API key 只用于语音，不能作为聊天模型 provider。
+
+本地 persona rule engine 只能作为最后安全垫：
+
+- 它不能承担主聊天体验，也不能把“早上吃了多少、肚皮痒、库存剩余”等照护摘要作为默认回复。
+- 如果用户问的是本机可直接回答的确定性问题，例如“现在几点了”，本地 fallback 要回答问题本身。
+- 如果用户问的是需要 Agent 理解的问题，而 Agent runtime 失败，本地 fallback 要用宠物语气温和接住，不讲工程词，不插入无关数据。
+- 调试和验证时必须检查 `provider`，不能只看聊天框里有宠物气泡就判定 Agent 成功。
 
 ## 模型与语音供应商
 
@@ -50,9 +58,9 @@ related:
 
 - `AI_PET_AGENT_PROVIDER=llmmelon`
 - `AI_PET_OPENCODE_PROVIDER=llmmelon`
-- `AI_PET_OPENCODE_MODEL=claude-sonnet-4-6`
+- `AI_PET_OPENCODE_MODEL=deepseek-chat`
 - `LLMMELON_BASE_URL=https://llmmelon.cloud/v1`
-- `LLMMELON_MODEL=claude-sonnet-4-6`
+- `LLMMELON_MODEL=deepseek-chat`
 - `VITE_AI_PET_API_BASE_URL=http://127.0.0.1:8788`
 - `AI_PET_TTS_PROVIDER=qwen`
 - `AI_PET_QWEN_VOICE_DESIGN_MODEL=qwen-voice-design`
@@ -61,15 +69,20 @@ related:
 实现要求：
 
 - llmmelon 走 OpenAI-compatible Chat Completions，不走 OpenAI Responses API。2026-05-30 实测 `claude-sonnet-4-6` 和 `claude-opus-4-6` 在 llmmelon `/v1/models` 存在，且 OpenAI-compatible `/chat/completions` 与 Anthropic-compatible `/messages` 均可返回 `pong`。
-- 对话模型默认 `claude-sonnet-4-6`；需要更高能力时可切 `claude-opus-4-6`。
+- 当前安装版对话模型默认 `deepseek-chat`，因为 2026-05-31 E2E 中 llmmelon 的 Claude 系列返回 quota 不足，而 `deepseek-chat` 可稳定返回。需要更高能力时可切 `claude-sonnet-4-6` 或 `claude-opus-4-6`，但必须先用真实安装版 E2E 验证额度和延迟。
 - 应用窗口运行在 Vite dev server 时可以使用 `/api` 代理；运行在 Electron `file://dist/index.html` 时，前端必须用 `VITE_AI_PET_API_BASE_URL` 或默认 `http://127.0.0.1:8788` 调用 API，不能直接 `fetch("/api/...")`。
 - 百炼 Qwen TTS 的 `qwen3-tts-vd-2026-01-26` 需要自定义音色；如果已有 `AI_PET_QWEN_TTS_VOICE` 则直接使用，没有则可通过 `qwen-voice-design` 创建当前宠物 Demo 音色并在进程内缓存。
 - Qwen/千问 key 只用于语音/TTS 链路，不能配置为 OpenCode 对话 provider。
 - 真实 API key 只放本地环境变量或本机私有配置，不写入仓库文档、源码或示例配置。
+- 打包应用必须把 `opencode.json` 和 `.opencode/prompts/**` 作为外部可读资源打进 `Resources`，并在启动时把 `AI_PET_OPENCODE_PROJECT_ROOT` 指向该资源目录。
+- 打包应用必须把 `scripts/run-mcp.cjs` 和 `build/server/mcp.cjs` 也作为外部可读资源打进 `Resources`；OpenCode MCP 命令使用 `node scripts/run-mcp.cjs`，不能使用源码期 `npm run mcp:ai-pet`。
+- 打包应用必须补充 Homebrew CLI 路径，确保 Finder/LaunchServices 启动时仍能找到 `opencode`；也允许 `AI_PET_OPENCODE_BIN` 显式指定 CLI。
+- 当 `AI_PET_AGENT_RUNTIME=opencode` 且 OpenCode 不可用时，状态接口和 chat 结果必须暴露 opencode 不可用的 warning/detail，不能悄悄切到 SDK fallback。
+- 端到端验收必须以 `/Applications/AI Pet Demo.app` 为最终对象：检查进程路径、`/api/agent/status` provider/model/projectRoot、真实 `/api/agent/chat` provider、窗口内实际发送消息、桌宠气泡截图。只验证源码函数、dev server 或 release 目录不算交付。
 
 ## 角色提示词口径
 
-对话页系统提示词必须服务“宠物本人在长期主群聊里陪主人说话”，不能写成后台工具说明。
+对话页系统提示词必须服务“宠物本人在长期主群聊里陪主人说话”，不能写成后台工具说明。系统提示词的运行时输入必须来自 merged settings，而不是静态 `petProfiles[0]` 或只存在前端 state 的表单值。
 
 Dog Persona 是可见表达层，不是后台 Agent Runtime 本身。Agent Runtime 可以读取数据、接 timer tick、接 domain hook、调用工具和判断风险；Dog Persona 只负责把最终要给用户看的 `ThreadMessage.text` 写成狗狗伙伴的口吻。
 
@@ -140,10 +153,17 @@ Dog Persona 是可见表达层，不是后台 Agent Runtime 本身。Agent Runti
 
 Demo 群聊：
 
-- 群名：`${PetProfile.displayName}家庭群`，当前为 `旺财家庭群`。
-- 固定动物角色：当前宠物的可见显示身份，名字和头像与“我的”页引用同一份 `PetProfile` 数据。
-- 默认用户角色：`主人`。
+- 群名：默认 `${PetProfile.displayName}家庭群`，允许 settings 中的 `groupNameOverride` 覆盖。
+- 固定动物角色：当前宠物的可见显示身份，名字和头像与“我的”页引用同一份 merged `PetProfile` 数据。
+- 默认用户角色：`主人`，允许 settings 中的 `ownerDisplayName` 覆盖。
 - 未来可扩展成员：家人、代遛人、医生、第二只宠物或系统服务。
+
+修改身份后的历史策略：
+
+- 已写入 thread store 的历史消息保留当时 `authorName`。
+- 新用户消息使用当前 `ownerDisplayName`。
+- 新宠物消息使用当前 `PetProfile.displayName` 或 persona displayName。
+- 如果 settings 发生变化，知识库应记录“资料已更新”事件，解释历史名称和当前名称的连续性。
 
 工具调用不是群成员。工具结果可以呈现为语音卡片、商品推荐卡片或记忆卡片，但不能伪装成另一个聊天人格。`request_pet_motion` 的结果默认只驱动桌宠动作和顶部宠物形象，不在聊天流里显示“桌宠动作”气泡。
 

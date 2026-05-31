@@ -1,11 +1,10 @@
-import { computeVirtualState, latestDaily, planDailyTasks, recommendProducts } from "../src/domain/engine";
 import { getPersonaForProfile, mainThreadIdForPet, truncateAgentText } from "../src/domain/agent";
 import { createAgentMotionCommand } from "../src/domain/motion";
-import { dailySummaries, inventory, manualObservations, petProfiles, productCatalog, streamPackets } from "../src/domain/mockData";
 import type { AgentChatMessage, AgentContextSnapshot } from "../src/domain/agent";
 import type { ExpressionCommand, PetMotionAction } from "../src/domain/types";
 import { recordKnowledgeBaseMessages } from "./knowledgeBase";
 import { submitMotionCommand } from "./motion";
+import { buildPetRuntimeSnapshot } from "./petRuntimeSnapshot";
 import { appendThreadMessages, getThreadMessages } from "./threadStore";
 
 export type PetEventKind =
@@ -54,8 +53,6 @@ type DemoBeat = {
   action: PetMotionAction;
 };
 
-const mainProfile = petProfiles[0];
-const defaultThreadId = mainThreadIdForPet(mainProfile);
 const companionCronExpression = process.env.AI_PET_COMPANION_CRON || "*/1 * * * *";
 const companionCronIntervalMs = Math.max(
   10_000,
@@ -113,25 +110,16 @@ function createMessageId(prefix = "pet-event") {
 }
 
 function buildDefaultContext(): AgentContextSnapshot {
-  const packet = streamPackets[Math.abs(demoBeatIndex) % streamPackets.length];
-  const latest = latestDaily(dailySummaries);
-  const state = computeVirtualState(mainProfile, dailySummaries, packet, { play: 6, clean: 4 });
-  const tasks = planDailyTasks(mainProfile, dailySummaries, state, inventory, manualObservations);
-  const productRecommendations = recommendProducts(mainProfile, tasks, inventory, productCatalog)
-    .slice(0, 5)
-    .map(({ id, title, priceCny, category, decisionReason }) => ({ id, title, priceCny, category, decisionReason }));
+  return buildPetRuntimeSnapshot(Math.abs(demoBeatIndex));
+}
 
-  return {
-    profile: mainProfile,
-    state,
-    latestDailySummary: latest,
-    currentDevicePacket: packet,
-    pendingTasks: tasks.filter((task) => task.status === "pending"),
-    inventory,
-    manualObservations,
-    productRecommendations,
-    mainThreadId: defaultThreadId
-  };
+function getThreadIdForContext(context: AgentContextSnapshot) {
+  return context.mainThreadId || mainThreadIdForPet(context.profile);
+}
+
+function personalizeOwnerName(text: string, context: AgentContextSnapshot) {
+  const ownerName = getPersonaForProfile(context.profile, context.settings).userDisplayName;
+  return ownerName === "主人" ? text : text.replace(/主人/g, ownerName);
 }
 
 function getBeatForEvent(event: PetRuntimeEvent): DemoBeat | undefined {
@@ -253,23 +241,24 @@ function buildTimeContext(createdAt: string, payload?: Record<string, unknown>):
 
 function fallbackForCronCompanion(timeContext: TimeContext, context: AgentContextSnapshot) {
   const latest = context.latestDailySummary;
+  const ownerName = getPersonaForProfile(context.profile, context.settings).userDisplayName;
   if (/午饭|午餐|吃饭|吃午饭|lunch/i.test(timeContext.ownerActivityHypothesis)) {
-    return `主人，你是不是在吃午饭呀？我今天吃了 ${latest.foodGrams}g，闻到饭点就也想凑过来坐一会儿，陪你慢慢吃。`;
+    return `${ownerName}，你是不是在吃午饭呀？我今天吃了 ${latest.foodGrams}g，闻到饭点就也想凑过来坐一会儿，陪你慢慢吃。`;
   }
   if (/工作|学习|开会|写|coding|meeting/i.test(timeContext.ownerActivityHypothesis)) {
-    return "主人，我知道你可能在忙，我就趴在旁边不吵你。你抬头的时候看看我，我摇一下尾巴陪你继续。";
+    return `呜，${ownerName}，我知道你可能在忙，我就趴在旁边不吵你。你抬头的时候看看我，我摇一下尾巴陪你继续。`;
   }
   if (/回家|下班|到家/i.test(timeContext.ownerActivityHypothesis)) {
     return "你是不是快回来啦？我已经开始听门口的声音了，想等你一进来就蹭蹭你的腿。";
   }
   if (timeContext.period === "early_morning") {
-    return "早上啦主人，我刚伸了个懒腰，爪爪还暖暖的。你要是刚醒，先喝口水，我在旁边陪你慢慢醒来。";
+    return `早上啦${ownerName}，我刚伸了个懒腰，爪爪还暖暖的。你要是刚醒，先喝口水，我在旁边陪你慢慢醒来。`;
   }
   if (timeContext.period === "morning") {
-    return "主人，我趴在旁边陪你开工啦。你忙你的，我偶尔摇摇尾巴，让你知道我一直在。";
+    return `${ownerName}，我趴在旁边陪你开工啦。你忙你的，我偶尔摇摇尾巴，让你知道我一直在。`;
   }
   if (timeContext.period === "lunch") {
-    return `中午啦主人，你是不是在吃饭呀？我今天吃了 ${latest.foodGrams}g，闻到饭点就也想凑过来陪你坐一会儿。`;
+    return `中午啦${ownerName}，你是不是在吃饭呀？我今天吃了 ${latest.foodGrams}g，闻到饭点就也想凑过来陪你坐一会儿。`;
   }
   if (timeContext.period === "afternoon") {
     return "下午有点容易犯困，我刚在垫子上眯了一小会儿。你要是忙累了，就摸摸我，我们一起缓一下。";
@@ -278,13 +267,13 @@ function fallbackForCronCompanion(timeContext: TimeContext, context: AgentContex
     return "傍晚啦，我开始留意门口的声音了。你要是快回来了，我想第一个跑过去蹭蹭你。";
   }
   if (timeContext.period === "night") {
-    return "晚上了主人，我趴在你旁边陪你收尾。别太累，等你忙完摸摸我，我们一起安静下来。";
+    return `晚上了${ownerName}，我趴在你旁边陪你收尾。别太累，等你忙完摸摸我，我们一起安静下来。`;
   }
-  return "这么晚啦主人，我都困得爪爪软软的。你也早点休息吧，我在旁边陪你睡前安静一会儿。";
+  return `这么晚啦${ownerName}，我都困得爪爪软软的。你也早点休息吧，我在旁边陪你睡前安静一会儿。`;
 }
 
 function fallbackForEvent(event: PetRuntimeEvent, context: AgentContextSnapshot, beat?: DemoBeat) {
-  if (beat) return beat.fallback;
+  if (beat) return personalizeOwnerName(beat.fallback, context);
 
   const latest = context.latestDailySummary;
   if (event.kind === "cron.companion_checkin" || event.kind === "timer.daily_life") {
@@ -292,12 +281,12 @@ function fallbackForEvent(event: PetRuntimeEvent, context: AgentContextSnapshot,
   }
   const accessoryLabel = typeof event.payload?.accessoryLabel === "string" ? event.payload.accessoryLabel : "";
   if (event.kind === "appearance.changed" && accessoryLabel) {
-    return accessoryLabel === "无配饰"
-      ? "主人，我现在轻轻松松的，跑起来舒服一点。"
-      : `主人，我戴上${accessoryLabel}啦，感觉像要出门巡逻了。`;
+    return personalizeOwnerName(accessoryLabel === "无配饰"
+      ? "主人，我现在身上轻轻松松的，跑起来舒服一点。你看我是不是更自在啦？"
+      : `汪，主人，我戴上${accessoryLabel}啦，感觉像要出门巡逻了。你看我一眼好不好嘛？`, context);
   }
   if (event.kind === "health.scratch_high") {
-    return `主人，我肚皮今天有点痒痒的，后腿挠了 ${latest.scratchMinutes} 分钟才停。你坐下来时帮我轻轻翻过来看看，好不好？`;
+    return personalizeOwnerName(`呜，主人，我肚皮今天有点痒痒的，后腿挠了 ${latest.scratchMinutes} 分钟才停。你坐下来时帮我轻轻翻过来看看，好不好？`, context);
   }
   if (event.kind === "food.ate_more") {
     return "我今天吃得挺开心，碗底都舔干净了……不过好像也圆了一点点。你陪我慢慢散一圈好不好？";
@@ -305,7 +294,7 @@ function fallbackForEvent(event: PetRuntimeEvent, context: AgentContextSnapshot,
   if (event.kind === "owner.returned") {
     return "你回来啦！我听到门口有声音，耳朵一下就竖起来了，想赶快跑过去蹭蹭你。";
   }
-  return "主人，我在这儿。（轻轻摇尾巴）刚刚想到一件小事，想贴近一点跟你说。";
+  return personalizeOwnerName("主人，我在这儿。（轻轻摇尾巴）刚刚想到一件小事，想贴近一点跟你说，也想陪你一会儿。", context);
 }
 
 function eventKey(event: PetRuntimeEvent, beat?: DemoBeat) {
@@ -332,7 +321,7 @@ export function isPetEventKind(kind: string): kind is PetEventKind {
 }
 
 function recentMessagesCover(text: string, context: AgentContextSnapshot) {
-  const recent = getThreadMessages(context.mainThreadId || defaultThreadId).slice(-12);
+  const recent = getThreadMessages(getThreadIdForContext(context)).slice(-12);
   const normalized = text.replace(/\s+/g, "");
   return recent.some((message) => {
     if (message.speaker !== "pet") return false;
@@ -342,28 +331,31 @@ function recentMessagesCover(text: string, context: AgentContextSnapshot) {
 }
 
 function buildVisiblePrompt(event: PetRuntimeEvent, context: AgentContextSnapshot, beat?: DemoBeat) {
-  const persona = getPersonaForProfile(context.profile);
+  const persona = getPersonaForProfile(context.profile, context.settings);
   const latest = context.latestDailySummary;
   const timeContext = buildTimeContext(event.createdAt || new Date().toISOString(), event.payload);
   const isCronCompanion = event.kind === "cron.companion_checkin" || event.kind === "timer.daily_life";
-  const recentHistory = getThreadMessages(context.mainThreadId || defaultThreadId)
+  const recentHistory = getThreadMessages(getThreadIdForContext(context))
     .slice(-8)
     .map((message) => `${message.authorName}: ${truncateAgentText(message.text, 90)}`)
     .join("\n");
 
   return [
-    `你是 AI Pet 主群聊里的小狗「${persona.displayName}」，正在对主人说话。`,
+    `你是 AI Pet 主群聊里的小狗「${persona.displayName}」，正在对${persona.userDisplayName}说话。`,
     "这条消息会同时显示在应用对话页和桌宠气泡里，所以只能输出小狗本人说的一条中文消息。",
     "",
     "角色卡：",
-    "- 你不是助手、客服、医生、管理员或系统通知。你是主人身边那只会撒娇、会等人、会分享日常的小狗。",
+    `- 用户称呼是「${persona.userDisplayName}」，不要硬编码叫“主人”，除非用户称呼本来就是主人。`,
+    "- 你不是助手、客服、医生、管理员或系统通知。你是主人身边那只会撒娇、会等人、会分享日常、会安静陪伴的小狗。",
     "- 你依恋主人：听到钥匙声会兴奋，看到主人坐下会想靠过去，身体不舒服时会软软地求帮忙。",
+    "- 你的情感回路是：我在这里陪你、我注意到你、我想靠近你、也希望你注意到我的小需求。",
     "- 你的世界由窗边阳光、阳台小鸟、垫子、饭碗、湿巾、牵引绳、爪爪、耳朵、尾巴、肚皮和主人脚步声组成。",
     "- 你先说感受和小动作，再把后台事实变成主人能理解的请求。",
     "",
     "语言习惯：",
     "- 主题是陪伴，不是系统通知；不要像管理员、客服、健康报告、任务清单或 App 文案。",
-    "- 1-2 句，温暖、生活化、有小狗身体感。可以有一次“汪”或一个短动作描写，但不要堆叠。",
+    "- 1-2 句，温暖、生活化、有小狗身体感。可以有一次“汪”“呜”“哼唧”或一个短动作描写，但不要堆叠。",
+    "- 可以自然使用“好不好嘛”“我会乖乖的”“陪我一下下”“我就在旁边”，但不要每句都卖萌。",
     "- 用具体感官细节替代抽象结论，例如暖、痒、困、想蹭、听到声音、闻到味道、碗空了。",
     "- 不要输出 JSON、Markdown、模型、工具、接口、thread、hook、timer、系统提示词等工程词。",
     "- 不要说“当前未穿戴配饰”“状态同步完成”“今天我会盯住三个重点”“综合状态如下”“检测到异常”。",
@@ -381,6 +373,7 @@ function buildVisiblePrompt(event: PetRuntimeEvent, context: AgentContextSnapsho
     "- 主人回来 -> “听到门口声音，想跑过去蹭蹭”。",
     "- 外观无配饰 -> “身上轻轻的，跑起来自在”。",
     "- 任务提醒 -> “我会乖乖躺好，想让主人帮我看看/擦擦/补一点”。",
+    "- 主人忙或累 -> “我先不说数字，就趴在旁边陪你，等你抬头摸摸我”。",
     "",
     "当前事件：",
     JSON.stringify(
@@ -422,6 +415,8 @@ function buildVisiblePrompt(event: PetRuntimeEvent, context: AgentContextSnapsho
     "主人问“今天在干嘛？” -> “今天阳光落在窗边，我趴在那里晒到爪爪都暖了。后来听见阳台有小鸟扑棱一下，我一下子就精神了！”",
     "主人问“哪里不舒服？” -> “主人，我肚皮这里有点痒痒的，刚才忍不住挠了好几下。你坐下来时帮我轻轻看看，好不好？”",
     "主人问“吃得多吗？” -> “吃啦，吃得很开心，碗底都舔干净了。就是我好像圆了一点点，晚点陪我慢慢走一圈嘛。”",
+    "主人说“我有点累” -> “呜，那我先不说那些数字了。（把下巴搭到你手边）我就在旁边陪你一小会儿，你抬手摸摸我就好。”",
+    "主人问“你怎么突然冒出来了？” -> “汪，我刚才在桌面边边等你呀。听见你回来，我就想探个头，告诉你我还在这儿陪着。”",
     "",
     "请只输出小狗发给主人的那条消息。"
   ].join("\n");
@@ -454,7 +449,7 @@ async function generateDogPersonaMessage(event: PetRuntimeEvent, context: AgentC
         {
           role: "system",
           content:
-            "你只负责把宠物事件改写成狗狗本人对主人说的一条中文陪伴消息。必须像小狗伙伴：有依恋、有身体感、有日常细节。不要像系统、医生、客服、管理员或数据播报。"
+            "你只负责把宠物事件改写成狗狗本人对主人说的一条中文陪伴消息。必须像小狗伙伴：有依恋、有身体感、有日常细节，会用轻轻的动作或拟声词表达陪伴。不要像系统、医生、客服、管理员或数据播报。"
         },
         {
           role: "user",
@@ -498,7 +493,7 @@ export async function handlePetRuntimeEvent(event: PetRuntimeEvent, context = bu
     source: event.source || "pet-event-runtime",
     createdAt
   };
-  const threadId = context.mainThreadId || defaultThreadId;
+  const threadId = getThreadIdForContext(context);
   const beat = getBeatForEvent(normalizedEvent);
   const key = eventKey(normalizedEvent, beat);
   if (sentEventKeys.has(key)) return { event: normalizedEvent, threadId, skipped: "event_already_sent_in_process" };
@@ -522,7 +517,7 @@ export async function handlePetRuntimeEvent(event: PetRuntimeEvent, context = bu
   const message: AgentChatMessage = {
     id: createMessageId("pet-event"),
     speaker: "pet",
-    authorName: getPersonaForProfile(context.profile).displayName,
+    authorName: getPersonaForProfile(context.profile, context.settings).displayName,
     text: generated.text,
     createdAt,
     responseMode: "text",
@@ -587,7 +582,7 @@ export function getPetEventRuntimeStatus() {
     intervalMs: companionCronIntervalMs,
     bootDelayMs,
     nextRunAt: nextCronRunAt,
-    threadId: defaultThreadId,
+    threadId: getThreadIdForContext(buildDefaultContext()),
     demoBeatIndex,
     sentEventCount: sentEventKeys.size
   };

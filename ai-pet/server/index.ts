@@ -12,7 +12,17 @@ import {
 } from "./knowledgeBase";
 import { getMotionSnapshot, submitAgentMotion, submitBraceletMirror, submitMotionCommand, submitRandomMotion } from "./motion";
 import { getPetEventRuntimeStatus, handlePetRuntimeEvent, isPetEventKind, startPetEventRuntime, type PetEventKind } from "./petEventRuntime";
+import {
+  getActivePetPersona,
+  getActivePetProfile,
+  getActivePetSettings,
+  resetSettings,
+  updatePersonaSettings,
+  updateProfileSettings,
+  updateVoiceSettings
+} from "./settings";
 import { appendThreadMessages, getLatestPetThreadMessage, getThreadMemories, getThreadMessages, replaceThreadMemories } from "./threadStore";
+import { mainThreadIdForPet } from "../src/domain/agent";
 import type { AgentChatMessage } from "../src/domain/agent";
 import type { ExpressionCommand, PetMotionAction, StreamPacket, VirtualPetState } from "../src/domain/types";
 
@@ -54,16 +64,19 @@ function localAnswer(question: string) {
 }
 
 app.get("/api/health", (_req, res) => {
+  const persona = getActivePetPersona();
   res.json({
     ok: true,
     llm: process.env.LLMMELON_API_KEY ? "llmmelon-configured" : "local-fallback",
     model: process.env.LLMMELON_API_KEY ? llmModel : "rule-engine",
     desktopPet: desktopRuntime,
-    desktopPetDisplayName: "旺财"
+    desktopPetDisplayName: persona.displayName
   });
 });
 
 app.get("/api/desktop-pet/status", (_req, res) => {
+  const profile = getActivePetProfile();
+  const persona = getActivePetPersona();
   res.json({
     configured: true,
     connected: true,
@@ -72,11 +85,106 @@ app.get("/api/desktop-pet/status", (_req, res) => {
     defaultPetVisible: true,
     speechBubblesEnabled: true,
     defaultPet: {
-      id: "pet_mochi",
-      displayName: "旺财",
+      id: profile.id,
+      displayName: persona.displayName,
       builtIn: false
     }
   });
+});
+
+app.get("/api/settings", (_req, res) => {
+  res.json(getActivePetSettings());
+});
+
+app.patch("/api/settings", (req, res) => {
+  try {
+    if (req.body?.profile && typeof req.body.profile === "object") updateProfileSettings({ ...req.body.profile, _replace: true });
+    if (req.body?.persona && typeof req.body.persona === "object") updatePersonaSettings({ ...req.body.persona, _replace: true });
+    const snapshot =
+      req.body?.voice && typeof req.body.voice === "object"
+        ? updateVoiceSettings({ ...req.body.voice, _replace: true })
+        : getActivePetSettings();
+    recordKnowledgeBaseEvent({
+      kind: "settings_updated",
+      source: "settings-api",
+      title: "宠物设置已保存",
+      detail: "App 端保存了宠物资料、人格和声音设置，后续桌宠、群聊、Agent、MCP 和知识库统一使用合并后的设置。"
+    });
+    res.json(snapshot);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.patch("/api/settings/profile", (req, res) => {
+  try {
+    const snapshot = updateProfileSettings(req.body);
+    recordKnowledgeBaseEvent({
+      kind: "settings_updated",
+      source: "settings-api",
+      title: "宠物资料设置已保存",
+      detail: "App 端保存了宠物资料设置，后续桌宠、群聊、Agent 和知识库统一使用合并后的设置。"
+    });
+    res.json(snapshot);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.patch("/api/settings/persona", (req, res) => {
+  try {
+    const snapshot = updatePersonaSettings(req.body);
+    recordKnowledgeBaseEvent({
+      kind: "settings_updated",
+      source: "settings-api",
+      title: "宠物人格设置已保存",
+      detail: "App 端保存了宠物人格与系统提示补充，后续 Agent 组装提示词时会使用这份设置。"
+    });
+    res.json(snapshot);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.patch("/api/settings/voice", (req, res) => {
+  try {
+    const snapshot = updateVoiceSettings(req.body);
+    recordKnowledgeBaseEvent({
+      kind: "settings_updated",
+      source: "settings-api",
+      title: "宠物声音设置已保存",
+      detail: "App 端保存了宠物声音补充设置，后续语音回复会读取合并后的声音设定。"
+    });
+    res.json(snapshot);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post("/api/settings/reset", (req, res) => {
+  try {
+    const section = req.body?.section === "profile" || req.body?.section === "persona" || req.body?.section === "voice" || req.body?.section === "all" ? req.body.section : "all";
+    const snapshot = resetSettings(section);
+    recordKnowledgeBaseEvent({
+      kind: "settings_updated",
+      source: "settings-api",
+      title: "宠物设置已重置",
+      detail: section === "all" ? "App 端重置了全部宠物设置。" : `App 端重置了 ${section} 设置。`
+    });
+    res.json(snapshot);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
 });
 
 app.get("/api/desktop-pet/motion", (_req, res) => {
@@ -157,16 +265,19 @@ app.post("/api/desktop-pet/say", async (req, res) => {
   }
 
   const now = new Date().toISOString();
+  const profile = getActivePetProfile();
+  const persona = getActivePetPersona();
+  const threadId = mainThreadIdForPet(profile);
   const petMessage: AgentChatMessage = {
     id: `desktop_pet_say_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     speaker: "pet",
-    authorName: "旺财",
+    authorName: persona.displayName,
     text: message,
     createdAt: now,
     provider: "desktop/photo-pet"
   };
-  appendThreadMessages("pet_mochi_main", [petMessage]);
-  recordKnowledgeBaseMessages("pet_mochi_main", [petMessage]);
+  appendThreadMessages(threadId, [petMessage]);
+  recordKnowledgeBaseMessages(threadId, [petMessage]);
   res.json({
     ok: true,
     runtime: desktopRuntime,
@@ -180,7 +291,8 @@ app.post("/api/desktop-pet/say", async (req, res) => {
 });
 
 app.get("/api/desktop-pet/bubble", (req, res) => {
-  const threadId = String(req.query.threadId || "pet_mochi_main").trim() || "pet_mochi_main";
+  const defaultThreadId = mainThreadIdForPet(getActivePetProfile());
+  const threadId = String(req.query.threadId || defaultThreadId).trim() || defaultThreadId;
   const message = getLatestPetThreadMessage(threadId);
   if (!message) {
     res.json({
@@ -350,7 +462,10 @@ app.post("/api/agent/threads/:threadId/proactive", (req, res) => {
 
 app.post("/api/agent/chat", async (req, res) => {
   try {
-    const requestedThreadId = String(req.body?.threadId || req.body?.context?.mainThreadId || "pet_mochi_main").trim() || "pet_mochi_main";
+    const activeSettings = getActivePetSettings();
+    const activePersona = getActivePetPersona();
+    const defaultThreadId = mainThreadIdForPet(activeSettings.merged.profile);
+    const requestedThreadId = String(req.body?.threadId || req.body?.context?.mainThreadId || defaultThreadId).trim() || defaultThreadId;
     const clientMessageId =
       typeof req.body?.clientMessageId === "string" && req.body.clientMessageId.trim()
         ? req.body.clientMessageId.trim().slice(0, 160)
@@ -389,7 +504,7 @@ app.post("/api/agent/chat", async (req, res) => {
     const userMessage: AgentChatMessage = {
       id: clientMessageId,
       speaker: "user",
-      authorName: "主人",
+      authorName: activePersona.userDisplayName,
       text: String(req.body?.input || "").trim(),
       createdAt: clientCreatedAt,
       clientTurnId,

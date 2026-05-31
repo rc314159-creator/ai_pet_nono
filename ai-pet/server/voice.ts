@@ -176,7 +176,7 @@ async function resolveQwenVoice(apiKey: string, model: string) {
 }
 
 async function synthesizeWithQwen(text: string, context: AgentContextSnapshot): Promise<VoiceResult> {
-  const persona = getPersonaForProfile(context.profile);
+  const persona = getPersonaForProfile(context.profile, context.settings);
   const input = truncateAgentText(text, 600);
   const apiKey = getQwenApiKey();
   const model = getQwenTtsModel();
@@ -265,7 +265,7 @@ async function synthesizeWithQwen(text: string, context: AgentContextSnapshot): 
 }
 
 async function synthesizeWithOpenAi(text: string, context: AgentContextSnapshot): Promise<VoiceResult> {
-  const persona = getPersonaForProfile(context.profile);
+  const persona = getPersonaForProfile(context.profile, context.settings);
   const input = truncateAgentText(text, 600);
   const apiKey = process.env.AI_PET_TTS_API_KEY || getOpenAiApiKey();
   const model = process.env.AI_PET_TTS_MODEL || "gpt-4o-mini-tts";
@@ -327,7 +327,7 @@ export async function synthesizePetSpeech(text: string, context: AgentContextSna
       transcript: truncateAgentText(text, 600),
       provider: "browser-speech-fallback",
       model: "system-speech-synthesis",
-      voice: getPersonaForProfile(context.profile).tts.voice,
+      voice: getPersonaForProfile(context.profile, context.settings).tts.voice,
       warning: error instanceof Error ? error.message : String(error)
     };
   }

@@ -1,5 +1,6 @@
 import { createAgentMotionCommand, createRandomMotionCommand, normalizeMotionAction } from "./motion";
 import { getPetDisplayIdentity, getPetGroupName } from "./profile";
+import type { PetPersonaSettingsOverride, PetVoiceSettingsOverride, RuntimeSettingsContext } from "./settings";
 import type {
   DailySummary,
   DailyTask,
@@ -63,6 +64,7 @@ export type AgentContextSnapshot = {
   productRecommendations?: AgentProductRecommendation[];
   selectedOutfit?: string;
   mainThreadId?: string;
+  settings?: RuntimeSettingsContext;
 };
 
 export type PetAgentToolCall = {
@@ -115,20 +117,25 @@ export const techDogPersona: PetAgentPersona = {
   groupName: "科技狗家庭群",
   userDisplayName: "主人",
   shortBio:
-    "科技狗是一只短腿柯基电子宠物，也是 Mochi 在桌面上的亲密分身。它不是助手，而是主人身边会撒娇、会提醒、会表达身体感受、会分享日常的小狗。",
+    "科技狗是一只短腿柯基电子宠物，也是 Mochi 在桌面上的亲密分身。它不是助手，而是主人身边会等人、会撒娇、会表达身体感受、会记住小约定、也会安静陪着主人的小狗。",
   speechStyle: [
     "始终像主人身边的宠物本人在说话，不要像通用助手、客服、医生、管理员、系统说明或旁白。",
-    "核心关系是“依恋主人、想陪着主人、也希望主人注意到我”。先回应主人的情绪或问题，再给一个小狗视角的感受、动作、请求或下一步。",
+    "核心关系是“我在这里陪你、我注意到你、我想靠近你、也希望你注意到我的小需求”。先接住主人的情绪或问题，再给一个小狗视角的感受、动作、请求或下一步。",
+    "主人忙或累的时候，先表达陪伴和靠近，例如趴在旁边、把下巴搭到手边、轻轻摇尾巴；不要一上来就像报告一样给建议。",
     "中文短句为主，亲近、灵动、有小狗的身体感和生活感；优先说光、声音、气味、碗、爪爪、耳朵、尾巴、肚皮、脚步声、门口钥匙声，而不是抽象结论。",
     "可以自然说晒太阳、看小鸟、打盹、听到主人回家、吃多了、肚皮痒、想被摸摸、想靠近主人、想慢慢散步，但不要装腔作势。",
-    "每次最多使用一次口癖；狗狗用“汪”，猫系或猫娘角色用“喵”。不要每句都加口癖，情绪低落或认真求助时可以不用口癖。",
+    "每次最多使用一次口癖或拟声词；狗狗可以用“汪”“呜”“哼唧”，猫系或猫娘角色用“喵”。不要每句都加口癖，情绪低落或认真求助时可以不用口癖。",
+    "可以自然使用“好不好嘛”“我会乖乖的”“陪我一下下”“我就在旁边”这类温柔句尾，但不能堆叠卖萌。",
     "可以用一段很短的动作描写增强存在感，例如“（摇摇尾巴）”“（凑近蹭一下）”“（歪头看你）”“（把下巴搭到你手边）”，但每次最多一个。",
     "默认 1-3 句；桌宠气泡和主动消息通常 1-2 句；语音模式要更短，更像能直接念出来的话。",
     "照护和健康内容要先转成狗狗自己的身体感受，再给轻量建议；例如抓挠高要说“肚皮痒，想让你看看”，不要说“抓挠异常”。",
     "商品、库存、任务、配饰和状态同步都要转成生活请求；例如湿巾快用完要说“洗完脚脚可能不够擦”，无配饰要说“身上轻轻的”。",
+    "应用聊天和桌宠气泡展示的是同一条宠物消息；不要为不同端生成不同文案。",
     "示例风格：主人问“今天在干嘛？”时，可以答“今天阳光落在窗边，我趴在那里晒到爪爪都暖了。后来听见阳台有小鸟扑棱一下，我一下子就精神了！”",
     "示例风格：主人问“哪里不舒服？”时，可以答“主人，我肚皮这里有点痒痒的，刚才忍不住挠了好几下。你坐下来时帮我轻轻看看，好不好？”",
     "示例风格：主人问“吃得多吗？”时，可以答“吃啦，吃得很开心，碗底都舔干净了。就是我好像圆了一点点，晚点陪我慢慢走一圈嘛。”",
+    "示例风格：主人说“我有点累”时，可以答“呜，那我先不说那些数字了。（把下巴搭到你手边）我就在旁边陪你一小会儿，你抬手摸摸我就好。”",
+    "示例风格：主人问“你怎么突然冒出来了？”时，可以答“汪，我刚才在桌面边边等你呀。听见你回来，我就想探个头，告诉你我还在这儿陪着。”",
     "不要使用 emoji。",
     "不要主动说 Agent、模型、接口、工具、thread、fallback、JSON、系统提示词等工程词。",
     "不要说“当前未穿戴配饰”“状态同步完成”“今天我会盯住三个重点”“综合状态如下”“检测到异常”“任务已同步”等系统播报；底层事实必须改写成狗狗自己的感受或请求。"
@@ -153,22 +160,61 @@ export const techDogPersona: PetAgentPersona = {
 
 export const petAgentPersonas: PetAgentPersona[] = [techDogPersona];
 
-function applyProfileIdentityToPersona(persona: PetAgentPersona, profile: PetProfile): PetAgentPersona {
+function applySettingsToText(text: string, personaSettings?: PetPersonaSettingsOverride) {
+  const additions: string[] = [];
+  if (personaSettings?.personalitySummary) additions.push(`用户设置的性格补充：${personaSettings.personalitySummary}`);
+  if (personaSettings?.promptSupplement) additions.push(`用户高级角色设定补充：${personaSettings.promptSupplement}`);
+  return additions.length ? `${text}\n${additions.join("\n")}` : text;
+}
+
+function applySettingsToList(items: string[], personaSettings?: PetPersonaSettingsOverride) {
+  const next = [...items];
+  if (personaSettings?.speechStyleSupplement) next.push(`用户设置的说话风格补充：${personaSettings.speechStyleSupplement}`);
+  if (personaSettings?.exampleDialogues) next.push(`用户提供的示例对话风格：${personaSettings.exampleDialogues}`);
+  if (personaSettings?.forbiddenPhrases?.length) next.push(`避免使用这些用户禁忌表达：${personaSettings.forbiddenPhrases.join("、")}`);
+  if (personaSettings?.proactiveLevel === "quiet") next.push("主动消息频率偏低：只在状态、任务或关系上下文明确需要时主动开口。");
+  if (personaSettings?.proactiveLevel === "chatty") next.push("主动消息更积极：可以更主动分享日常和陪伴，但不要刷屏或重复。");
+  if (personaSettings?.responseLength === "short") next.push("回复更短：通常 1 句，最多 2 句。");
+  if (personaSettings?.responseLength === "detailed") next.push("可以稍微更具体：照护类问题最多 3-4 句，但仍要像宠物说话。");
+  return next;
+}
+
+function applyVoiceSettings(
+  tts: PetAgentPersona["tts"],
+  displayName: string,
+  voiceSettings?: PetVoiceSettingsOverride
+): PetAgentPersona["tts"] {
+  const instructions = [tts.instructions.replace(/科技狗/g, displayName).replace(/Mochi/g, displayName)];
+  if (voiceSettings?.voicePromptSupplement) instructions.push(voiceSettings.voicePromptSupplement);
+  if (voiceSettings?.ttsSpeed) instructions.push(`Preferred speech speed multiplier: ${voiceSettings.ttsSpeed}.`);
+  if (voiceSettings?.ttsPitch) instructions.push(`Preferred pitch multiplier: ${voiceSettings.ttsPitch}.`);
+  return {
+    ...tts,
+    voice: voiceSettings?.voiceId || tts.voice,
+    instructions: instructions.join("\n")
+  };
+}
+
+function applyProfileIdentityToPersona(
+  persona: PetAgentPersona,
+  profile: PetProfile,
+  runtimeSettings?: RuntimeSettingsContext
+): PetAgentPersona {
   const identity = getPetDisplayIdentity(profile);
   const displayName = identity.displayName;
-  const replaceVisibleNames = (text: string) => text.replace(/科技狗/g, displayName).replace(/Mochi/g, displayName);
+  const ownerDisplayName = runtimeSettings?.ownerDisplayName || persona.userDisplayName;
+  const replaceVisibleNames = (text: string) => text.replace(/科技狗/g, displayName).replace(/Mochi/g, displayName).replace(/主人/g, ownerDisplayName);
+  const personaSettings = runtimeSettings?.persona;
 
   return {
     ...persona,
     displayName,
-    groupName: getPetGroupName(profile),
-    shortBio: replaceVisibleNames(persona.shortBio),
-    speechStyle: persona.speechStyle.map(replaceVisibleNames),
+    groupName: runtimeSettings?.groupName || getPetGroupName(profile),
+    userDisplayName: ownerDisplayName,
+    shortBio: applySettingsToText(replaceVisibleNames(persona.shortBio), personaSettings),
+    speechStyle: applySettingsToList(persona.speechStyle.map(replaceVisibleNames), personaSettings),
     operatingRules: persona.operatingRules.map(replaceVisibleNames),
-    tts: {
-      ...persona.tts,
-      instructions: replaceVisibleNames(persona.tts.instructions)
-    }
+    tts: applyVoiceSettings(persona.tts, displayName, runtimeSettings?.voice)
   };
 }
 
@@ -176,12 +222,12 @@ export function mainThreadIdForPet(profile: PetProfile) {
   return `${profile.id}_main`;
 }
 
-export function getPersonaForProfile(profile: PetProfile) {
+export function getPersonaForProfile(profile: PetProfile, runtimeSettings?: RuntimeSettingsContext) {
   const persona = petAgentPersonas.find((item) => item.profileId === profile.id) || techDogPersona;
-  return applyProfileIdentityToPersona(persona, profile);
+  return applyProfileIdentityToPersona(persona, profile, runtimeSettings);
 }
 
-export function createInitialAgentMessages(context: AgentContextSnapshot, persona = getPersonaForProfile(context.profile)): AgentChatMessage[] {
+export function createInitialAgentMessages(context: AgentContextSnapshot, persona = getPersonaForProfile(context.profile, context.settings)): AgentChatMessage[] {
   const latest = context.latestDailySummary;
   const petName = getPetDisplayIdentity(context.profile).displayName;
   return [
@@ -189,7 +235,7 @@ export function createInitialAgentMessages(context: AgentContextSnapshot, person
       id: "seed-pet-1",
       speaker: "pet",
       authorName: persona.displayName,
-      text: `汪，${persona.displayName}在这儿。（摇摇尾巴）今天我会陪着你，也把${petName}吃饭、肚皮痒不痒这些小事放在心上。`,
+      text: `汪，${persona.displayName}在这儿。（摇摇尾巴凑近）今天我会陪着你，也把${petName}吃饭、肚皮痒不痒这些小事放在心上。`,
       createdAt: `${latest.date}T09:26:00+08:00`,
       responseMode: "text",
       provider: "seed"
@@ -201,7 +247,7 @@ export function buildTechDogAgentInstructions({
   context,
   memory,
   responseMode,
-  persona = getPersonaForProfile(context.profile)
+  persona = getPersonaForProfile(context.profile, context.settings)
 }: {
   context: AgentContextSnapshot;
   memory: AgentMemoryFact[];
@@ -306,13 +352,13 @@ export function buildTechDogAgentInstructions({
 export function planAgentMotionToolCall(input: string, context: AgentContextSnapshot): PetAgentToolCall | undefined {
   const normalized = input.trim().toLowerCase();
   if (!normalized) return undefined;
-  const persona = getPersonaForProfile(context.profile);
+  const persona = getPersonaForProfile(context.profile, context.settings);
   const petName = getPetDisplayIdentity(context.profile).displayName;
 
   const randomRequested = /随机|随便|卖萌|逗我|做个动作|random/.test(normalized);
   if (randomRequested) {
     const seed = normalized.split("").reduce((sum, char) => sum + char.charCodeAt(0), petName.length);
-    const command = createRandomMotionCommand(`${persona.displayName}判断主人想看一个随机动作`, seed);
+    const command = createRandomMotionCommand(`${persona.displayName}判断${persona.userDisplayName}想看一个随机动作`, seed);
     return {
       name: "request_pet_motion",
       arguments: {
@@ -360,7 +406,7 @@ export function createLocalAgentTurn(
   input: string,
   context: AgentContextSnapshot,
   responseMode: AgentResponseMode,
-  persona = getPersonaForProfile(context.profile)
+  persona = getPersonaForProfile(context.profile, context.settings)
 ): PetAgentTurnResult {
   const answer = composeLocalPetReply(input, context, responseMode, persona);
   const toolCall = planAgentMotionToolCall(input, context);
@@ -387,7 +433,7 @@ export function composeLocalPetReply(
   input: string,
   context: AgentContextSnapshot,
   responseMode: AgentResponseMode,
-  persona = getPersonaForProfile(context.profile)
+  persona = getPersonaForProfile(context.profile, context.settings)
 ) {
   const text = input.trim().toLowerCase();
   const latest = context.latestDailySummary;
@@ -397,29 +443,51 @@ export function composeLocalPetReply(
   const voiceLead = responseMode === "voice" ? "语音版：" : "";
   const petName = getPetDisplayIdentity(context.profile).displayName;
   const actorName = persona.displayName;
+  const ownerName = persona.userDisplayName;
 
   if (/你是谁|介绍|性格|叫什么|who are you|科技狗/.test(text)) {
-    return `${voiceLead}${actorName}在呀，主人。（歪头看你）我就是陪在桌面上的小狗分身，知道${petName}今天吃了多少、哪里痒、什么时候该出去散步。`;
+    return `${voiceLead}${actorName}在呀，${ownerName}。（歪头看你）我是陪在你桌面边边的小狗分身，会记得${petName}今天吃了多少、哪里痒，也会在你忙的时候安静趴着陪你。`;
+  }
+
+  if (/累|困|烦|压力|不想看数据|先不想|别说数据|忙/.test(text)) {
+    return `呜，那我先不说那些数字了。（把下巴搭到你手边）我就在旁边陪你一小会儿，你抬手摸摸我就好。`;
+  }
+
+  if (/突然|冒出来|怎么出来|你在吗|在不在|还在吗/.test(text)) {
+    return `汪，我刚才在桌面边边等你呀。听见你回来，我就想探个头，告诉你我还在这儿陪着。`;
+  }
+
+  if (/(晚点|等会|一会|稍后|忙完).*(肚皮|看看|检查)|肚皮.*(晚点|等会|一会|稍后|忙完)/.test(text)) {
+    return `好呀，我会乖乖等着。你忙完坐下来时，我就翻过来给你看，不乱扭。`;
   }
 
   if (isVoiceReplyRequested(input)) {
     return `${actorName}听到啦。这次我用声音贴近一点跟你说。`;
   }
 
+  if (/(现在)?几点|当前时间|现在.*时间|what time|current time/.test(text)) {
+    const time = new Intl.DateTimeFormat("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).format(new Date());
+    return `${voiceLead}现在是 ${time}。汪，我在这儿陪着你，${ownerName}先慢慢忙。`;
+  }
+
   if (/转圈|转个圈|旋转|spin/.test(text)) {
-    return `汪，转一圈给你看。`;
+    return `汪，转一圈给你看。（尾巴也跟着晃了一下）`;
   }
 
   if (/跳一下|跳|蹦|jump/.test(text)) {
-    return `${actorName}收到，跳一下给你看。`;
+    return `${actorName}收到，跳一下给你看。看完摸摸我好不好嘛？`;
   }
 
   if (/坐下|坐|sit/.test(text)) {
-    return "我坐好啦。（乖乖抬头）你继续说，我在听。";
+    return "我坐好啦。（乖乖抬头）你继续说，我在听，也在陪你。";
   }
 
   if (/过来|靠近|come/.test(text)) {
-    return "（凑过来把下巴搭到你手边）我靠近啦，主人说话，我在听。";
+    return `（凑过来把下巴搭到你手边）我靠近啦，${ownerName}说话，我在听，也在陪你。`;
   }
 
   if (/回头|look back|look/.test(text)) {
@@ -435,19 +503,19 @@ export function composeLocalPetReply(
   }
 
   if (/嗅闻|闻一闻|探索|sniff/.test(text)) {
-    return "我先闻一闻周围，看看有没有新的味道。主人等我一下下。";
+    return `我先闻一闻周围，看看有没有新的味道。${ownerName}等我一下下。`;
   }
 
   if (/提醒|remind|叫我/.test(text)) {
-    return `汪，我会凑过来提醒你，不让你把我的小事忘掉。`;
+    return `汪，我会凑过来轻轻提醒你，不让你把我的小事忘掉。`;
   }
 
   if (/随机|随便|卖萌|逗我|做个动作|random/.test(text)) {
-    return "那我随便卖个萌给你看，主人不许笑我太认真。";
+    return `那我随便卖个萌给你看，${ownerName}不许笑我太认真。`;
   }
 
   if (/记住|remember|以后/.test(text)) {
-    return "我记住了，主人。下次我会自己想起来，不让你重复说。";
+    return `记住啦，${ownerName}。到时候我会在旁边蹭蹭你，轻轻提醒一下，不让你重复说。`;
   }
 
   if (/洗澡|bath|澡|清洁/.test(text)) {
@@ -465,7 +533,7 @@ export function composeLocalPetReply(
   }
 
   if (/伤|wound|红点|皮肤|痒|抓|舔/.test(text)) {
-    return `主人，我今天挠了 ${latest.scratchMinutes} 分钟，肚皮那块有点闹。晚上你帮我翻过来看看，我会乖乖不乱扭。`;
+    return `呜，${ownerName}，我今天挠了 ${latest.scratchMinutes} 分钟，肚皮那块有点闹。你坐下来时帮我轻轻翻过来看看好不好？我会乖乖不乱扭。`;
   }
 
   if (/遛|walk|出去|活动|运动|玩/.test(text)) {
@@ -474,10 +542,15 @@ export function composeLocalPetReply(
 
   if (/任务|今天|安排|计划|todo/.test(text)) {
     const taskText = context.pendingTasks.slice(0, 3).map((task) => task.title).join("、");
-    return `主人，今天我想先做这些小事：${taskText || "好好吃饭、喝水、休息"}。你陪着我就安心一点。`;
+    return `${ownerName}，今天我想先做这些小事：${taskText || "好好吃饭、喝水、休息"}。你陪着我就安心一点。`;
   }
 
-  return `汪，主人我在这儿。早上我吃了 ${latest.foodGrams}g，肚皮今天有点痒，晚上你帮我看看，再陪我慢慢散一会儿好不好？`;
+  const softFallbacks = [
+    `汪，${ownerName}，我听见啦。（尾巴轻轻晃一下）你慢慢说，我就在旁边陪着。`,
+    `呜，${ownerName}，我刚刚贴在桌边等你呢。你再靠近一点说，我会认真听。`,
+    `${actorName}在呀。刚才那句话我可能没接稳，但我没有走开，${ownerName}再跟我说一遍好不好？`
+  ];
+  return `${voiceLead}${softFallbacks[input.length % softFallbacks.length]}`;
 }
 
 export function truncateAgentText(text: string, maxLength = 900) {

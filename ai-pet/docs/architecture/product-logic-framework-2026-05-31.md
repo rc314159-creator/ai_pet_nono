@@ -4,7 +4,7 @@ description: 把用户构想、产品主闭环、桌宠/应用窗口/Agent/记�
 status: 已批准
 created: 2026-05-31
 updated: 2026-05-31
-update_reason: 修正一分钟循环为 Agent Cron 定时陪伴，由 Agent 结合当前时间和上下文生成情感陪伴话。
+update_reason: 将 App 端宠物资料、主人称呼、Persona 和 Prompt 补充设置提升为产品逻辑层的单一真相源，明确 settings 与 memory 的边界。
 doc_type: architecture-spec
 domain_taxa:
   - product-logic
@@ -18,6 +18,7 @@ related:
   - agent-runtime-dog-persona-and-bubble-lifecycle-2026-05-31.md
   - ../product/product-spec-2026-05-30.md
   - ../modules/agent-chat-2026-05-30.md
+  - ../modules/pet-settings-and-persona-2026-05-31.md
   - ../modules/user-incentive-2026-05-31.md
   - ../fix-records/2026-05-31-chat-history-not-persisted.md
   - ../fix-records/2026-05-31-desktop-pet-restore-and-shared-bubble-source.md
@@ -58,7 +59,8 @@ AI Pet 用系统级桌宠承载陪伴存在感，用应用窗口承载完整功�
 
 ```text
 我的
-├─ 宠物档案 / 知识库 / 我的装扮区
+├─ 宠物资料 / 对话设置
+├─ 宠物知识库 / 我的装扮区
 └─ 用户激励入口
    └─ 用户激励页
       ├─ 每日任务详情页
@@ -77,6 +79,32 @@ AI Pet 用系统级桌宠承载陪伴存在感，用应用窗口承载完整功�
 
 如果后续 UI 或代码和这套结构冲突，应先修 UI/代码，不能再把错误实现回写成文档真相。
 
+## App 端设置与单一真相源
+
+宠物名字、主人称呼、宠物资料、角色表达、语音偏好和高级 Prompt 补充是产品配置，不是对话记忆，也不是问题记录里的临时修复项。
+
+正确结构是：
+
+```text
+我的
+└─ 宠物资料 / 对话设置
+   ├─ 基础资料：名字、头像、物种、品种、年龄、体重
+   ├─ 对话设定：主人称呼、群名、性格、说话风格、主动程度
+   ├─ 语音设定：音色、语速、语音风格
+   └─ 高级角色设定：Prompt 补充、示例对话、禁忌表达、恢复默认
+```
+
+这些设置保存后必须进入统一 settings/profile store，再由 merged settings 输出给应用窗口、Agent Runtime、MCP tools、PetEventRuntime、TTS、桌宠气泡对应的 `ThreadMessage` 和应用内知识库。任何端都不能只改本地 UI state。
+
+Settings 和 Memory 的边界：
+
+- Settings 记录当前配置真相，例如宠物显示名、主人称呼和 persona override。
+- Memory 记录对话中积累的关系事实、偏好、承诺和事件摘要。
+- 用户在设置页改名，写 settings；用户在聊天里说“记住晚上 8 点喂你”，写 memory。
+- 用户在聊天里要求改名时，Agent 应引导或调用受控设置工具更新 settings，不能只把新名字写成 memory。
+
+详细模块契约见 [AI Pet 宠物资料、App 设置与 Persona 配置模块](../modules/pet-settings-and-persona-2026-05-31.md)。
+
 ## 分层框架
 
 ```mermaid
@@ -88,14 +116,18 @@ flowchart TD
   Domain["Domain Service<br/>宠物档案、状态、任务、库存、推荐、动作命令"]
   Agent["Agent Runtime<br/>OpenCode/opencode + ai_pet MCP tools"]
   Memory["Thread Store<br/>messages + memories + tool cards"]
+  Settings["Settings Store<br/>profile/persona/voice overrides"]
   Motion["Motion Runtime<br/>Mochi 多帧动作资产与仲裁"]
-  KB["Knowledge Base<br/>docs 里的产品/架构/模块/spec"]
+  KB["Knowledge Base<br/>ai-pet/docs 里的产品/架构/模块/spec"]
 
   User --> DesktopPet
   DesktopPet --> AppWindow
   AppWindow --> Renderer
   Renderer --> Domain
   Renderer --> Agent
+  Renderer --> Settings
+  Settings --> Domain
+  Settings --> Agent
   Agent --> Domain
   Agent --> Memory
   Renderer --> Memory
@@ -117,8 +149,9 @@ flowchart TD
 | Renderer UI 层 | 渲染页面、收集输入、展示消息/工具卡片/动作状态 | `src/app/App.tsx`, `src/app/styles.css` |
 | Domain 层 | 宠物档案、状态、任务、库存、推荐和动作数据结构 | `src/domain/*`, `server/petRuntimeSnapshot.ts` |
 | Agent 层 | 生成宠物回复、调用工具、写记忆、触发桌宠动作 | `server/agent.ts`, `server/opencodeAgent.ts`, `server/mcp.ts`, `.opencode/prompts/` |
+| Settings 层 | 保存 App 端可编辑宠物资料、主人称呼、Persona、Prompt 补充和语音偏好，并输出 merged settings | 目标入口：`.ai-pet-data/settings.json`, `server/settings.ts`, `src/domain/settings.ts` |
 | 持久层 | 保存长期主群聊消息和结构化记忆 | `server/threadStore.ts`, `.ai-pet-data/thread-store.json` |
-| 知识库层 | 保存产品真相、架构真相、模块边界、修复记录和验证标准 | `docs/`, `ai-pet/docs/` |
+| 知识库层 | 保存产品真相、架构真相、模块边界、修复记录和验证标准 | `ai-pet/docs/`；根级 `docs/` 只保存原始材料和路由 |
 
 ## 对话页主逻辑
 
@@ -255,10 +288,10 @@ Agent Runtime 和 Dog Persona 不是同一个概念。
 
 ## 知识库层级
 
-知识库必须分级描述项目，而不是把所有信息塞进修复记录：
+知识库必须分级描述项目，而不是把所有信息塞进修复记录，也不能在根级和子项目目录维护两套项目真相：
 
-- 根 `docs/INDEX.md`：跨会话入口，只做项目级导航。
-- `ai-pet/docs/INDEX.md`：AI Pet 项目权威入口。
+- 根 `docs/INDEX.md`：仓库级路由，只保存原始会议记录、参考素材和到 AI Pet 权威入口的跳转。
+- `ai-pet/docs/INDEX.md`：AI Pet 项目唯一权威入口。
 - `architecture/`：产品逻辑、当前系统架构、技术架构、联动协议。
 - `product/`：产品定位、用户构想、功能目标。
 - `modules/`：按能力拆分模块边界。

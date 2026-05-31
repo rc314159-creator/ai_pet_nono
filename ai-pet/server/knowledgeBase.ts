@@ -2,8 +2,9 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { EventEmitter } from "node:events";
 import path from "node:path";
 import { computeVirtualState, currentPacket, latestDaily, planDailyTasks } from "../src/domain/engine";
-import { dailySummaries, inventory, manualObservations, petProfiles, streamPackets } from "../src/domain/mockData";
+import { dailySummaries, inventory, manualObservations, streamPackets } from "../src/domain/mockData";
 import { getPetDisplayIdentity } from "../src/domain/profile";
+import { getActivePetSettings } from "./settings";
 import type { AgentChatMessage, AgentMemoryFact } from "../src/domain/agent";
 import type { DailyTask, PetAccessoryId } from "../src/domain/types";
 
@@ -42,7 +43,7 @@ type StoredKnowledgeBase = {
 };
 
 export type RuntimeKnowledgeBaseEvent = {
-  kind: "task_completed" | "appearance_saved" | "proactive_alert" | "chat_message";
+  kind: "task_completed" | "appearance_saved" | "proactive_alert" | "chat_message" | "settings_updated";
   title?: string;
   detail?: string;
   source?: string;
@@ -153,7 +154,8 @@ function createEntry(input: Omit<KnowledgeBaseEntry, "updatedAt"> & { updatedAt?
 }
 
 function createDefaultEntries(): KnowledgeBaseEntry[] {
-  const profile = petProfiles[0];
+  const settings = getActivePetSettings();
+  const profile = settings.merged.profile;
   const identity = getPetDisplayIdentity(profile);
   const packet = currentPacket(streamPackets, 21);
   const latest = latestDaily(dailySummaries);
@@ -168,7 +170,7 @@ function createDefaultEntries(): KnowledgeBaseEntry[] {
       id: stableEntryId("profile", "identity"),
       sectionId: "profile",
       title: `${identity.displayName} 的基础档案`,
-      detail: `${profile.breed}，约 ${Math.round(profile.ageMonths / 12)} 岁，体重 ${profile.weightKg}kg。过敏源：${profile.allergies.join("、") || "暂无"}。`,
+      detail: `${profile.breed}，约 ${Math.round(profile.ageMonths / 12)} 岁，体重 ${profile.weightKg}kg。主人称呼：${settings.merged.ownerDisplayName}。过敏源：${profile.allergies.join("、") || "暂无"}。`,
       source: "PetProfile",
       tags: ["档案", profile.species],
       importance: "high"
@@ -177,7 +179,7 @@ function createDefaultEntries(): KnowledgeBaseEntry[] {
       id: stableEntryId("profile", "diet"),
       sectionId: "profile",
       title: "饮食限制",
-      detail: `${identity.displayName} 当前饮食记录：${profile.diet}。推荐和任务需要避开已知过敏源。`,
+      detail: `${identity.displayName} 当前主粮：${profile.diet.currentFood}；日计划 ${profile.diet.dailyGrams}g；喂食窗口 ${profile.diet.feedingWindows.join("、")}；零食上限 ${profile.diet.treatLimitKcal}kcal。推荐和任务需要避开已知过敏源。`,
       source: "PetProfile",
       tags: ["饮食", "过敏"],
       importance: "medium"
@@ -223,9 +225,20 @@ function createDefaultEntries(): KnowledgeBaseEntry[] {
 
 function ensureSeedStore() {
   const store = readStore();
-  const missingDefaults = createDefaultEntries().filter((entry) => !store.entries[entry.id]);
-  if (!missingDefaults.length) return store;
-  for (const entry of missingDefaults) store.entries[entry.id] = entry;
+  const defaultEntries = createDefaultEntries();
+  const changedDefaults = defaultEntries.filter((entry) => {
+    const existing = store.entries[entry.id];
+    return (
+      !existing ||
+      existing.title !== entry.title ||
+      existing.detail !== entry.detail ||
+      existing.source !== entry.source ||
+      existing.importance !== entry.importance ||
+      existing.tags.join("|") !== entry.tags.join("|")
+    );
+  });
+  if (!changedDefaults.length) return store;
+  for (const entry of changedDefaults) store.entries[entry.id] = entry;
   store.revision += 1;
   store.updatedAt = nowIso();
   writeStore(store);
@@ -340,6 +353,20 @@ export function recordKnowledgeBaseEvent(event: RuntimeKnowledgeBaseEvent) {
     });
   } else if (event.kind === "chat_message" && event.message) {
     return recordKnowledgeBaseMessages(event.threadId || "main-thread", [event.message]);
+  } else if (event.kind === "settings_updated") {
+    const settings = getActivePetSettings();
+    entry = createEntry({
+      id: stableEntryId("events", `settings-${updatedAt}`),
+      sectionId: "events",
+      title: event.title || "宠物资料已更新",
+      detail:
+        event.detail ||
+        `当前宠物显示名：${settings.merged.profile.displayName || settings.merged.profile.name}；主人称呼：${settings.merged.ownerDisplayName}。后续对话、Agent 和桌宠消息会使用这份设置。`,
+      source: event.source || "App 设置",
+      tags: event.tags || ["设置", "身份档案"],
+      importance: event.importance || "medium",
+      updatedAt
+    });
   } else {
     entry = createEntry({
       id: stableEntryId("events", `${event.kind}-${updatedAt}`),

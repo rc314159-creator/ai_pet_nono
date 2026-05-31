@@ -38,6 +38,7 @@ import { createInitialAgentMessages, createLocalAgentTurn, getPersonaForProfile,
 import { average, computeVirtualState, currentPacket, latestDaily, planDailyTasks, recommendProducts } from "../domain/engine";
 import { dailySummaries, inventory, manualObservations, petProfiles, productCatalog, streamPackets } from "../domain/mockData";
 import { getPetDisplayIdentity } from "../domain/profile";
+import type { MergedPetSettings, ProactiveLevelPreference, ResponseLengthPreference } from "../domain/settings";
 import { ChatWaitingCue } from "../components/ChatWaitingCue";
 import { KnowledgeBaseView } from "../components/KnowledgeBaseView";
 import { MochiMotionAvatar, type MochiMotionId } from "../components/MochiMotionAvatar";
@@ -82,7 +83,7 @@ type RewardUnlock = {
   unlocked: boolean;
   detail: string;
 };
-type MyPageMode = "home" | "incentive" | "tasks" | "leaderboard" | "rewards" | "knowledge";
+type MyPageMode = "home" | "incentive" | "tasks" | "leaderboard" | "rewards" | "knowledge" | "settings";
 
 const motionActionLabels: Record<PetMotionAction, string> = {
   idle: "待在原地",
@@ -438,8 +439,10 @@ export function App() {
   const [outfit, setOutfit] = useState<OutfitId>("none");
   const [accessory, setAccessory] = useState<PetAccessoryId>("none");
   const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(() => new Set(["task_water"]));
+  const [settingsSnapshot, setSettingsSnapshot] = useState<MergedPetSettings>();
 
-  const profile = petProfiles[0];
+  const profile = settingsSnapshot?.merged.profile || petProfiles[0];
+  const runtimeSettings = settingsSnapshot?.merged.runtime;
   const profileIdentity = getPetDisplayIdentity(profile);
   const packet = currentPacket(streamPackets, 21);
   const latest = latestDaily(dailySummaries);
@@ -447,7 +450,10 @@ export function App() {
   const tasks = useMemo(() => planDailyTasks(profile, dailySummaries, state, inventory, manualObservations), [profile, state]);
   const recommendations = useMemo(() => recommendProducts(profile, tasks, inventory, productCatalog), [profile, tasks]);
   const rewardSummary = useMemo(() => buildRewardSummary(tasks, completedTaskIds), [tasks, completedTaskIds]);
-  const leaderboard = useMemo(() => buildCareLeaderboard(profileIdentity.displayName, rewardSummary), [profileIdentity.displayName, rewardSummary]);
+  const leaderboard = useMemo(
+    () => buildCareLeaderboard(profileIdentity.displayName, rewardSummary, settingsSnapshot?.merged.groupName),
+    [profileIdentity.displayName, rewardSummary, settingsSnapshot?.merged.groupName]
+  );
   const baseline = useMemo(() => buildBaseline(dailySummaries), []);
   const selectedOutfit = outfitOptions.find((item) => item.id === outfit) || outfitOptions[0];
   const agentContext = useMemo<AgentContextSnapshot>(
@@ -460,10 +466,26 @@ export function App() {
       inventory,
       manualObservations,
       productRecommendations: recommendations.slice(0, 5),
-      selectedOutfit: accessory
+      selectedOutfit: accessory,
+      settings: runtimeSettings
     }),
-    [profile, state, latest, packet, tasks, recommendations, accessory]
+    [profile, state, latest, packet, tasks, recommendations, accessory, runtimeSettings]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(apiUrl("/api/settings"), { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((snapshot: MergedPetSettings | undefined) => {
+        if (!cancelled && snapshot?.merged?.profile) setSettingsSnapshot(snapshot);
+      })
+      .catch(() => {
+        // The App keeps its built-in demo profile if the settings API is unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -545,9 +567,11 @@ export function App() {
               leaderboard={leaderboard}
               tasks={tasks}
               completedTaskIds={completedTaskIds}
+              settingsSnapshot={settingsSnapshot}
               onSelect={setOutfit}
               onAccessorySelect={setAccessory}
               onCompleteTask={completeTask}
+              onSettingsSaved={setSettingsSnapshot}
             />
           ) : null}
         </section>
@@ -782,11 +806,11 @@ function buildRewardSummary(tasks: DailyTask[], completedTaskIds: Set<string>): 
   };
 }
 
-function buildCareLeaderboard(petName: string, rewardSummary: RewardSummary): LeaderboardEntry[] {
+function buildCareLeaderboard(petName: string, rewardSummary: RewardSummary, ownerLabel = `${petName}家庭`): LeaderboardEntry[] {
   const entries: Omit<LeaderboardEntry, "rank">[] = [
     { petName: "Nori", ownerLabel: "晨跑家庭", points: 438, completedTasks: 6, streakDays: 9, badge: "晨间巡逻" },
     { petName: "芝麻", ownerLabel: "梳毛小队", points: 407, completedTasks: 5, streakDays: 8, badge: "护理达人" },
-    { petName, ownerLabel: "旺财家庭", points: rewardSummary.weeklyPoints, completedTasks: rewardSummary.completedTasks, streakDays: rewardSummary.streakDays, badge: "今日照护", self: true },
+    { petName, ownerLabel, points: rewardSummary.weeklyPoints, completedTasks: rewardSummary.completedTasks, streakDays: rewardSummary.streakDays, badge: "今日照护", self: true },
     { petName: "Biscuit", ownerLabel: "低敏联盟", points: 362, completedTasks: 4, streakDays: 6, badge: "稳定喂食" },
     { petName: "Luna", ownerLabel: "睡眠守护", points: 335, completedTasks: 4, streakDays: 5, badge: "安静夜晚" }
   ];
@@ -946,7 +970,7 @@ function ChatHome({
   const hydratedThreadRef = useRef<string | null>(null);
   const localActivityRef = useRef(false);
   const sendInFlightRef = useRef(false);
-  const persona = getPersonaForProfile(profile);
+  const persona = getPersonaForProfile(profile, context.settings);
   const profileIdentity = getPetDisplayIdentity(profile);
   const threadId = mainThreadIdForPet(profile);
 
@@ -1410,7 +1434,7 @@ function StatusDataView({
           <div className="status-pet-info">
             <div className="status-location-line">
               <MapPin size={14} />
-              <span>{formatGeofence(packet.location.geofence)}</span>
+              <span>{formatGeofence(packet.location.geofence, getPetDisplayIdentity(profile).displayName)}</span>
             </div>
             <div className="status-main-line">
               <span className={`status-pulse-dot ${statusSnapshot.tone}`} />
@@ -1689,10 +1713,10 @@ function formatMonthDay(date: string) {
   return date.slice(5).replace("-", "-");
 }
 
-function formatGeofence(geofence: StreamPacket["location"]["geofence"]) {
+function formatGeofence(geofence: StreamPacket["location"]["geofence"], petName: string) {
   if (geofence === "park") return "梅溪湖小公园";
   if (geofence === "outside_safe_zone") return "安全围栏外";
-  return "旺财大宅";
+  return `${petName}大宅`;
 }
 
 function formatDurationMinutes(minutes: number) {
@@ -2312,9 +2336,11 @@ function OutfitView({
   leaderboard,
   tasks,
   completedTaskIds,
+  settingsSnapshot,
   onSelect,
   onAccessorySelect,
-  onCompleteTask
+  onCompleteTask,
+  onSettingsSaved
 }: {
   profile: PetProfile;
   outfit: OutfitId;
@@ -2324,9 +2350,11 @@ function OutfitView({
   leaderboard: LeaderboardEntry[];
   tasks: DailyTask[];
   completedTaskIds: Set<string>;
+  settingsSnapshot?: MergedPetSettings;
   onSelect: (value: OutfitId) => void;
   onAccessorySelect: (value: PetAccessoryId) => void;
   onCompleteTask: (taskId: string) => void;
+  onSettingsSaved: (snapshot: MergedPetSettings) => void;
 }) {
   const [myMode, setMyMode] = useState<MyPageMode>("home");
   const [activeTab, setActiveTab] = useState<OutfitTab>("服装");
@@ -2427,6 +2455,10 @@ function OutfitView({
 
   if (myMode === "knowledge") {
     return <KnowledgeBaseView onBack={() => setMyMode("home")} />;
+  }
+
+  if (myMode === "settings") {
+    return <PetSettingsView profile={profile} settingsSnapshot={settingsSnapshot} onBack={() => setMyMode("home")} onSaved={onSettingsSaved} />;
   }
 
   if (myMode === "incentive") {
@@ -2645,6 +2677,14 @@ function OutfitView({
           </span>
           <ChevronRight size={17} />
         </button>
+
+        <button className="my-settings-entry" onClick={() => setMyMode("settings")}>
+          <span>
+            <Settings size={16} />
+            资料设置
+          </span>
+          <ChevronRight size={17} />
+        </button>
       </div>
 
       <div className="outfit-tabs">
@@ -2691,6 +2731,251 @@ function OutfitView({
         <Sparkles size={17} />
         <span>{statusLabel}</span>
       </div>
+    </section>
+  );
+}
+
+function PetSettingsView({
+  profile,
+  settingsSnapshot,
+  onBack,
+  onSaved
+}: {
+  profile: PetProfile;
+  settingsSnapshot?: MergedPetSettings;
+  onBack: () => void;
+  onSaved: (snapshot: MergedPetSettings) => void;
+}) {
+  const [displayName, setDisplayName] = useState("");
+  const [realName, setRealName] = useState("");
+  const [ownerDisplayName, setOwnerDisplayName] = useState("");
+  const [groupName, setGroupName] = useState("");
+  const [breed, setBreed] = useState("");
+  const [ageMonths, setAgeMonths] = useState("");
+  const [weightKg, setWeightKg] = useState("");
+  const [personalitySummary, setPersonalitySummary] = useState("");
+  const [speechStyleSupplement, setSpeechStyleSupplement] = useState("");
+  const [promptSupplement, setPromptSupplement] = useState("");
+  const [forbiddenPhrases, setForbiddenPhrases] = useState("");
+  const [responseLength, setResponseLength] = useState<ResponseLengthPreference>("balanced");
+  const [proactiveLevel, setProactiveLevel] = useState<ProactiveLevelPreference>("balanced");
+  const [voicePromptSupplement, setVoicePromptSupplement] = useState("");
+  const [statusLabel, setStatusLabel] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const profileIdentity = getPetDisplayIdentity(profile);
+  const personaSettings = settingsSnapshot?.overrides.persona;
+  const voiceSettings = settingsSnapshot?.overrides.voice;
+
+  useEffect(() => {
+    const merged = settingsSnapshot?.merged;
+    setDisplayName(profile.displayName || profile.name);
+    setRealName(profile.name);
+    setOwnerDisplayName(merged?.ownerDisplayName || "主人");
+    setGroupName(merged?.groupName || `${profile.displayName || profile.name}家庭群`);
+    setBreed(profile.breed);
+    setAgeMonths(String(profile.ageMonths));
+    setWeightKg(String(profile.weightKg));
+    setPersonalitySummary(personaSettings?.personalitySummary || "");
+    setSpeechStyleSupplement(personaSettings?.speechStyleSupplement || "");
+    setPromptSupplement(personaSettings?.promptSupplement || "");
+    setForbiddenPhrases((personaSettings?.forbiddenPhrases || []).join("\n"));
+    setResponseLength(personaSettings?.responseLength || "balanced");
+    setProactiveLevel(personaSettings?.proactiveLevel || "balanced");
+    setVoicePromptSupplement(voiceSettings?.voicePromptSupplement || "");
+  }, [profile, personaSettings, settingsSnapshot?.merged, voiceSettings]);
+
+  function toNumber(value: string, fallback: number) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  async function saveSettings() {
+    if (isSaving) return;
+    setIsSaving(true);
+    setStatusLabel("正在保存...");
+    try {
+      const response = await fetch(apiUrl("/api/settings"), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile: {
+            displayName,
+            realName,
+            ownerDisplayName,
+            groupNameOverride: groupName,
+            breed,
+            ageMonths: toNumber(ageMonths, profile.ageMonths),
+            weightKg: toNumber(weightKg, profile.weightKg)
+          },
+          persona: {
+            personalitySummary,
+            speechStyleSupplement,
+            promptSupplement,
+            forbiddenPhrases,
+            responseLength,
+            proactiveLevel
+          },
+          voice: {
+            voicePromptSupplement
+          }
+        })
+      });
+      if (!response.ok) throw new Error(`settings_${response.status}`);
+      const snapshot = (await response.json()) as MergedPetSettings;
+      onSaved(snapshot);
+      setStatusLabel("已保存，聊天、桌宠和知识库会使用新的设置。");
+    } catch {
+      setStatusLabel("保存失败，请稍后重试。");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function resetAllSettings() {
+    if (isSaving) return;
+    setIsSaving(true);
+    setStatusLabel("正在重置...");
+    try {
+      const response = await fetch(apiUrl("/api/settings/reset"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section: "all" })
+      });
+      if (!response.ok) throw new Error(`settings_reset_${response.status}`);
+      const snapshot = (await response.json()) as MergedPetSettings;
+      onSaved(snapshot);
+      setStatusLabel("已恢复默认设置。");
+    } catch {
+      setStatusLabel("重置失败，请稍后重试。");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="app-screen scroll-screen outfit-screen settings-screen">
+      <div className="my-subpage-header">
+        <button className="my-back-button" onClick={onBack} aria-label="返回我的">
+          <ArrowLeft size={18} />
+        </button>
+        <MobileTopNav title="资料设置" subtitle={`${profileIdentity.displayName} · Agent 设定`} />
+      </div>
+
+      <div className="settings-profile-summary">
+        <PetProfileAvatar profile={profile} className="profile-avatar" />
+        <div>
+          <span>当前身份</span>
+          <strong>{profileIdentity.displayName}</strong>
+          <p>{ownerDisplayName || "主人"} · {groupName || `${profileIdentity.displayName}家庭群`}</p>
+        </div>
+      </div>
+
+      <form
+        className="settings-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void saveSettings();
+        }}
+      >
+        <section className="settings-section">
+          <div className="settings-section-title">
+            <UserRound size={17} />
+            <strong>基础资料</strong>
+          </div>
+          <div className="settings-grid">
+            <label className="settings-field">
+              <span>显示名</span>
+              <input value={displayName} maxLength={24} onChange={(event) => setDisplayName(event.target.value)} />
+            </label>
+            <label className="settings-field">
+              <span>真实名</span>
+              <input value={realName} maxLength={48} onChange={(event) => setRealName(event.target.value)} />
+            </label>
+            <label className="settings-field">
+              <span>主人称呼</span>
+              <input value={ownerDisplayName} maxLength={24} onChange={(event) => setOwnerDisplayName(event.target.value)} />
+            </label>
+            <label className="settings-field">
+              <span>群聊名</span>
+              <input value={groupName} maxLength={40} onChange={(event) => setGroupName(event.target.value)} />
+            </label>
+            <label className="settings-field">
+              <span>品种</span>
+              <input value={breed} maxLength={80} onChange={(event) => setBreed(event.target.value)} />
+            </label>
+            <label className="settings-field compact">
+              <span>月龄</span>
+              <input type="number" min="0" max="360" value={ageMonths} onChange={(event) => setAgeMonths(event.target.value)} />
+            </label>
+            <label className="settings-field compact">
+              <span>体重 kg</span>
+              <input type="number" min="0.2" max="120" step="0.1" value={weightKg} onChange={(event) => setWeightKg(event.target.value)} />
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-title">
+            <MessageCircle size={17} />
+            <strong>角色与提示词</strong>
+          </div>
+          <label className="settings-field">
+            <span>性格补充</span>
+            <textarea rows={3} value={personalitySummary} maxLength={420} onChange={(event) => setPersonalitySummary(event.target.value)} />
+          </label>
+          <label className="settings-field">
+            <span>说话风格</span>
+            <textarea rows={3} value={speechStyleSupplement} maxLength={420} onChange={(event) => setSpeechStyleSupplement(event.target.value)} />
+          </label>
+          <label className="settings-field">
+            <span>系统提示词补充</span>
+            <textarea rows={4} value={promptSupplement} maxLength={600} onChange={(event) => setPromptSupplement(event.target.value)} />
+          </label>
+          <div className="settings-grid two">
+            <label className="settings-field">
+              <span>回复长度</span>
+              <select value={responseLength} onChange={(event) => setResponseLength(event.target.value as ResponseLengthPreference)}>
+                <option value="short">简短</option>
+                <option value="balanced">适中</option>
+                <option value="detailed">详细</option>
+              </select>
+            </label>
+            <label className="settings-field">
+              <span>主动程度</span>
+              <select value={proactiveLevel} onChange={(event) => setProactiveLevel(event.target.value as ProactiveLevelPreference)}>
+                <option value="quiet">安静</option>
+                <option value="balanced">适中</option>
+                <option value="chatty">活跃</option>
+              </select>
+            </label>
+          </div>
+          <label className="settings-field">
+            <span>禁用表达</span>
+            <textarea rows={3} value={forbiddenPhrases} maxLength={520} onChange={(event) => setForbiddenPhrases(event.target.value)} />
+          </label>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-title">
+            <Volume2 size={17} />
+            <strong>声音</strong>
+          </div>
+          <label className="settings-field">
+            <span>声音提示补充</span>
+            <textarea rows={3} value={voicePromptSupplement} maxLength={420} onChange={(event) => setVoicePromptSupplement(event.target.value)} />
+          </label>
+        </section>
+
+        <div className="settings-actions">
+          <button type="button" className="settings-secondary-button" onClick={() => void resetAllSettings()} disabled={isSaving}>
+            恢复默认
+          </button>
+          <button type="submit" className="settings-primary-button" disabled={isSaving}>
+            {isSaving ? "保存中" : "保存设置"}
+          </button>
+        </div>
+        {statusLabel ? <p className="settings-status">{statusLabel}</p> : null}
+      </form>
     </section>
   );
 }

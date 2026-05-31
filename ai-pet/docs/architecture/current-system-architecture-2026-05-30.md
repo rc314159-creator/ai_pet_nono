@@ -4,7 +4,7 @@ description: 当前可运行 Demo 的整体架构真相源，明确桌宠、应�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 补强 Electron 桌宠 App 验收红线：浏览器 localhost 只能做 renderer smoke test，不能替代 App 可用性验证。
+update_reason: 补充桌宠气泡由 desktop/photo-pet 主进程创建独立透明跟随窗口，避免覆盖宠物本体且保持 ThreadMessage 同源。
 doc_type: architecture-spec
 domain_taxa:
   - system-architecture
@@ -20,6 +20,7 @@ related:
   - desktop-pet-app-window-linkage-protocol-2026-05-30.md
   - ../product/product-spec-2026-05-30.md
   - ../modules/INDEX.md
+  - ../modules/pet-settings-and-persona-2026-05-31.md
   - ../modules/user-incentive-2026-05-31.md
   - ../knowledge-base/project-directory-map-2026-05-30.md
 ---
@@ -50,6 +51,7 @@ flowchart LR
 
   subgraph ElectronMain["Electron 主进程: desktop/photo-pet/main.cjs"]
     PetWindow["透明桌宠窗口<br/>desktop/photo-pet/renderer.html + runtime.js"]
+    BubbleWindow["独立桌宠气泡窗口<br/>desktop/photo-pet/bubble.html + bubble-preload.cjs"]
     AppWindow["应用窗口 BrowserWindow<br/>430x932 手机比例"]
     IPC["IPC 桥接<br/>点击/拖拽/关闭/导航"]
   end
@@ -66,6 +68,7 @@ flowchart LR
     OpenCode["server/opencodeAgent.ts<br/>opencode run"]
     MCP["server/mcp.ts<br/>AI Pet MCP tools"]
     MotionAPI["/api/desktop-pet/motion<br/>动作命令"]
+    BubbleAPI["/api/desktop-pet/bubble<br/>最新 ThreadMessage"]
     AppearanceAPI["/api/desktop-pet/appearance<br/>配饰外观"]
     KnowledgeAPI["/api/knowledge-base<br/>应用内实时知识库"]
     VoiceAPI["Qwen TTS 语音"]
@@ -78,11 +81,13 @@ flowchart LR
 
   User --> PetWindow
   PetWindow --> IPC
+  PetWindow --> BubbleWindow
   IPC --> AppWindow
   AppWindow --> ReactApp
   ReactApp --> DomainClient
   ReactApp --> API
   PetWindow --> MotionAPI
+  PetWindow --> BubbleAPI
   PetWindow --> AppearanceAPI
   ReactApp --> KnowledgeAPI
   MotionAvatar --> Manifest
@@ -129,6 +134,7 @@ flowchart LR
 `desktop/photo-pet/main.cjs` 是当前完整 Demo 的桌面入口。它负责：
 
 - 创建透明、置顶、跳过任务栏的桌宠窗口。
+- 创建独立透明、置顶、点击穿透的桌宠气泡窗口，并让气泡跟随桌宠窗口定位，避免气泡覆盖宠物本体。
 - 加载 `desktop/photo-pet/renderer.html` 和 `runtime.js` 播放 Mochi 照片级动作帧。
 - 处理桌宠拖拽。
 - 处理桌宠点击，并创建或聚焦应用窗口。
@@ -140,6 +146,7 @@ flowchart LR
 - 读取 `public/assets/pets/mochi/motions/manifest.json`。
 - 播放完整多帧动作序列。
 - 轮询动作命令和外观配饰状态。
+- 接收到同源 `ThreadMessage.text` 后通过 preload/IPC 请求主进程展示独立气泡窗口；runtime 不生成桌宠专用文案。
 - 按配饰状态切换完整帧图，不把服装、毛发、妆容伪装成已真实同步到桌宠。
 
 ### 应用窗口
@@ -179,14 +186,15 @@ renderer 不应该直接拥有业务真相。后续 Domain Service 成熟后，r
 
 | 路径 | 架构职责 |
 |---|---|
-| `desktop/photo-pet/` | 当前完整桌宠集成入口、透明桌宠窗口、桌宠 renderer、点击打开应用窗口、显隐联动 |
+| `desktop/photo-pet/` | 当前完整桌宠集成入口、透明桌宠窗口、独立气泡窗口、桌宠 renderer、点击打开应用窗口、显隐联动 |
 | `desktop/app-window/` | standalone 应用窗口调试入口 |
 | `src/app/App.tsx` | 应用窗口主 renderer，承载五个主入口和交互流程 |
 | `src/app/styles.css` | 应用窗口视觉样式 |
-| `src/domain/` | 当前共享领域模型、mock 数据、状态、动作、档案和推荐规则；后续要抽到端无关 Domain Service |
+| `src/domain/` | 当前共享领域模型、mock 数据、状态、动作、档案和推荐规则；后续要抽到端无关 Domain Service，并承载 settings merge 纯函数 |
 | `src/components/` | 当前 App 实际使用的共享组件；过时 MVP 组件不保留 |
 | `server/` | Express API、OpenCode/opencode Agent 主路径、AI Pet MCP tools、OpenAI Agents SDK fallback、语音、动作命令和外观状态 |
 | `server/appearance.ts` | 宠物外观单一真相源，保存和读取当前真实同步配饰状态；Demo 阶段持久化到 `.ai-pet-data/appearance.json` |
+| `server/settings.ts`（待实现） | App 端宠物资料、主人称呼、Persona、Prompt 补充和语音偏好的单一真相源；Demo 阶段持久化到 `.ai-pet-data/settings.json` |
 | `server/threadStore.ts` | Demo 阶段的主群聊消息和长期记忆持久化 store；默认写入 `.ai-pet-data/thread-store.json` |
 | `server/knowledgeBase.ts` | Demo 阶段的应用内知识库 store；默认写入 `.ai-pet-data/knowledge-base.json`，并通过 SSE 推送更新 |
 | `opencode.json` | OpenCode/opencode 配置，声明 llmmelon provider、`ai-pet-companion` agent 和 `ai_pet` MCP server |
@@ -208,6 +216,7 @@ renderer 不应该直接拥有业务真相。后续 Domain Service 成熟后，r
 - `ProductRecommendation`：商品或服务推荐及触发原因。
 - `ExpressionCommand`：桌宠说话、动作、提醒和状态表达。
 - `PetAppearanceState`：宠物当前真实外观状态。当前只包含可同步到照片级桌宠动作帧的配饰状态，是“我的页、对话页、状态页、桌宠”共同读取的单一真相源。
+- `PetSettings` / `PersonaSettings`（待实现）：App 端保存的宠物资料、主人称呼、角色表达、Prompt 补充和语音偏好 override；与默认 `PetProfile` 和默认 Dog Persona 合成 merged settings，作为 UI、Agent、MCP、主动事件、TTS 和知识库共同读取的配置真相源。
 
 当前这些对象主要位于 `src/domain/*`，同时被应用窗口和 API 使用。后续正确方向是抽成共享 Domain Service：API、Agent tools、桌宠运行时和未来移动端都调用同一套领域服务，而不是各端各写一份状态。
 
@@ -221,6 +230,22 @@ renderer 不应该直接拥有业务真相。后续 Domain Service 成熟后，r
 4. 主进程隐藏桌宠窗口。
 5. 应用窗口加载 Vite dev server 或 `dist/index.html`。
 6. 用户关闭应用窗口后，主进程恢复桌宠窗口。
+
+### 应用窗口保存宠物资料与 Persona 设置
+
+宠物资料、主人称呼、角色表达、语音偏好和高级 Prompt 补充的架构原则是：merged settings 是唯一配置真相源，不允许“我的页、对话页、Agent、MCP、主动事件、知识库”各自读取一套静态 profile 或 prompt。
+
+目标链路：
+
+1. 用户在“我的 -> 宠物资料/对话设置”中编辑并保存。
+2. 应用窗口调用 settings API，例如 `PATCH /api/settings/profile` 或 `PATCH /api/settings/persona`。
+3. `server/settings.ts` 校验字段并把 overrides 持久化到 `.ai-pet-data/settings.json`。
+4. API 返回默认值、overrides 和 merged settings；应用窗口根状态刷新当前 `PetProfile` 和 persona。
+5. `server/petRuntimeSnapshot.ts`、`server/petEventRuntime.ts`、`server/mcp.ts`、`server/knowledgeBase.ts`、`server/voice.ts` 和 `server/opencodeAgent.ts` 都读取 merged settings。
+6. 新对话消息、新主动事件、MCP `get_pet_profile`、TTS 指令和知识库身份档案使用保存后的当前身份。
+7. 历史 thread message 保留当时 `authorName`；新消息使用新显示名。必要时知识库记录“资料已更新”事件解释身份变化。
+
+详细模块契约见 [AI Pet 宠物资料、App 设置与 Persona 配置模块](../modules/pet-settings-and-persona-2026-05-31.md)。
 
 ### 应用窗口同步桌宠外观
 

@@ -3,8 +3,8 @@ title: AI Pet 知识库分类体系
 description: 参考 kb skill 与 Codex skill 结构，为 AI 宠物项目建立知识库分类、入口、文档类型和更新规则。
 status: 起草中
 created: 2026-05-30
-updated: 2026-05-30
-update_reason: 建立面向产品、调研、架构、执行和证据的知识库分类体系。
+updated: 2026-05-31
+update_reason: 明确根级 docs 只做路由和原始材料索引，AI Pet 当前真相统一维护在 ai-pet/docs。
 doc_type: kb-taxonomy
 related:
   - ../product/positioning-framework-2026-05-30.md
@@ -28,11 +28,14 @@ AI Pet 知识库不是资料堆放区，而是项目决策、实现和验证的�
 - 产品分类和技术分类分开：用户、场景、功能是产品 taxon；服务、数据、运行时是技术 taxon。
 - 计划不能长期充当真相源：计划完成后，核心设计要合并到产品、架构或模块 spec。
 - 不制造双真相源：同一事实只有一个权威文档，其他文档只引用或摘要。
+- 根级 `docs/` 不是 AI Pet 的第二套知识库；它只保存原始会议记录、参考素材和到 `ai-pet/docs/` 的路由。
 - 先索引再细读：`INDEX.md` 是入口，具体文档根据任务按需读取。
 
 ## 目录分类
 
 建议把 `ai-pet/docs/` 按下面的知识类型治理。现阶段不强制移动旧文件，先通过 `INDEX.md` 建立分类入口；后续整理时再按批准方案迁移。
+
+仓库根级 `docs/` 只负责会议原始材料、参考素材和轻量入口，不再列出 AI Pet 的全量 spec、计划或修复记录。AI Pet 的当前结论、修复记录和验证标准必须写入 `ai-pet/docs/`。
 
 ```text
 ai-pet/docs/
@@ -164,9 +167,12 @@ related:
 
 AI Pet 项目的新对话必须先读：
 
-1. `docs/INDEX.md`
-2. `docs/product/product-spec-2026-05-30.md`
-3. `docs/architecture/technical-architecture-2026-05-30.md`
-4. `docs/modules/INDEX.md`
+1. 仓库根级 `docs/INDEX.md`：只确认知识库边界、原始会议记录和参考材料位置。
+2. `ai-pet/docs/INDEX.md`：AI Pet 权威知识库入口。
+3. `ai-pet/docs/architecture/product-logic-framework-2026-05-31.md`
+4. `ai-pet/docs/architecture/current-system-architecture-2026-05-30.md`
+5. `ai-pet/docs/product/product-spec-2026-05-30.md`
+6. `ai-pet/docs/architecture/technical-architecture-2026-05-30.md`
+7. `ai-pet/docs/modules/INDEX.md`
 
-如旧的 `plan/` 或历史 `mvp-*` 文档与上述三份当前真相源冲突，以上述三份当前真相源为准。
+如旧的 `plan/` 或历史 `mvp-*` 文档与上述已批准当前真相源冲突，以上述当前真相源为准。

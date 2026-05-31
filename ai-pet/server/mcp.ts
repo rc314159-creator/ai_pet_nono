@@ -5,6 +5,7 @@ import { z } from "zod";
 import { mainThreadIdForPet } from "../src/domain/agent";
 import { createAgentMotionCommand } from "../src/domain/motion";
 import { compactPetSnapshot, buildPetRuntimeSnapshot } from "./petRuntimeSnapshot";
+import { getActivePetSettings, updatePersonaSettings, updateProfileSettings } from "./settings";
 import { appendThreadMemory } from "./threadStore";
 import type { AgentMemoryFact, AgentMemoryType } from "../src/domain/agent";
 import type { PetMotionAction } from "../src/domain/types";
@@ -72,6 +73,52 @@ const server = new McpServer({
   name: "ai_pet",
   version: "0.1.0"
 });
+
+server.registerTool(
+  "get_pet_settings",
+  {
+    title: "Get Pet Settings",
+    description: "Read the persisted App-side pet profile, persona, owner, and runtime prompt settings.",
+    inputSchema: {}
+  },
+  async () => jsonToolResult(getActivePetSettings())
+);
+
+server.registerTool(
+  "update_pet_profile_settings",
+  {
+    title: "Update Pet Profile Settings",
+    description: "Update persisted App-side pet profile identity settings such as display name, owner name, group name, breed, age, or weight.",
+    inputSchema: {
+      displayName: z.string().optional(),
+      realName: z.string().optional(),
+      breed: z.string().optional(),
+      ageMonths: z.number().optional(),
+      weightKg: z.number().optional(),
+      ownerDisplayName: z.string().optional(),
+      groupNameOverride: z.string().optional()
+    }
+  },
+  async (input) => jsonToolResult(updateProfileSettings(input))
+);
+
+server.registerTool(
+  "update_pet_persona_settings",
+  {
+    title: "Update Pet Persona Settings",
+    description: "Update persisted App-side persona and system prompt supplements used by the pet agent.",
+    inputSchema: {
+      personalitySummary: z.string().optional(),
+      speechStyleSupplement: z.string().optional(),
+      promptSupplement: z.string().optional(),
+      exampleDialogues: z.string().optional(),
+      forbiddenPhrases: z.array(z.string()).optional(),
+      proactiveLevel: z.enum(["quiet", "balanced", "chatty"]).optional(),
+      responseLength: z.enum(["short", "balanced", "detailed"]).optional()
+    }
+  },
+  async (input) => jsonToolResult(updatePersonaSettings(input))
+);
 
 server.registerTool(
   "get_pet_profile",
@@ -172,4 +219,4 @@ server.registerTool(
   async ({ type, content }) => jsonToolResult(persistCareMemory(type, content))
 );
 
-await server.connect(new StdioServerTransport());
+void server.connect(new StdioServerTransport());

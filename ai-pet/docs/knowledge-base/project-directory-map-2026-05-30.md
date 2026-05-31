@@ -4,7 +4,7 @@ description: 记录当前仓库目录职责、文件归属边界和源码打包�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 按单一 App 结构整理目录；删除过时宽屏 MVP 组件，不再保留 legacy 代码目录。
+update_reason: 明确根级 docs 只做路由、原始会议记录和参考素材索引，AI Pet 项目真相统一在 ai-pet/docs。
 doc_type: kb-structure
 related:
   - ../INDEX.md
@@ -27,7 +27,7 @@ related:
 |---|---|---|
 | `README.md` | 给外部接手者看的项目入口和打包说明 | 保持简洁，明确只有 `ai-pet/` 一个 App |
 | `AGENTS.md` | 项目级 Codex 工作规则 | 只记录规则，不放产品事实或实现日志 |
-| `docs/` | 根级会议记录、跨会话索引和参考资料 | 保持轻量索引；AI Pet 产品真相源在 `ai-pet/docs/` |
+| `docs/` | 根级路由、原始会议记录和参考资料 | 保持轻量索引；不复制 AI Pet 全量 spec、计划或修复记录，AI Pet 产品和架构真相源只在 `ai-pet/docs/` |
 | `ai-pet/` | AI Pet 单一 App 源码、桌宠入口、应用窗口、服务端、资产、项目知识库 | 当前主项目目录 |
 | `reports/` | 验证截图、GIF、HTML 调研报告和运行证据 | 不参与 App 运行，不作为产品入口 |
 | `exports/` | 生成的源码包、图片包或其它交付压缩包 | 生成目录，不作为源码维护 |

@@ -43,7 +43,9 @@ body {
 }
 
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
 }
 
@@ -4070,13 +4072,14 @@ input.composer-field:focus {
 
 .my-quick-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 16px;
 }
 
 .my-incentive-entry,
-.my-knowledge-entry {
+.my-knowledge-entry,
+.my-settings-entry {
   display: grid;
   min-width: 0;
   border: 0;
@@ -4086,6 +4089,7 @@ input.composer-field:focus {
 }
 
 .my-incentive-entry {
+  grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px 10px;
   min-height: 104px;
@@ -4095,18 +4099,20 @@ input.composer-field:focus {
     rgba(255, 255, 255, 0.92);
 }
 
-.my-knowledge-entry {
+.my-knowledge-entry,
+.my-settings-entry {
   align-content: center;
   justify-items: center;
   gap: 7px;
-  min-height: 104px;
+  min-height: 88px;
   padding: 12px 10px;
   background: rgba(255, 255, 255, 0.9);
   text-align: center;
 }
 
 .my-incentive-entry span,
-.my-knowledge-entry span {
+.my-knowledge-entry span,
+.my-settings-entry span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -4132,8 +4138,169 @@ input.composer-field:focus {
 }
 
 .my-incentive-entry > svg,
-.my-knowledge-entry > svg {
+.my-knowledge-entry > svg,
+.my-settings-entry > svg {
   color: var(--muted);
+}
+
+.settings-screen {
+  padding-bottom: 30px;
+}
+
+.settings-profile-summary {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-soft);
+}
+
+.settings-profile-summary span,
+.settings-section-title,
+.settings-field span,
+.settings-status {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.settings-profile-summary strong {
+  display: block;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1.12;
+}
+
+.settings-profile-summary p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.settings-form {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+}
+
+.settings-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--coral-deep);
+}
+
+.settings-section-title strong {
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settings-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.settings-field:not(.compact):has(textarea),
+.settings-field:not(.compact):has(select) {
+  grid-column: 1 / -1;
+}
+
+.settings-field input,
+.settings-field textarea,
+.settings-field select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(88, 82, 74, 0.13);
+  border-radius: 15px;
+  background: rgba(255, 250, 246, 0.92);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.35;
+  outline: none;
+}
+
+.settings-field input,
+.settings-field select {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.settings-field textarea {
+  resize: vertical;
+  min-height: 86px;
+  padding: 11px 12px;
+}
+
+.settings-field input:focus,
+.settings-field textarea:focus,
+.settings-field select:focus {
+  border-color: rgba(230, 110, 82, 0.5);
+  box-shadow: 0 0 0 4px rgba(255, 143, 115, 0.12);
+}
+
+.settings-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 10px;
+}
+
+.settings-primary-button,
+.settings-secondary-button {
+  height: 48px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.settings-primary-button {
+  background: var(--coral);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(230, 110, 82, 0.24);
+}
+
+.settings-secondary-button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--muted);
+}
+
+.settings-primary-button:disabled,
+.settings-secondary-button:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.settings-status {
+  line-height: 1.4;
+  text-align: center;
 }
 
 .incentive-screen .incentive-card {

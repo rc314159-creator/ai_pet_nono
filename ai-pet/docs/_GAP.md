@@ -4,7 +4,7 @@ description: 记录知识库分类整理后仍需补齐或确认的结构、spec
 status: 起草中
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 记录并处理用户激励信息架构此前缺少权威模块 spec 的问题。
+update_reason: 记录并处理根级 docs 与 ai-pet/docs 双入口导致知识库边界不清的问题。
 doc_type: kb-gap
 related:
   - INDEX.md
@@ -109,3 +109,11 @@ related:
 已处理：代码实现和端到端验证已完成，结果已回写到 [2026-05-31 对话页内部 Thread ID 暴露与用户激励闭环缺失问题记录](fix-records/2026-05-31-incentive-loop-and-thread-id-ui-leak.md)。
 
 待处理：后续如果把用户激励迁移到正式 Domain Service 或后端持久层，需要覆盖更新用户激励模块 spec、技术架构和当前系统架构，不能让前端本地 state 被误描述成正式后台。
+
+### 12. 根级 docs 与 ai-pet/docs 边界不清
+
+事实：根级 `docs/INDEX.md` 复制列出了大量 AI Pet 产品、架构、模块、计划和修复记录入口；`ai-pet/docs/INDEX.md` 同时维护同一批项目事实，导致用户指出“大目录知识库”和“小目录知识库”矛盾。
+
+已处理：已新增 [根级 docs 与 ai-pet/docs 双知识库冲突问题记录](fix-records/2026-05-31-root-and-ai-pet-docs-double-knowledge-base.md)。根级 `docs/INDEX.md` 已收口为轻量路由页，只保留权威边界、原始会议记录、参考素材和非 AI Pet 历史记录；AI Pet 的产品、架构、模块、计划、修复记录和验证标准统一由 `ai-pet/docs/` 维护。
+
+待处理：后续新增 AI Pet 文档时只更新 `ai-pet/docs/INDEX.md`。根级 `docs/` 如新增原始会议记录或参考素材，需要在形成项目结论后沉淀到 `ai-pet/docs/` 的对应 spec，不能再扩展成第二套项目知识库。

@@ -21,6 +21,8 @@ function getMochiAssetRoot() {
 contextBridge.exposeInMainWorld("desktopPhotoPet", {
   close: () => ipcRenderer.send("desktop-photo-pet:close"),
   openAppWindow: (targetView = "welcome") => ipcRenderer.send("desktop-photo-pet:open-app-window", targetView),
+  showSpeechBubble: (payload) => ipcRenderer.send("desktop-photo-pet:show-bubble", payload),
+  hideSpeechBubble: () => ipcRenderer.send("desktop-photo-pet:hide-bubble"),
   dragStart: (point) => ipcRenderer.send("desktop-photo-pet:drag-start", point),
   dragMove: (point) => ipcRenderer.send("desktop-photo-pet:drag-move", point),
   dragEnd: () => ipcRenderer.send("desktop-photo-pet:drag-end"),

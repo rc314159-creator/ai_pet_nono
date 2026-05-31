@@ -4,7 +4,7 @@ description: 明确桌宠点击打开应用窗口的基础跳转协议，以及�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 统一桌宠点击默认入口：无显式目标视图时先打开欢迎/开始陪伴页，再由用户进入对话主页。
+update_reason: 补充桌宠气泡由独立透明跟随窗口展示，且必须继续保持 ThreadMessage 同源，不生成桌宠专用双文案。
 doc_type: architecture-protocol
 domain_taxa:
   - desktop-runtime
@@ -183,6 +183,8 @@ type ExpressionCommand = {
 
 桌宠气泡生命周期：
 
+- 当前 `desktop/photo-pet` 气泡 UI 由主进程创建独立透明窗口展示，跟随桌宠窗口定位，避免在 320x320 宠物窗口内部覆盖宠物头部或身体。
+- 独立窗口只能作为 presentation，显示内容必须来自下面同一条 `ThreadMessage.text`，不能出现应用聊天一版、桌宠气泡一版的双文案。
 - 每个 `ThreadMessage.id` 最多展示一次。
 - 每次展示 5-10 秒，当前 Demo 固定 8 秒。
 - 展示结束后隐藏 speech bubble，不保持常驻。

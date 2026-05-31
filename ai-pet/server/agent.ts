@@ -13,6 +13,7 @@ import {
 import { createAgentMotionCommand } from "../src/domain/motion";
 import { getAgentGatewayConfig, getAgentRunner } from "./agentGateway";
 import { getOpenCodeRuntimeStatus, isOpenCodeRuntimeAvailable, runOpenCodePetAgent } from "./opencodeAgent";
+import { buildPetRuntimeSnapshot } from "./petRuntimeSnapshot";
 import { appendThreadMemory, appendThreadMessages, getThreadMemories, getThreadMessages, replaceThreadMemories } from "./threadStore";
 import { getVoiceRuntimeStatus, synthesizePetSpeech } from "./voice";
 import type {
@@ -80,6 +81,10 @@ type ProactiveAgentResult = {
 const threadSessions = new Map<string, MemorySession>();
 const memoryStore = new Map<string, AgentMemoryFact[]>();
 const agentRunTimeoutMs = Number(process.env.AI_PET_AGENT_TIMEOUT_MS || 12000);
+
+function getRequestedAgentRuntime() {
+  return process.env.AI_PET_AGENT_RUNTIME?.trim().toLowerCase();
+}
 
 const motionActionSchema = z.enum([
   "idle",
@@ -167,12 +172,18 @@ function mergeAgentHistory(...groups: Array<AgentChatMessage[] | undefined>) {
   return messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-function formatRecentHistory(history: AgentChatMessage[]) {
+function getFallbackAuthor(message: AgentChatMessage, snapshot?: AgentContextSnapshot) {
+  const persona = snapshot ? getPersonaForProfile(snapshot.profile, snapshot.settings) : undefined;
+  if (message.speaker === "user") return persona?.userDisplayName || "主人";
+  return persona?.displayName || "旺财";
+}
+
+function formatRecentHistory(history: AgentChatMessage[], snapshot?: AgentContextSnapshot) {
   const recent = history.slice(-16);
   if (!recent.length) return "- 暂无历史消息。";
   return recent
     .map((message) => {
-      const author = message.authorName || (message.speaker === "user" ? "主人" : "旺财");
+      const author = message.authorName || getFallbackAuthor(message, snapshot);
       return `- ${author}: ${truncateAgentText(message.text, 180)}`;
     })
     .join("\n");
@@ -389,13 +400,25 @@ function createTechDogAgent(model: string, displayName: string) {
 }
 
 function buildPrompt(input: string, runtime: PetAgentRuntimeContext) {
+  const persona = getPersonaForProfile(runtime.snapshot.profile, runtime.snapshot.settings);
+  const runtimeTime = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(new Date());
   return [
     `主群聊：${runtime.threadId}`,
-    `发言者：主人`,
+    `发言者：${persona.userDisplayName}`,
     `本回合希望输出：${runtime.responseMode}`,
+    `当前运行时间：${runtimeTime}（Asia/Shanghai，本机时间；如果主人问几点或现在时间，直接用这个时间回答，只能加一句轻陪伴，不要添加健康、肚皮、进食、散步、任务或库存信息。）`,
     "",
     "最近群聊记录：",
-    formatRecentHistory(runtime.history),
+    formatRecentHistory(runtime.history, runtime.snapshot),
     "",
     input
   ].join("\n");
@@ -427,7 +450,7 @@ function createMessageFromResult({
   return {
     id: createMessageId("pet"),
     speaker: "pet",
-    authorName: getPersonaForProfile(runtime.snapshot.profile).displayName,
+    authorName: getPersonaForProfile(runtime.snapshot.profile, runtime.snapshot.settings).displayName,
     text: voice?.transcript || answer,
     createdAt: new Date().toISOString(),
     clientTurnId: runtime.clientTurnId,
@@ -462,7 +485,7 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function createLlmmelonFastMotionReply(input: string, snapshot: AgentContextSnapshot, persona = getPersonaForProfile(snapshot.profile)) {
+async function createLlmmelonFastMotionReply(input: string, snapshot: AgentContextSnapshot, persona = getPersonaForProfile(snapshot.profile, snapshot.settings)) {
   const apiKey = process.env.LLMMELON_API_KEY || process.env.AI_PET_AGENT_API_KEY;
   if (!apiKey) return undefined;
 
@@ -488,7 +511,8 @@ async function createLlmmelonFastMotionReply(input: string, snapshot: AgentConte
                 content: [
                   `你是 AI Pet 主群聊里的宠物「${persona.displayName}」。`,
                   "主人提出了一个明确动作请求；动作工具已由系统触发，你只需要像宠物本人一样回复一句中文。",
-                  "回复要有宠物身体感和陪伴感，可以说摇尾巴、凑近、歪头、爪爪、想被摸摸。",
+                  "回复要有宠物身体感和陪伴感，可以说摇尾巴、凑近、歪头、爪爪、想被摸摸、想陪主人一下。",
+                  "可以自然使用一次“汪”“呜”“哼唧”或一句短动作描写，但不要每句卖萌。",
                   "不要提模型、接口、工具、JSON、fallback、动作命令或系统实现。不要使用 emoji。最多一句动作描写加一句短回复。"
                 ].join("\n")
               },
@@ -521,6 +545,8 @@ async function createLlmmelonFastMotionReply(input: string, snapshot: AgentConte
 
 function buildProactiveIssue(snapshot: AgentContextSnapshot) {
   const latest = snapshot.latestDailySummary;
+  const persona = getPersonaForProfile(snapshot.profile, snapshot.settings);
+  const ownerName = persona.userDisplayName;
   const notes = latest.notes.join("；");
   const skinObservation = snapshot.manualObservations.find((item) => /红点|抓挠|舔|皮肤|腹部/.test(item.note));
   const highTask = snapshot.pendingTasks.find((task) => task.priority === "high" && task.status === "pending");
@@ -530,28 +556,28 @@ function buildProactiveIssue(snapshot: AgentContextSnapshot) {
   if (latest.scratchMinutes >= 24 || /抓挠|红点|皮肤/.test(notes) || skinObservation) {
     return {
       reason: `抓挠 ${latest.scratchMinutes} 分钟；${notes || skinObservation?.note || "需要皮肤观察"}`,
-      text: `汪，主人，我今天肚皮有点痒，抓挠比平时多一点。你进来的时候能先帮我看看腹部红点吗？别安排太疯的奔跑，我想先被摸摸确认一下。`
+      text: `呜，${ownerName}，我今天肚皮有点痒痒的，挠得比平时多一点。你坐下来时先帮我轻轻看看好不好？我会乖乖躺好。`
     };
   }
 
   if (latest.healthIndex <= 78) {
     return {
       reason: `健康指数 ${latest.healthIndex}`,
-      text: `汪，主人，我今天状态有点低，身体不像平时那么轻快。你先陪我观察一下吃饭、喝水和精神好不好，可以吗？`
+      text: `汪，${ownerName}，我今天身体有点沉沉的，不像平时那么轻快。你先陪我慢慢观察吃饭、喝水和精神好不好？`
     };
   }
 
   if (lowFood) {
     return {
       reason: `进食 ${latest.foodGrams}g，低于计划 ${expectedFood}g`,
-      text: `汪，主人，我今天饭没有吃够，肚子有点空空的。你能帮我看看是不是该少量补一点，或者换个更舒服的喂法吗？`
+      text: `汪，${ownerName}，我今天饭好像没吃够，肚子有点空空的。你等会儿帮我看看，要不要少量补一点好不好嘛？`
     };
   }
 
   if (highTask) {
     return {
       reason: highTask.reason,
-      text: `汪，主人，我有个要紧的小任务想提醒你：${highTask.title}。你进来了就先看看我，好不好？`
+      text: `汪，${ownerName}，我有个要紧的小事想轻轻提醒你：${highTask.title}。你进来了就先看看我，好不好？`
     };
   }
 
@@ -572,11 +598,11 @@ function recentMessagesAlreadyCoverIssue(messages: AgentChatMessage[], issueText
 }
 
 export function createProactiveAgentMessage(payload: { threadId?: string; context?: AgentContextSnapshot }): ProactiveAgentResult {
-  if (!payload.context?.profile) throw new Error("context_required");
-
+  const activeSnapshot = buildPetRuntimeSnapshot();
   const snapshot: AgentContextSnapshot = {
-    ...payload.context,
-    mainThreadId: payload.threadId || payload.context.mainThreadId || mainThreadIdForPet(payload.context.profile)
+    ...activeSnapshot,
+    selectedOutfit: payload.context?.selectedOutfit || activeSnapshot.selectedOutfit,
+    mainThreadId: payload.threadId || payload.context?.mainThreadId || activeSnapshot.mainThreadId || mainThreadIdForPet(activeSnapshot.profile)
   };
   const threadId = snapshot.mainThreadId || mainThreadIdForPet(snapshot.profile);
   const issue = buildProactiveIssue(snapshot);
@@ -606,7 +632,7 @@ export function createProactiveAgentMessage(payload: { threadId?: string; contex
     };
   }
 
-  const persona = getPersonaForProfile(snapshot.profile);
+  const persona = getPersonaForProfile(snapshot.profile, snapshot.settings);
   const messageId = createMessageId("pet-proactive");
   const command = createAgentMotionCommand("remind", issue.reason, {
     targetView: "chat",
@@ -644,6 +670,23 @@ export function getAgentRuntimeStatus() {
       configured: opencode.configured,
       cliVersion: opencode.cliVersion,
       mcp: opencode.mcp,
+      projectRoot: opencode.projectRoot,
+      cliPath: opencode.cliPath,
+      fallbackProvider: gateway.configured ? `openai-agents-sdk:${gateway.provider}` : "local-fallback",
+      tts: voice.provider,
+      ttsConfigured: voice.configured,
+      ttsModel: voice.model,
+      ttsVoice: voice.voice
+    };
+  }
+  if (getRequestedAgentRuntime() === "opencode") {
+    return {
+      provider: opencode.provider,
+      model: opencode.model,
+      configured: false,
+      cliVersion: opencode.cliVersion,
+      mcp: opencode.mcp,
+      warning: "opencode_runtime_not_configured",
       fallbackProvider: gateway.configured ? `openai-agents-sdk:${gateway.provider}` : "local-fallback",
       tts: voice.provider,
       ttsConfigured: voice.configured,
@@ -666,16 +709,17 @@ export function getAgentRuntimeStatus() {
 export async function createPetAgentReply(payload: AgentChatPayload): Promise<AgentChatResult> {
   const input = String(payload.input || "").trim();
   if (!input) throw new Error("input_required");
-  if (!payload.context?.profile) throw new Error("context_required");
 
+  const activeSnapshot = buildPetRuntimeSnapshot();
   const snapshot: AgentContextSnapshot = {
-    ...payload.context,
-    mainThreadId: payload.threadId || payload.context.mainThreadId || mainThreadIdForPet(payload.context.profile)
+    ...activeSnapshot,
+    selectedOutfit: payload.context?.selectedOutfit || activeSnapshot.selectedOutfit,
+    mainThreadId: payload.threadId || payload.context?.mainThreadId || activeSnapshot.mainThreadId || mainThreadIdForPet(activeSnapshot.profile)
   };
   const threadId = snapshot.mainThreadId || mainThreadIdForPet(snapshot.profile);
   const responseMode: AgentResponseMode = payload.responseMode === "voice" ? "voice" : "text";
   const voiceAllowed = responseMode === "voice" || isVoiceReplyRequested(input);
-  const persona = getPersonaForProfile(snapshot.profile);
+  const persona = getPersonaForProfile(snapshot.profile, snapshot.settings);
   const memory = getThreadMemory(threadId, persona.displayName);
   const history = mergeAgentHistory(getThreadMessages(threadId), payload.history);
   const runtime: PetAgentRuntimeContext = {
@@ -867,6 +911,14 @@ export async function createPetAgentReply(payload: AgentChatPayload): Promise<Ag
       console.warn(`OpenCode agent runtime failed, falling back: ${detail}`);
       return fallback("opencode_agent_request_error", detail);
     }
+  }
+
+  if (getRequestedAgentRuntime() === "opencode") {
+    const status = getOpenCodeRuntimeStatus();
+    return fallback(
+      "opencode_runtime_not_configured",
+      `projectRoot=${status.projectRoot || "unresolved"}; cliVersion=${status.cliVersion || "missing"}; configured=${status.configured}`
+    );
   }
 
   const gateway = getAgentGatewayConfig();

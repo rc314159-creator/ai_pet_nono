@@ -4,7 +4,7 @@ description: 记录应用窗口内“宠物知识库”板块、实时同步机�
 status: 已批准
 created: 2026-05-31
 updated: 2026-05-31
-update_reason: 用户要求补全项目中的知识库板块并实现实时更新功能。
+update_reason: 明确应用内知识库身份档案必须读取 App 端 merged settings，资料设置变更要形成可见运行时事件。
 doc_type: module-spec
 domain_taxa:
   - memory
@@ -14,6 +14,7 @@ domain_taxa:
 related:
   - INDEX.md
   - ../architecture/current-system-architecture-2026-05-30.md
+  - pet-settings-and-persona-2026-05-31.md
   - agent-chat-2026-05-30.md
 ---
 
@@ -51,7 +52,7 @@ related:
 
 | 分区 | 内容 | 主要来源 |
 |---|---|---|
-| 身份档案 | 名字、品种、年龄、体重、过敏和饮食限制 | `PetProfile` |
+| 身份档案 | 名字、品种、年龄、体重、过敏、饮食限制和主人称呼 | merged `PetProfile` / settings |
 | 照护证据 | 今日状态、异常观察、库存和待办任务 | mock/device/domain 数据 |
 | 长期记忆 | 用户明确要求记住的偏好、承诺和关系事实 | `threadStore` memory |
 | 实时事件 | 对话、主动提醒、任务完成和配饰同步 | API 事件写入 |
@@ -64,7 +65,8 @@ related:
 2. 主动提醒生成后，`/api/agent/threads/:threadId/proactive` 写入提醒事件。
 3. 用户保存桌宠配饰后，`/api/desktop-pet/appearance` 写入外观事件。
 4. 用户完成每日任务后，应用窗口调用 `POST /api/knowledge-base/events` 写入任务事件。
-5. 已打开的知识库页面通过 SSE 收到新快照并立即刷新。
+5. 用户保存宠物资料、主人称呼、Persona 或语音设置后，settings API 写入“资料已更新”事件，并刷新身份档案条目。
+6. 已打开的知识库页面通过 SSE 收到新快照并立即刷新。
 
 如果 SSE 断开，前端仍通过普通读取接口恢复当前快照；断开状态不得阻止 App 使用。
 
@@ -74,3 +76,4 @@ related:
 - 不把项目 `docs/` 的开发文档直接展示给试用者当产品知识库。
 - 不在聊天 UI 中暴露内部 thread id、MCP、模型、fallback 等工程词。
 - 不把用户未触发的事件伪装成实时更新。
+- 不继续从静态 `petProfiles[0]` 生成身份档案；App 端设置保存后，知识库必须展示 merged settings。

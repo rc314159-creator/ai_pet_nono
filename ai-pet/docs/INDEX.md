@@ -2,6 +2,8 @@
 
 本目录记录 AI 宠物项目的产品定位、调研、架构、Demo 计划、验证证据和修复记录。进入项目工作时先读本页，再按任务读取对应分类文档。
 
+权威边界：`ai-pet/docs/` 是 AI Pet 项目唯一权威知识库。根级 `docs/` 只保留仓库级路由、原始会议记录和参考素材，不是与本目录并列的第二套项目知识库。若根级 `docs/` 与本目录对同一 AI Pet 事实存在冲突，以本目录中已批准 spec 为准，并修正根级入口。
+
 当前硬约束：不要从零开发桌宠前端或 agent 框架，优先复用已经能运行的开源项目和成熟工具协议。
 当前交付约束：团队角色是开发，不是展陈或 PPT 包装；目标是明天汇报可实际运行的一版项目展示 Demo，不按多版本路线讨论。开发讨论必须围绕产品到底解决什么问题、需要跑通哪些功能闭环、怎么实现；AI Key 和算力不作为限制条件，AI 功能必须优先接成熟 agent、成熟模型服务或成熟工具协议。项目没有 HTML 展示页；产品第一入口是系统级桌宠，点击桌宠后弹出应用窗口/功能面板承载复杂功能。
 
@@ -27,6 +29,7 @@
 - AI/agent 底座：当前对话主路径是 OpenCode/opencode runtime + `ai_pet` MCP tools；OpenAI Agents SDK 只作为 fallback，不能描述为最终 Agent 底座。
 - 健康监测：Demo 不等待真实硬件 API；用足够完整的 mock/手动数据把健康解释、任务、桌宠提醒和汇报闭环跑通。
 - 用户激励：从“我的”页点击“用户激励”进入独立子流程；每日任务、排行榜和奖励/可解锁服饰继续进入详情页。装扮仍是“我的”页内既有功能，任何“奖励获得”的服饰或配饰必须在用户激励奖励页有对应解锁来源。
+- App 端设置：宠物资料、主人称呼、对话设定、语音偏好和高级 Prompt 补充必须从“我的”页可编辑并持久化；保存后应用窗口、Agent、MCP tools、桌宠气泡对应消息和应用内知识库必须读取同一份 merged settings。
 - 换装与商业化：MVP 换装先作为娱乐和陪伴玩法，用内置模板同步到对话主页和桌宠；商品推荐、电商、真实宠物试装和同款推荐作为后续商业化入口预留。
 - 安全边界：当前不作为产品讨论焦点；实现层可保留必要底线，但不再作为待用户拍板的问题。
 
@@ -36,6 +39,9 @@
 - [AI Pet 项目目录地图](knowledge-base/project-directory-map-2026-05-30.md)
 - [AI Pet 应用内实时知识库模块](modules/live-knowledge-base-2026-05-31.md)
 - [AI Pet 知识库缺口记录](_GAP.md)
+- [根级 docs 与 ai-pet/docs 双知识库冲突问题记录](fix-records/2026-05-31-root-and-ai-pet-docs-double-knowledge-base.md)
+
+治理规则：AI Pet 的产品、架构、模块、计划、修复记录和验证记录只在 `ai-pet/docs/` 维护；根级 `docs/INDEX.md` 只做轻量路由，不复制本目录的全量清单。
 
 ## 产品与会议框架
 
@@ -51,6 +57,8 @@
 - [并行开发工作流 2026-05-30](plan/parallel-development-workstreams-2026-05-30.md)
 - [Mochi 桌宠动作包生成计划 2026-05-30](plan/desktop-pet-motion-pack-plan-2026-05-30.md)
 - [对话页省略等待与宠物养护建言实施计划 2026-05-31](plan/chat-waiting-cue-and-care-ticker-plan-2026-05-31.md)
+- [桌宠气泡避让与陪伴语气端到端修复计划 2026-05-31](plan/desktop-bubble-persona-warmth-e2e-plan-2026-05-31.md)
+- [Agent Runtime 与本地 fallback 可靠性修复计划 2026-05-31](plan/agent-runtime-fallback-reliability-plan-2026-05-31.md)
 - [Mac Demo 安装交付方案 2026-05-31](plan/mac-demo-distribution-2026-05-31.md)
 - [Demo 实施计划](plan/mvp-plan.md)（早期计划，需按新 spec 更新后执行）
 - [Demo 实现记录 2026-05-30](plan/implementation-log-2026-05-30.md)
@@ -71,6 +79,7 @@
 
 - [AI Pet 模块分类索引](modules/INDEX.md)
 - [AI Pet 对话页 Agent 群聊模块](modules/agent-chat-2026-05-30.md)
+- [AI Pet 宠物资料、App 设置与 Persona 配置模块](modules/pet-settings-and-persona-2026-05-31.md)
 - [AI Pet 宠物外观单一真相源模块](modules/pet-appearance-2026-05-31.md)
 - [AI Pet 应用内实时知识库模块](modules/live-knowledge-base-2026-05-31.md)
 - [AI Pet 用户激励、每日任务与奖励解锁模块](modules/user-incentive-2026-05-31.md)
@@ -153,7 +162,13 @@
 - [2026-05-31 对话页发送后等待态同时显示文案和省略点问题记录](fix-records/2026-05-31-chat-pending-indicator-duplicate-cue.md)
 - [2026-05-31 状态页未严格对齐参考项目交互问题记录](fix-records/2026-05-31-status-page-reference-interaction-misalignment.md)
 - [2026-05-31 桌宠显示橙色像素宠物而不是小狗问题记录](fix-records/2026-05-31-orange-pixel-pet-instead-of-dog.md)
+- [2026-05-31 桌宠气泡遮挡宠物与陪伴语气不足问题记录](fix-records/2026-05-31-desktop-bubble-overlap-and-companion-persona-warmth.md)
 - [2026-05-31 海报初稿误做成主视觉而非图文丰富项目海报问题记录](fix-records/2026-05-31-poster-visual-only-not-content-rich.md)
+- [2026-05-31 根级 docs 与 ai-pet/docs 双知识库冲突问题记录](fix-records/2026-05-31-root-and-ai-pet-docs-double-knowledge-base.md)
+- [2026-05-31 宠物名字与系统提示词无法在 App 内修改问题记录](fix-records/2026-05-31-profile-and-system-prompt-not-editable.md)
+- [2026-05-31 参考视频音轨与画面清晰度优化记录](fix-records/2026-05-31-reference-video-audio-visual-optimization.md)
+- [2026-05-31 参考视频朴素 4K 放大未达到用户优化目标问题记录](fix-records/2026-05-31-reference-video-naive-upscale-failed.md)
+- [2026-05-31 对话页未返回 Agent 回复而显示默认兜底话术问题记录](fix-records/2026-05-31-agent-chat-fallback-default-reply-investigation.md)
 
 ## 已有验证证据
 

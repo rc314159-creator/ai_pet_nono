@@ -4,7 +4,7 @@ description: 按产品能力和工程边界组织模块 spec；新功能开发�
 status: 已批准
 created: 2026-05-30
 updated: 2026-05-31
-update_reason: 明确应用窗口默认先进入欢迎/开始陪伴页，开始陪伴后再进入对话主页。
+update_reason: 新增 App 端宠物资料、对话设置与 Persona 配置单一真相源模块，明确关键配置先写架构再开发验证。
 doc_type: module-spec
 domain_taxa:
   - capability
@@ -16,6 +16,7 @@ related:
   - ../architecture/product-logic-framework-2026-05-31.md
   - ../architecture/desktop-pet-app-window-linkage-protocol-2026-05-30.md
   - agent-chat-2026-05-30.md
+  - pet-settings-and-persona-2026-05-31.md
   - pet-appearance-2026-05-31.md
   - user-incentive-2026-05-31.md
   - ../plan/mvp-feature-design-2026-05-30.md
@@ -36,6 +37,7 @@ related:
 | 模块 | 当前优先级 | 作用 | 当前实现/证据入口 |
 |---|---:|---|---|
 | 宠物档案模块 | P0 | 管理真实宠物和纯电子宠物的基础设定 | `src/domain/mockData.ts`, `architecture/technical-architecture-2026-05-30.md` |
+| 宠物资料、App 设置与 Persona 配置模块 | P0 | 让 App 端可编辑宠物身份、主人称呼、角色表达、Prompt 补充和语音偏好，并作为 UI、Agent、MCP、桌宠和知识库共同读取的单一真相源 | [pet-settings-and-persona-2026-05-31.md](pet-settings-and-persona-2026-05-31.md) |
 | 宠物状态机模块 | P0 | 支撑数字分身、电子宠物养成和桌宠反馈 | `src/domain/engine.ts`, `research/pet-game-ai-projects/INDEX.md` |
 | Agent 工具模块 | P0 | 当前由 OpenCode/opencode 通过 `ai_pet` MCP tools 调用宠物业务能力；OpenAI Agents SDK 仅 fallback | `server/opencodeAgent.ts`, `server/mcp.ts`, `opencode.json`, `architecture/current-system-architecture-2026-05-30.md` |
 | 对话页 Agent 群聊模块 | P0 | 单宠物唯一长期主群聊，可见名字/头像复用 PetProfile，OpenCode/opencode 主路径，文字/语音模式、长期记忆、主动开场和工具调用 | [agent-chat-2026-05-30.md](agent-chat-2026-05-30.md) |
@@ -61,6 +63,16 @@ related:
 - 纯电子宠物：物种/形象、人设、初始状态、成长偏好、装扮配置。
 
 两类档案都进入统一 `PetProfile`，不能拆成两套不兼容系统。
+
+### 宠物资料、App 设置与 Persona 配置
+
+App 端必须提供“我的 -> 宠物资料/对话设置”入口，使用户可以编辑宠物显示名、头像、主人称呼、基础档案、角色表达、语音偏好和高级 Prompt 补充。
+
+该模块是 P0 单一真相源，不是普通表单。保存后的设置必须被应用窗口、Agent Runtime、MCP tools、主动事件 runtime、TTS、桌宠气泡对应消息和应用内知识库共同读取。
+
+实现时必须先新增 settings/profile store 和 merged settings 纯函数，再替换前后端静态 `petProfiles[0]` 读取点，最后做 UI。不能先做一个只改前端显示的编辑页。
+
+详细契约见 [AI Pet 宠物资料、App 设置与 Persona 配置模块](pet-settings-and-persona-2026-05-31.md)。
 
 ### 宠物状态机
 
@@ -215,10 +227,11 @@ Demo 阶段使用 `server/threadStore.ts` 的本地 JSON store；生产迁移数
 优先拆出以下独立 module spec：
 
 1. `agent-chat-2026-05-30.md`（已创建，后续可继续拆工具子 spec）
-2. `agent-tools.md`
-3. `desktop-pet-entry.md`
-4. `app-window-entry.md`
-5. `pet-profile-and-state.md`
-6. `evidence-health-task.md`
-7. `commerce-and-outfit.md`
-8. `multi-channel-entrypoints.md`
+2. `pet-settings-and-persona-2026-05-31.md`（已创建）
+3. `agent-tools.md`
+4. `desktop-pet-entry.md`
+5. `app-window-entry.md`
+6. `pet-profile-and-state.md`
+7. `evidence-health-task.md`
+8. `commerce-and-outfit.md`
+9. `multi-channel-entrypoints.md`
