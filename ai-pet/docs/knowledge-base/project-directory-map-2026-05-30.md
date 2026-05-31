@@ -101,6 +101,7 @@ npm run package:source
 | `reports/application-window-ui-2026-05-30/` | 手机比例应用窗口的对话、状态、换装、任务截图 |
 | `reports/application-window-ui-2026-05-30/mochi-flow/` | 根目录散落的 Mochi 应用窗口流程截图归档 |
 | `reports/application-window-ui-2026-05-30/user-incentive-v2/` | 根目录散落的用户激励 E2E 截图归档 |
+| `reports/product-handoff-assets-2026-05-31/` | README 和产品侧发送使用的精选交付截图、录屏和质检联系表 |
 | `reports/legacy-root-screenshots/` | 历史根目录临时截图，仅作证据，不代表仍有 legacy App |
 | `reports/desktop-photo-pet-*` | 桌宠形象线生成的截图、GIF、动作验证产物 |
 | `reports/*-research*/` | 调研 HTML 报告和截图 |

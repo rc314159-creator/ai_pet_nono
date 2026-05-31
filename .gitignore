@@ -5,6 +5,8 @@
 
 # Generated handoff packages and export bundles
 /exports/
+/reports/*.zip
+/reports/product-handoff-2026-05-31/
 
 # Root-level temporary screenshots and ad-hoc captures.
 /*.png
