@@ -20,21 +20,15 @@ The current demo name in the product UI is `毛球伙伴`. The default pet profi
 
 More product handoff images live in [`reports/product-handoff-assets-2026-05-31/`](reports/product-handoff-assets-2026-05-31/). Historical validation screenshots and research reports live under [`reports/`](reports/).
 
-## What This Repo Contains
+## Install And Run
 
-- One runnable app: [`ai-pet/`](ai-pet/).
-- A floating Electron desktop pet entry: [`ai-pet/desktop/photo-pet/`](ai-pet/desktop/photo-pet/).
-- A React/Vite renderer loaded inside the Electron app window: [`ai-pet/src/app/`](ai-pet/src/app/).
-- An Express API, OpenCode/opencode agent bridge, MCP tools, voice bridge, local stores, and desktop-pet sync endpoints: [`ai-pet/server/`](ai-pet/server/).
-- Product, architecture, module, plan, and fix-record knowledge base: [`ai-pet/docs/`](ai-pet/docs/).
-
-There is no separate legacy MVP web app to maintain. Browser `localhost` pages are renderer smoke tests only; final validation must use the desktop app chain.
-
-## Quick Start
+Clone the repository, install dependencies inside the only runnable app directory, copy the env template, then start the desktop app:
 
 ```bash
-cd ai-pet
+git clone https://github.com/rc314159-creator/ai_pet_nono.git
+cd ai_pet_nono/ai-pet
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
@@ -45,6 +39,52 @@ npm run dev
 3. Electron desktop pet from `desktop/photo-pet/main.cjs`.
 
 Use the floating desktop pet as the product entry. Clicking it opens or focuses the app window; closing the app window restores the desktop pet.
+
+## Configuration Checklist
+
+The app can boot without model keys and will fall back to local demo rules, but the full AI experience needs these local settings in `ai-pet/.env.local`:
+
+| Setting | Required | Purpose |
+|---|---:|---|
+| `LLMMELON_API_KEY` | Full AI chat | Enables the OpenCode/opencode companion agent through the llmmelon OpenAI-compatible gateway. |
+| `LLMMELON_BASE_URL` | Usually keep default | Model gateway base URL. Defaults to `https://llmmelon.cloud/v1`. |
+| `LLMMELON_MODEL` / `AI_PET_OPENCODE_MODEL` | Optional | Chat model name. Defaults to `claude-sonnet-4-6`. |
+| `VITE_AI_PET_API_BASE_URL` | Usually keep default | Renderer API base URL. Change it only if `AI_PET_API_PORT` changes. |
+| `AI_PET_QWEN_API_KEY` | Optional voice | Enables Qwen voice design and TTS. Without it, voice mode falls back to browser/system speech behavior. |
+| `AI_PET_TTS_PROVIDER` | Optional | Defaults to `qwen`; can be changed for fallback TTS experiments. |
+
+For the primary Agent runtime, install the OpenCode CLI so `opencode --version` works:
+
+```bash
+npm install -g opencode-ai
+opencode --version
+```
+
+If OpenCode or `LLMMELON_API_KEY` is missing, the app still opens, but chat and proactive companion behavior use the local fallback path.
+
+## Verify It Is Running
+
+After `npm run dev`, check:
+
+```bash
+curl http://127.0.0.1:8788/api/health
+```
+
+Expected result:
+
+- `ok: true`
+- `desktopPet: "desktop/photo-pet"`
+- `llm: "llmmelon-configured"` when `LLMMELON_API_KEY` is set, otherwise `local-fallback`
+
+## What This Repo Contains
+
+- One runnable app: [`ai-pet/`](ai-pet/).
+- A floating Electron desktop pet entry: [`ai-pet/desktop/photo-pet/`](ai-pet/desktop/photo-pet/).
+- A React/Vite renderer loaded inside the Electron app window: [`ai-pet/src/app/`](ai-pet/src/app/).
+- An Express API, OpenCode/opencode agent bridge, MCP tools, voice bridge, local stores, and desktop-pet sync endpoints: [`ai-pet/server/`](ai-pet/server/).
+- Product, architecture, module, plan, and fix-record knowledge base: [`ai-pet/docs/`](ai-pet/docs/).
+
+There is no separate legacy MVP web app to maintain. Browser `localhost` pages are renderer smoke tests only; final validation must use the desktop app chain.
 
 ## Common Commands
 
@@ -60,6 +100,22 @@ Run these from [`ai-pet/`](ai-pet/).
 | `npm run dist:mac` | Build an unsigned macOS zip without local env secrets. |
 | `npm run dist:mac:demo` | Build a trusted local demo zip that intentionally bundles local demo env. |
 | `npm run package:source` | Create a clean source handoff zip under `exports/source/`. |
+
+## Package A Demo App
+
+From `ai-pet/`:
+
+```bash
+npm run dist:mac
+```
+
+For a trusted local handoff demo that intentionally bundles the current local `.env.local` into the packaged app resources:
+
+```bash
+npm run dist:mac:demo
+```
+
+Use `dist:mac:demo` only for trusted recipients because it copies local demo credentials into the app package. Generated release artifacts are ignored by Git.
 
 ## Directory Layout
 
